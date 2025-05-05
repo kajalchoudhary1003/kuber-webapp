@@ -1,37 +1,26 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
-const Client = require('./clientModel');
+const mongoose = require('mongoose');
 
-const PaymentTracker = sequelize.define('PaymentTracker', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const paymentTrackerSchema = new mongoose.Schema({
+  client: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client',
+    required: true,
   },
-  ClientID: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Client,
-      key: 'id',
-    },
+  receivedDate: {
+    type: Date,
+    required: true,
   },
-  ReceivedDate: {
-    type: DataTypes.DATE,
-    allowNull: false,
+  amount: {
+    type: mongoose.Schema.Types.Decimal128,
+    required: true,
   },
-  Amount: {
-    type: DataTypes.DECIMAL(18, 2),
-    allowNull: false,
-  },
-  Remark: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+  remark: {
+    type: String,
+    default: null,
+  }
 }, {
-  timestamps: true,
+  timestamps: true // Adds createdAt and updatedAt
 });
 
-PaymentTracker.belongsTo(Client, { foreignKey: 'ClientID' });
-
+const PaymentTracker = mongoose.model('PaymentTracker', paymentTrackerSchema);
 module.exports = PaymentTracker;
