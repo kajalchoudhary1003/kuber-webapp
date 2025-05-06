@@ -336,7 +336,7 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
   };
 };
 
-exports.generateInvoices = async (clientIds, year, month) => {
+const generateInvoices = async (clientIds, year, month) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -450,7 +450,7 @@ exports.generateInvoices = async (clientIds, year, month) => {
     }
   };
   
-  exports.getGeneratedInvoices = async (year, month) => {
+const getGeneratedInvoices = async (year, month) => {
     try {
       const invoiceYear = month <= 3 ? year + 1 : year;
       
@@ -505,7 +505,7 @@ exports.generateInvoices = async (clientIds, year, month) => {
     }
   };
   
-  exports.deleteInvoice = async (invoiceId) => {
+const deleteInvoice = async (invoiceId) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -536,7 +536,7 @@ exports.generateInvoices = async (clientIds, year, month) => {
     }
   };
   
-  exports.downloadInvoice = async (invoiceId) => {
+const downloadInvoice = async (invoiceId) => {
     try {
       const invoice = await Invoice.findById(invoiceId);
       if (!invoice) {
@@ -550,7 +550,7 @@ exports.generateInvoices = async (clientIds, year, month) => {
     }
   };
   
-  exports.markInvoiceAsSent = async (invoiceId) => {
+const markInvoiceAsSent = async (invoiceId) => {
     try {
       const invoice = await Invoice.findById(invoiceId);
       if (!invoice) {
@@ -564,7 +564,7 @@ exports.generateInvoices = async (clientIds, year, month) => {
     }
   };
   
-  exports.regenerateInvoice = async (invoiceId) => {
+const regenerateInvoice = async (invoiceId) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     

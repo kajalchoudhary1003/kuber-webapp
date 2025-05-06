@@ -1,7 +1,7 @@
 const FinancialYear = require('../models/financialYearModel');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const BillingDetail = require('../models/billingDetailModel');
-const EmployeeCost = require('../models/EmployeeCostModel');
+const EmployeeCost = require('../models/employeeCostModel');
 const Employee = require('../models/employeeModel');
 const mongoose = require('mongoose');
 
