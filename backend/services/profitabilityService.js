@@ -1,9 +1,9 @@
-const BillingSetup = require('../models/BillingSetup');
-const CurrencyExchangeRate = require('../models/CurrencyExchangeRate');
-const Currency = require('../models/Currency');
-const Client = require('../models/Client');
-const Employee = require('../models/Employee');
-const EmployeeCost = require('../models/EmployeeCost');
+const BillingSetup = require('../models/billingDetailModel');
+const CurrencyExchangeRate = require('../models/currencyExchangeRateModel');
+const Currency = require('../models/currencyModel');
+const Client = require('../models/clientModel');
+const Employee = require('../models/employeeModel');
+const EmployeeCost = require('../models/employeeCostModel');
 const logger = require('../utils/logger');
 
 const getProfitabilityReport = async (clientId, financialYear) => {
@@ -148,4 +148,99 @@ const getEmployeeProfitabilityReport = async (financialYear) => {
   }
 };
 
-module.exports = { getProfitabilityReport, getEmployeeProfitabilityReport };
+const getClientProfitabilityReport = async (financialYear) => {
+  try {
+    // Step 1: Fetch all billing data for the specified financial year
+    const billingData = await BillingSetup.findAll({
+      where: { Year: financialYear },
+      include: [
+        { model: Employee, attributes: ['id', 'FirstName', 'LastName'] },
+        { model: Client, attributes: ['id', 'ClientName', 'BillingCurrencyID'] },
+      ],
+    });
+
+    if (!billingData.length) {
+      throw new Error('No billing data found for the selected financial year.');
+    }
+
+    // Step 2: Initialize data structure to hold profitability by client
+    const clientData = {};
+
+    for (const billing of billingData) {
+      const clientId = billing.Client.id;
+      const clientName = billing.Client.ClientName;
+      const billingCurrency = billing.Client.BillingCurrencyID;
+      const employeeId = billing.Employee.id;
+
+      // Fetch the exchange rate from billing currency to INR
+      const inrCurrency = await Currency.findOne({ where: { CurrencyName: 'INR' } });
+      if (!inrCurrency) throw new Error('INR currency not found.');
+
+      const exchangeRate = await CurrencyExchangeRate.findOne({
+        where: {
+          CurrencyFromID: billingCurrency,
+          CurrencyToID: inrCurrency.id,
+          Year: financialYear,
+        },
+      });
+
+      if (!exchangeRate) {
+        throw new Error(`No exchange rate found for currency ${billingCurrency}.`);
+      }
+
+      // Initialize client entry if not already present
+      if (!clientData[clientId]) {
+        clientData[clientId] = {
+          clientName,
+          monthlyProfit: {
+            Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0, Jan: 0, Feb: 0, Mar: 0,
+          },
+        };
+      }
+
+      // Step 3: Calculate and sum billing amounts to INR for each month
+      for (const month in clientData[clientId].monthlyProfit) {
+        if (billing[month] > 0) {
+          // Find how many clients the employee is working for in this financial year with non-zero billing
+          const clientsWithNonZeroBilling = await BillingSetup.count({
+            where: {
+              EmployeeID: employeeId,
+              Year: financialYear,
+              [`${month}`]: { [Op.gt]: 0 },
+            },
+          });
+
+          // Get the employee cost and average it across the number of clients
+          const employeeCost = await EmployeeCost.findOne({
+            where: {
+              EmployeeID: employeeId,
+              Year: financialYear,
+            },
+          });
+
+          if (!employeeCost) {
+            throw new Error(`No salary record found for employee ID ${employeeId}.`);
+          }
+
+          // Calculate the monthly profit after deducting the averaged salary
+          const adjustedSalary = employeeCost[month] / clientsWithNonZeroBilling;
+          const monthlyProfit = (billing[month] * exchangeRate.ExchangeRate) - adjustedSalary;
+
+          // Add the profit to the client's monthly profit, rounded to two decimal places
+          clientData[clientId].monthlyProfit[month] += parseFloat(monthlyProfit.toFixed(2));
+        }
+      }
+    }
+
+    // Log the structured client data
+    logger.info(`Client profitability data: ${JSON.stringify(clientData, null, 2)}`);
+
+    return clientData;
+  } catch (error) {
+    logger.error(`Error generating client profitability report: ${error.message}`);
+    throw new Error(`Error generating client profitability report: ${error.message}`);
+  }
+};
+
+
+module.exports = { getProfitabilityReport, getEmployeeProfitabilityReport, getClientProfitabilityReport};
