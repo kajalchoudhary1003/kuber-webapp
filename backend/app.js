@@ -10,6 +10,17 @@ const clientRoutes = require('./routes/clientRoutes');
 const clientEmployeeRoutes = require('./routes/clientEmployeeRoutes');
 const currencyRoutes = require('./routes/currencyRoutes');
 const currencyExchangeRateRoutes = require('./routes/currencyExchangeRateRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
+const employeeCostRoutes = require('./routes/employeeCostRoutes');
+const financialYearRoutes = require('./routes/financialYearRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
+const ledgerRoutes = require('./routes/ledgerRoutes');
+const levelRoutes = require('./routes/levelRoutes');
+const organisationRoutes = require('./routes/organisationRoutes');
+const paymentTrackerRoutes = require('./routes/paymentTrackerRoutes');
+const profitabilityRoutes = require('./routes/profitabilityRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+
 
 
 dotenv.config();
@@ -29,6 +40,18 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/client-employees', clientEmployeeRoutes);
 app.use('/api/currencies', currencyRoutes);
 app.use('/api/exchange-rates', currencyExchangeRateRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/employee-cost', employeeCostRoutes);
+app.use('/api/financial-years', financialYearRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/ledger', ledgerRoutes);
+app.use('/api/levels', levelRoutes);
+app.use('/api/organisations', organisationRoutes);
+app.use('/api', paymentTrackerRoutes);
+app.use('/api/profitability', profitabilityRoutes);
+app.use('/api/roles', roleRoutes); 
+
+
 
 
 module.exports = app;
