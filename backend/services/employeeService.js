@@ -120,7 +120,8 @@ const getEmployeeById = async (employeeId) => {
 
 const deleteEmployee = async (employeeId) => {
   try {
-    const employee = await Employee.findById(employeeId);
+    const employee = await Employee.findOne({ _id: employeeId }, 'Status');
+
     if (!employee) {
       throw new Error('Employee not found');
     }
@@ -137,21 +138,33 @@ const deleteEmployee = async (employeeId) => {
   }
 };
 
+
 const searchEmployees = async (query) => {
   try {
-    logger.info(`Search employees service called with query: ${query}`);
-    const employees = await Employee.find({
-      $or: [
-        { FirstName: { $regex: query, $options: 'i' } },
-        { LastName: { $regex: query, $options: 'i' } },
-      ],
-    }).lean();
+    if (!query || !query.trim()) {
+      logger.warn('Search query is empty');
+      return [];
+    }
+
+    logger.info(`Searching employees with query: "${query}"`);
+    
+    const employees = await Employee.find(
+      {
+        $or: [
+          { FirstName: new RegExp(query, 'i') },
+          { LastName: new RegExp(query, 'i') }
+        ]
+      },
+      'FirstName LastName EmpCode Email Status' // only return selected fields
+    ).lean();
+
     return employees;
   } catch (error) {
     logger.error(`Error searching employees: ${error.message}`);
     throw new Error(`Error searching employees: ${error.message}`);
   }
 };
+
 
 module.exports = {
   createEmployee,
