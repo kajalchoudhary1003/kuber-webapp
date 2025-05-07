@@ -20,5 +20,5 @@ const bankDetailSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const BankDetail = mongoose.model('BankDetail', bankDetailSchema);
-
+// gh
 module.exports = BankDetail;
