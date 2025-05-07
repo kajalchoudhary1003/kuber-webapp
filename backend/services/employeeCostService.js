@@ -1,17 +1,18 @@
 const EmployeeCost = require('../models/employeeCostModel');
 const Employee = require('../models/employeeModel');
+const mongoose = require('mongoose');
 
 const getEmployeeCostData = async (year) => {
   try {
     const costs = await EmployeeCost.find({ Year: year }).populate({
-      path: 'Employee',
+      path: 'EmployeeID', // Corrected field name 
       select: 'FirstName LastName',
-      options: { withDeleted: true } // if using mongoose-delete for soft deletes
+      options: { withDeleted: true } // Optional, if using mongoose-delete for soft deletes
     });
 
     return costs.map(cost => ({
       id: cost._id,
-      name: `${cost.Employee?.FirstName || ''} ${cost.Employee?.LastName || ''}`,
+      name: `${cost.EmployeeID?.FirstName || ''} ${cost.EmployeeID?.LastName || ''}`,
       Apr: cost.Apr,
       May: cost.May,
       Jun: cost.Jun,
@@ -31,21 +32,42 @@ const getEmployeeCostData = async (year) => {
 };
 
 const updateEmployeeCostData = async (id, month, amount) => {
-  try {
-    const employeeCost = await EmployeeCost.findById(id);
 
-    if (!employeeCost) {
+  const validMonths = [
+    'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+  ];
+
+  try {
+    // Check if the ID is valid
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error(`Invalid ObjectId: ${id}`);
+    }
+
+    if (!validMonths.includes(month)) {
+      throw new Error(`Invalid month: ${month}. Valid months are ${validMonths.join(', ')}`);
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) {
+      throw new Error(`Invalid amount: ${amount}. Please provide a valid number.`);
+    }
+
+    const updatedEmployeeCost = await EmployeeCost.findOneAndUpdate(
+      { _id: id },
+      { $set: { [month]: parsedAmount } }, 
+      { new: true, runValidators: true }    // `new: true` ensures we get the updated document back
+    );
+
+    if (!updatedEmployeeCost) {
       throw new Error(`EmployeeCost with id ${id} not found`);
     }
 
-    employeeCost[month] = parseFloat(amount);
-    await employeeCost.save();
-
-    return employeeCost;
+    return updatedEmployeeCost;
   } catch (error) {
     throw new Error(`Error updating employee cost data: ${error.message}`);
   }
 };
+
 
 module.exports = {
   getEmployeeCostData,
