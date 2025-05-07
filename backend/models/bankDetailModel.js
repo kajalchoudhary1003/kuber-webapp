@@ -21,4 +21,6 @@ const bankDetailSchema = new mongoose.Schema({
 
 const BankDetail = mongoose.model('BankDetail', bankDetailSchema);
 
+
+
 module.exports = BankDetail;
