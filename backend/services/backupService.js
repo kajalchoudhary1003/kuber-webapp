@@ -25,35 +25,35 @@ const backupDatabase = async () => {
     }
 
     const timestamp = getFormattedTimestamp();
-    const backupDir = path.join(__dirname, '..', 'backups');
-    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
+    const backupDataString = JSON.stringify(backupData, null, 2);
+    const fileName = `mongo_backup_${timestamp}.json`;
 
-    const filePath = path.join(backupDir, `mongo_backup_${timestamp}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2));
-
-    logger.info('MongoDB backup created successfully.');
-    return { success: true, message: 'MongoDB backup created successfully.', filePath };
+    return { 
+      success: true, 
+      message: 'MongoDB backup created successfully.',
+      fileName,
+      data: backupDataString
+    };
   } catch (err) {
     logger.error(`Error during MongoDB backup: ${err.message}`);
     return { success: false, message: `Error during MongoDB backup: ${err.message}` };
   }
 };
 
-const restoreDatabase = async () => {
+const restoreDatabase = async (backupData) => {
   try {
-    const latestBackupFile = getLatestBackupFile();
-    if (!latestBackupFile) {
-      return { success: false, message: 'No backup file found.' };
+    if (!backupData) {
+      return { success: false, message: 'No backup data provided.' };
     }
 
-    const backupJson = fs.readFileSync(latestBackupFile, 'utf-8');
-    const backupData = JSON.parse(backupJson);
+    const backupJson = typeof backupData === 'string' ? backupData : JSON.stringify(backupData);
+    const data = JSON.parse(backupJson);
 
-    for (const collectionName in backupData) {
+    for (const collectionName in data) {
       const collection = mongoose.connection.db.collection(collectionName);
       await collection.deleteMany({}); // Clear existing
-      if (backupData[collectionName].length > 0) {
-        await collection.insertMany(backupData[collectionName]);
+      if (data[collectionName].length > 0) {
+        await collection.insertMany(data[collectionName]);
       }
     }
 
