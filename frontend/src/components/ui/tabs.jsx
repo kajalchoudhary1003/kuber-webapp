@@ -61,7 +61,7 @@ function TabsTrigger({
 
       {...props} />)
 
-  );
+  
 }
 
 function TabsContent({
