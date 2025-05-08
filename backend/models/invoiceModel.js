@@ -22,11 +22,13 @@ const invoiceSchema = new mongoose.Schema({
     required: true,
   },
   OrganisationID: {
-    type: Number,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organisation',
     required: true,
   },
   BankDetailID: {
-    type: Number,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BankDetail',
     required: true,
   },
   Status: {
