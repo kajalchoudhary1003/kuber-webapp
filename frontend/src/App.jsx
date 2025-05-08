@@ -1,13 +1,16 @@
-import { BrowserRouter } from 'react-router-dom';
-import Layout from './Layout/Layout.jsx';
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
 
-const App = () => {
+
+function App() {
+  
+
   return (
-    <BrowserRouter>
-    
-      <Layout />
-    </BrowserRouter>
-  );
-};
+    <>
+     <div className='text-red-800'>hello</div>
+    </>
+  )
+}
 
-export default App;
+export default App
