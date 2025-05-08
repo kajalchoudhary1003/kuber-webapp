@@ -14,19 +14,19 @@ const createClient = async (data) => {
 
 const getAllClients = async () => {
   return await Client.find()
-    .populate('BillingCurrency', 'CurrencyName CurrencyCode');
+    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
 };
 
 const getAllActiveClients = async () => {
   const clientIds = await ClientEmployee.find({ Status: 'Active' }).distinct('ClientID');
   return await Client.find({ _id: { $in: clientIds } })
-    .populate('BillingCurrency', 'CurrencyName CurrencyCode');
+    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
 };
 
 const getAllInactiveClients = async () => {
   const clientIds = await ClientEmployee.find({ Status: 'Inactive' }).distinct('ClientID');
   return await Client.find({ _id: { $in: clientIds } })
-    .populate('BillingCurrency', 'CurrencyName CurrencyCode');
+    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
 };
 
 const updateClient = async (clientId, updates) => {
@@ -55,9 +55,9 @@ const deleteClient = async (clientId) => {
 
 const getClientById = async (clientId) => {
   const client = await Client.findById(clientId)
-    .populate('BillingCurrency', 'CurrencyName CurrencyCode')
-    .populate('Organisation', 'OrganisationName')
-    .populate('BankDetail', 'BankName');
+    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode')
+    .populate('OrganisationID', 'OrganisationName')
+    .populate('BankDetailID', 'BankName');
 
   if (!client) throw new Error('Client not found');
   return client;
