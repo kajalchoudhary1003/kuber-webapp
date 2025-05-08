@@ -16,7 +16,7 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 
 const recalculateBalanceFromStart = async (clientId, session) => {
   const ledgerEntries = await Ledger.find({ 
-    clientId: clientId 
+    client: clientId 
   }).sort({ date: 1 }).session(session);
   
   const paymentEntries = await PaymentTracker.find({ 
@@ -62,6 +62,9 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
   const firstDay = new Date(year, month - 1, 1);
   const lastDay = new Date(year, month, 0);
   
+  // Get organisation details from populated field
+  const organisation = client.OrganisationID;
+  
   return {
     pageMargins: [40, 100, 40, 24],
     header: {
@@ -77,7 +80,7 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
             {
               text: [
                 { text: 'Reg. No:', style: 'regNoLabel' },
-                { text: ` ${client.organisation.regNumber}`, style: 'regNoValue' }
+                { text: ` ${organisation.RegNumber}`, style: 'regNoValue' }
               ],
               alignment: 'right',
               color: '#0E1866',
@@ -105,14 +108,14 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
       {
         columns: [
           { text: 'Project:', style: 'subheaderKey', width: 160 },
-          { text: client.clientName, style: 'subheaderValue' }
+          { text: client.ClientName, style: 'subheaderValue' }
         ],
         margin: [0, 0, 0, 10]
       },
       {
         columns: [
           { text: 'Invoice number:', style: 'subheaderKey', width: 160 },
-          { text: `${client.organisation.abbreviation}${year}${month}_${client._id}`, style: 'subheaderValue' }
+          { text: `${organisation.Abbreviation}${year}${month}_${client._id}`, style: 'subheaderValue' }
         ],
         margin: [0, 0, 0, 10]
       },
@@ -135,8 +138,8 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
           { text: 'Invoiced to:', style: 'subheaderKey', width: 160 },
           {
             text: [
-              { text: client.clientName, bold: true },
-              { text: `, ${client.registeredAddress}`, bold: false }
+              { text: client.ClientName, bold: true },
+              { text: `, ${client.RegisteredAddress}`, bold: false }
             ],
             style: 'subheaderValue',
             margin: [0, 0, 0, 10]
@@ -157,7 +160,7 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
           body: [
             [
               { text: 'Services', style: 'tableHeaderService', fillColor: '#F7F7F7' },
-              { text: `Cost (${client.billingCurrency.currencyCode})`, style: 'tableHeaderCost', fillColor: '#F7F7F7' }
+              { text: `Cost (${client.BillingCurrencyID.currencyCode})`, style: 'tableHeaderCost', fillColor: '#F7F7F7' }
             ],
             ...employeeDetails.map(detail => [
               { text: detail.name, style: 'tableContentService' },
@@ -173,7 +176,7 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
             ],
             [
               { text: 'Total Due', style: 'tableContentService', fillColor: '#048DFF', color: '#ffffff' },
-              { text: `${client.billingCurrency.currencyCode} ${totalAmount}`, style: 'tableContentCost', fillColor: '#048DFF', color: '#ffffff' }
+              { text: `${client.BillingCurrencyID.currencyCode} ${totalAmount}`, style: 'tableContentCost', fillColor: '#048DFF', color: '#ffffff' }
             ]
           ]
         },
@@ -202,20 +205,20 @@ const generateDocDefinition = (client, year, month, employeeDetails, totalAmount
           body: [
             [
               { text: 'Payee name:', style: 'cardLabel', border: [false, false, false, false] },
-              { text: client.organisation.organisationName, style: 'cardValue', colSpan: 3, border: [false, false, false, false], margin: [0, 0, 0, 0] },
+              { text: client.OrganisationID.organisationName, style: 'cardValue', colSpan: 3, border: [false, false, false, false], margin: [0, 0, 0, 0] },
               {}, {}
             ],
             [
               { text: 'Swift code:', style: 'cardLabel', border: [false, false, false, false] },
-              { text: client.bankDetail.swiftCode, style: 'cardValue', border: [false, false, false, false] },
+              { text: client.BankDetailID.swiftCode, style: 'cardValue', border: [false, false, false, false] },
               { text: 'Account No:', style: 'cardLabel', border: [false, false, false, false] },
-              { text: client.bankDetail.accountNumber, style: 'cardValue', border: [false, false, false, false] },
+              { text: client.BankDetailID.accountNumber, style: 'cardValue', border: [false, false, false, false] },
             ],
             [
               { text: 'Bank:', style: 'cardLabel', border: [false, false, false, false] },
-              { text: client.bankDetail.bankName, style: 'cardValue', border: [false, false, false, false] },
+              { text: client.BankDetailID.bankName, style: 'cardValue', border: [false, false, false, false] },
               { text: 'IFSC code:', style: 'cardLabel', border: [false, false, false, false] },
-              { text: client.bankDetail.ifscCode, style: 'cardValue', border: [false, false, false, false] },
+              { text: client.BankDetailID.ifscCode, style: 'cardValue', border: [false, false, false, false] },
             ]
           ]
         },
@@ -346,15 +349,15 @@ const generateInvoices = async (clientIds, year, month) => {
       for (const clientId of clientIds) {
         // Delete existing invoices for this client/month/year
         await Invoice.deleteMany({
-          clientId: clientId,
-          year: month <= 3 ? year + 1 : year,
-          month: month
+          ClientID: clientId,
+          Year: month <= 3 ? year + 1 : year,
+          Month: month
         }).session(session);
         
         // Get billing details
         const billingDetails = await BillingDetail.find({
-          clientId: clientId,
-          year: year
+          ClientID: clientId,
+          Year: year
         }).populate('employee').session(session);
         
         let totalAmount = 0;
@@ -365,32 +368,48 @@ const generateInvoices = async (clientIds, year, month) => {
           }
           totalAmount += parseFloat(amount || 0);
           return {
-            name: `${billingDetail.employee.firstName} ${billingDetail.employee.lastName}`,
+            name: `${billingDetail.employee.FirstName} ${billingDetail.employee.LastName}`,
             amount,
           };
         }).filter(detail => detail !== null);
         
         // Get client with related data
         const client = await Client.findById(clientId)
-          .populate('organisation')
-          .populate('bankDetail')
-          .populate('billingCurrency')
+          .populate('OrganisationID')
+          .populate('BankDetailID')
+          .populate('BillingCurrencyID')
           .session(session);
+
+        if (!client) {
+          throw new Error(`Client not found with ID: ${clientId}`);
+        }
+
+        if (!client.BankDetailID) {
+          throw new Error(`Client ${client.ClientName} does not have bank details`);
+        }
+
+        if (!client.OrganisationID) {
+          throw new Error(`Client ${client.ClientName} does not have organisation details`);
+        }
+
+        if (!client.BillingCurrencyID) {
+          throw new Error(`Client ${client.ClientName} does not have billing currency details`);
+        }
         
         const invoiceYear = month <= 3 ? year + 1 : year;
         const lastDayOfMonth = new Date(invoiceYear, month, 0);
         
         // Create invoice
         const invoice = await Invoice.create([{
-          clientId: clientId,
-          month: month,
-          year: invoiceYear,
-          totalAmount: totalAmount,
-          organisationId: client.organisationId,
-          bankDetailId: client.bankDetailId,
-          status: 'Invoice generated',
-          generatedOn: new Date(),
-          invoicedOn: lastDayOfMonth,
+          ClientID: clientId,
+          Month: month,
+          Year: invoiceYear,
+          TotalAmount: totalAmount,
+          OrganisationID: client.OrganisationID._id,
+          BankDetailID: client.BankDetailID._id,
+          Status: 'Invoice generated',
+          GeneratedOn: new Date(),
+          InvoicedOn: lastDayOfMonth,
         }], { session });
         
         // Generate PDF
@@ -423,15 +442,15 @@ const generateInvoices = async (clientIds, year, month) => {
         });
         
         // Update invoice with PDF path
-        invoice[0].pdfPath = invoiceFilePath;
+        invoice[0].PdfPath = invoiceFilePath;
         await invoice[0].save({ session });
         
         // Create ledger entry
         const particulars = `Invoice Raised for ${monthNames[month - 1]}, ${invoiceYear}`;
         await Ledger.create([{
-          clientId: clientId,
-          date: invoice[0].generatedOn,
-          amount: invoice[0].totalAmount,
+          client: clientId,
+          date: invoice[0].GeneratedOn,
+          amount: invoice[0].TotalAmount,
           balance: 0,
           particulars: particulars,
         }], { session });
@@ -455,7 +474,7 @@ const getGeneratedInvoices = async (year, month) => {
       const invoiceYear = month <= 3 ? year + 1 : year;
       
       // Get all clients
-      const allClients = await Client.find().populate('billingCurrency');
+      const allClients = await Client.find().populate('BillingCurrencyID');
       
       // Get invoices for the specified month/year
       const invoices = await Invoice.find({
@@ -464,7 +483,7 @@ const getGeneratedInvoices = async (year, month) => {
       }).populate({
         path: 'clientId',
         populate: {
-          path: 'billingCurrency'
+          path: 'BillingCurrencyID'
         }
       });
       
@@ -473,7 +492,7 @@ const getGeneratedInvoices = async (year, month) => {
         clientId: invoice.clientId._id,
         clientName: invoice.clientId.clientName,
         totalAmount: invoice.totalAmount,
-        currencyCode: invoice.clientId.billingCurrency.currencyCode,
+        currencyCode: invoice.clientId.BillingCurrencyID.currencyCode,
         generatedOn: invoice.generatedOn,
         invoicedOn: invoice.invoicedOn,
         status: invoice.status,
@@ -491,7 +510,7 @@ const getGeneratedInvoices = async (year, month) => {
           clientId: client._id,
           clientName: client.clientName,
           totalAmount: 0,
-          currencyCode: client.billingCurrency?.currencyCode || 'N/A',
+          currencyCode: client.BillingCurrencyID?.currencyCode || 'N/A',
           generatedOn: null,
           invoicedOn: null,
           status: "Not generated yet",
@@ -610,9 +629,9 @@ const regenerateInvoice = async (invoiceId) => {
       
       // Regenerate the PDF
       const client = await Client.findById(invoice.clientId)
-        .populate('organisation')
-        .populate('bankDetail')
-        .populate('billingCurrency')
+        .populate('OrganisationID')
+        .populate('BankDetailID')
+        .populate('BillingCurrencyID')
         .session(session);
       
       const employeeDetails = billingDetails.map(billingDetail => {
@@ -621,7 +640,7 @@ const regenerateInvoice = async (invoiceId) => {
           return null;
         }
         return {
-          name: `${billingDetail.employee.firstName} ${billingDetail.employee.lastName}`,
+          name: `${billingDetail.employee.FirstName} ${billingDetail.employee.LastName}`,
           amount,
         };
       }).filter(detail => detail !== null);
