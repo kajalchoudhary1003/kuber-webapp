@@ -3,12 +3,12 @@ import { useState } from "react"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "../slidebar/slidebar"
 import { Header } from "../header/header"
+import PaymentTracker from "../Payments/PaymentsTracker"
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>
 const Admin = () => <div className="p-6 text-lg font-medium">Admin Page</div>
 const Invoice = () => <div className="p-6 text-lg font-medium">Invoice Generator Page</div>
-const Payment = () => <div className="p-6 text-lg font-medium">Payment Tracker Page</div>
 const Ledger = () => <div className="p-6 text-lg font-medium">Ledger & Reports Page</div>
 
 const Layout = () => {
@@ -26,7 +26,7 @@ const Layout = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/invoice" element={<Invoice />} />
-                <Route path="/payment" element={<Payment />} />
+                <Route path="/payment" element={<PaymentTracker />} />
                 <Route path="/ledger" element={<Ledger />} />
               </Routes>
             </div>
