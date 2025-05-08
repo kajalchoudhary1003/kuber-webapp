@@ -1,74 +1,96 @@
 // models/employeeCostModel.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database/sequelize');
 const Employee = require('./employeeModel');
 
-// Define the schema for EmployeeCost
-const employeeCostSchema = new mongoose.Schema({
+const EmployeeCost = sequelize.define('EmployeeCost', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   EmployeeID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Employee,
+      key: 'id',
+    },
   },
   Year: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   Apr: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   May: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Jun: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Jul: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Aug: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Sep: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Oct: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Nov: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Dec: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Jan: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Feb: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   Mar: {
-    type: mongoose.Decimal128,
-    default: 0,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
 }, {
   timestamps: true,
+  uniqueKeys: {
+    uniqueEmployeeCost: {
+      fields: ['EmployeeID', 'Year'],
+    },
+  },
 });
 
-// Create a unique index on EmployeeID and Year to prevent duplicates
-employeeCostSchema.index({ EmployeeID: 1, Year: 1 }, { unique: true });
-
-// Create the model from the schema
-const EmployeeCost = mongoose.model('EmployeeCost', employeeCostSchema);
+Employee.hasMany(EmployeeCost, { foreignKey: 'EmployeeID' });
+EmployeeCost.belongsTo(Employee, { foreignKey: 'EmployeeID' });
 
 module.exports = EmployeeCost;

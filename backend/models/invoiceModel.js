@@ -1,58 +1,62 @@
 // models/invoiceModel.js
-const mongoose = require('mongoose');
+
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database/sequelize');
 const Client = require('./clientModel');
 
-// Define the schema for Invoice
-const invoiceSchema = new mongoose.Schema({
+const Invoice = sequelize.define('Invoice', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   ClientID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Client,
+      key: 'id',
+    },
   },
   Year: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   Month: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   TotalAmount: {
-    type: mongoose.Decimal128,
-    required: true,
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: false,
   },
   OrganisationID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organisation',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   BankDetailID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'BankDetail',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   Status: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   PdfPath: {
-    type: String,
-    default: null, // default to null if not provided
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   InvoicedOn: {
-    type: Date,
-    default: null, // or set a default value if required
+    type: DataTypes.DATE,
+    allowNull: true, // or false, depending on your requirement
   },
   GeneratedOn: {
-    type: Date,
-    required: true,
-    default: Date.now, // default to current time if not provided
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
   },
-}, {
-  timestamps: true, // Enables automatic creation of createdAt and updatedAt fields
-});
+},);
 
-// Create the model from the schema
-const Invoice = mongoose.model('Invoice', invoiceSchema);
+Invoice.belongsTo(Client, { foreignKey: 'ClientID' });
 
 module.exports = Invoice;

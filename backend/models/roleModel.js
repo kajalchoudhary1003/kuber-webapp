@@ -1,18 +1,16 @@
-// models/roleModel.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database/sequelize'); // Adjust the path as necessary
 
-// Define the schema for Role
-const roleSchema = new mongoose.Schema({
-  RoleName: {
-    type: String,
-    required: true, // Ensure that RoleName is provided
-    maxlength: 50,  // Maximum length for RoleName
+const Role = sequelize.define('Role', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-}, {
-  timestamps: false, // We will handle timestamps manually if required
+  RoleName: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  }
 });
-
-// Create the model from the schema
-const Role = mongoose.model('Role', roleSchema);
 
 module.exports = Role;
