@@ -4,12 +4,13 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "../slidebar/slidebar"
 import { Header } from "../header/header"
 import PaymentTracker from "../Payments/PaymentsTracker"
+import Ledger from "../Ledger/Ledger" // Import the actual Ledger component
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>
 const Admin = () => <div className="p-6 text-lg font-medium">Admin Page</div>
 const Invoice = () => <div className="p-6 text-lg font-medium">Invoice Generator Page</div>
-const Ledger = () => <div className="p-6 text-lg font-medium">Ledger & Reports Page</div>
+// Remove the placeholder Ledger component since we're importing the real one
 
 const Layout = () => {
   const [collapsed, setCollapsed] = useState(false)
