@@ -1,32 +1,41 @@
-const mongoose = require('mongoose');
+// models/clientEmployeeModel.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database/sequelize');
 
-const clientEmployeeSchema = new mongoose.Schema({
+const ClientEmployee = sequelize.define('ClientEmployee', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   EmployeeID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   ClientID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   StartDate: {
-    type: Date,
-    required: true
+    type: DataTypes.DATE,
+    allowNull: false
   },
   EndDate: {
-    type: Date
+    type: DataTypes.DATE,
+    allowNull: true
   },
   MonthlyBilling: {
-    type: mongoose.Schema.Types.Decimal128,
-    required: true
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: false
   },
   Status: {
-    type: String,
-    enum: ['Active', 'Inactive'],
-    default: 'Active'
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'Active'
   }
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  paranoid: true  // Enables soft delete
+});
 
-module.exports = mongoose.model('ClientEmployee', clientEmployeeSchema);
+module.exports = ClientEmployee;

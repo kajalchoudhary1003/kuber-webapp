@@ -1,9 +1,25 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database/sequelize'); // Adjust the path as necessary
 
-const organisationSchema = new mongoose.Schema({
-  OrganisationName: { type: String, required: true, maxlength: 50 },
-  Abbreviation: { type: String, required: true, maxlength: 10 },
-  RegNumber: { type: String, required: true, maxlength: 30 },
+const Organisation = sequelize.define('Organisation', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  OrganisationName: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  Abbreviation: {
+    type: DataTypes.STRING(10),
+    allowNull: false
+  },
+  RegNumber: {
+    type: DataTypes.STRING(30),
+    allowNull: false
+  }
 });
 
-module.exports = mongoose.model('Organisation', organisationSchema);
+module.exports = Organisation;
+
