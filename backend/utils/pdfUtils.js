@@ -6,16 +6,24 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 
 const loadFonts = () => ({
   Roboto: {
-    normal: path.join(__dirname, './fonts/Roboto-Regular.ttf'),
-    bold: path.join(__dirname, './fonts/Roboto-Medium.ttf'),
-    italics: path.join(__dirname, '.utils/fonts/Roboto-Italic.ttf'),
-    bolditalics: path.join(__dirname, '.utils/fonts/Roboto-MediumItalic.ttf'),
+    normal: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italics: 'Helvetica-Oblique',
+    bolditalics: 'Helvetica-BoldOblique'
   }
 });
 
 const loadLogo = () => {
-  const logoPath = path.join(__dirname, './logo/CVT_logo.png');
-  return fs.readFileSync(logoPath, 'base64');
+  try {
+    const logoPath = path.join(__dirname, './logo/CVT_logo.png');
+    if (fs.existsSync(logoPath)) {
+      return fs.readFileSync(logoPath, 'base64');
+    }
+    return ''; // Return empty string if logo doesn't exist
+  } catch (error) {
+    console.warn('Logo file not found, using empty logo');
+    return '';
+  }
 };
 
 const createInvoicePdf = async (invoiceData, employeeDetails, invoiceFilePath) => {

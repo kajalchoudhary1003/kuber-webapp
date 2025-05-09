@@ -1,9 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const fileUpload = require('express-fileupload');
 
+// Import models and associations
+require('./models/associations');
+
+// Import routes
 const backupRoutes = require('./routes/backupRoutes');
-const bankDetailRoutes = require('./routes/bankDetailRoutes'); // Import the new routes for Bank Details
+const bankDetailRoutes = require('./routes/bankDetailRoutes');
 const billingRoutes = require('./routes/billingRoutes');
 const clientBalanceRoutes = require('./routes/clientBalanceRoutes');
 const clientRoutes = require('./routes/clientRoutes');
@@ -21,8 +26,6 @@ const paymentTrackerRoutes = require('./routes/paymentTrackerRoutes');
 const profitabilityRoutes = require('./routes/profitabilityRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 
-
-
 dotenv.config();
 
 const app = express();
@@ -30,10 +33,11 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
 
 // Routes
-app.use('/api/backup', backupRoutes); // 👈 This is your backup route
-app.use('/api/bank-details', bankDetailRoutes); // 👈 This is the new route for Bank Details
+app.use('/api/backup', backupRoutes);
+app.use('/api/bank-details', bankDetailRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/client-balance', clientBalanceRoutes);
 app.use('/api/clients', clientRoutes);
@@ -47,11 +51,14 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/ledger', ledgerRoutes);
 app.use('/api/levels', levelRoutes);
 app.use('/api/organisations', organisationRoutes);
-app.use('/api', paymentTrackerRoutes);
+app.use('/api/payment-tracker', paymentTrackerRoutes);
 app.use('/api/profitability', profitabilityRoutes);
-app.use('/api/roles', roleRoutes); 
+app.use('/api/roles', roleRoutes);
 
-
-
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
 
 module.exports = app;

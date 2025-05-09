@@ -1,4 +1,3 @@
-// models/index.js
 const Currency = require('./currencyModel');
 const Role = require('./roleModel');
 const Level = require('./levelModel');
@@ -8,6 +7,10 @@ const Client = require('./clientModel');
 const Employee = require('./employeeModel');
 const ClientEmployee = require('./clientEmployeeModel');
 const BankDetail = require('./bankDetailModel');
+const Invoice = require('./invoiceModel');
+const Ledger = require('./ledgerModel');
+const PaymentTracker = require('./paymentTrackerModel');
+const ReconciliationNote = require('./reconciliationModel');
 
 // Currency Exchange Rate Associations
 CurrencyExchangeRate.belongsTo(Currency, { as: 'CurrencyFrom', foreignKey: 'CurrencyFromID' });
@@ -17,7 +20,10 @@ CurrencyExchangeRate.belongsTo(Currency, { as: 'CurrencyTo', foreignKey: 'Curren
 Client.belongsTo(Currency, { as: 'BillingCurrency', foreignKey: 'BillingCurrencyID' });
 Client.belongsTo(Organisation, { as: 'Organisation', foreignKey: 'OrganisationID' });
 Client.belongsTo(BankDetail, { as: 'BankDetail', foreignKey: 'BankDetailID' });
-Client.hasMany(ClientEmployee, { foreignKey: 'ClientID' }); // Define the association from Client to ClientEmployee
+Client.hasMany(ClientEmployee, { foreignKey: 'ClientID' });
+Client.hasMany(Invoice, { foreignKey: 'ClientID' });
+Client.hasMany(Ledger, { foreignKey: 'ClientID' });
+Client.hasMany(PaymentTracker, { foreignKey: 'ClientID' });
 
 // Employee Associations
 Employee.belongsTo(Role, { foreignKey: 'RoleID' });
@@ -29,6 +35,15 @@ Employee.hasMany(ClientEmployee, { foreignKey: 'EmployeeID' });
 ClientEmployee.belongsTo(Employee, { foreignKey: 'EmployeeID' });
 ClientEmployee.belongsTo(Client, { foreignKey: 'ClientID' });
 
+// Invoice Associations
+Invoice.belongsTo(Client, { foreignKey: 'ClientID' });
+
+// Ledger Associations
+Ledger.belongsTo(Client, { foreignKey: 'ClientID' });
+
+// PaymentTracker Associations
+PaymentTracker.belongsTo(Client, { foreignKey: 'ClientID' });
+
 module.exports = {
   Currency,
   Role,
@@ -39,4 +54,8 @@ module.exports = {
   Employee,
   ClientEmployee,
   BankDetail,
-};
+  Invoice,
+  Ledger,
+  PaymentTracker,
+  ReconciliationNote,
+}; 

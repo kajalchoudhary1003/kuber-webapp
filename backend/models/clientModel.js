@@ -1,5 +1,6 @@
+// models/clientModel.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
 
 const Client = sequelize.define('Client', {
   id: {

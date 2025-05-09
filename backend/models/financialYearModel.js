@@ -1,5 +1,7 @@
+// models/financialYearModel.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
+
 
 const FinancialYear = sequelize.define('FinancialYear', {
   year: {

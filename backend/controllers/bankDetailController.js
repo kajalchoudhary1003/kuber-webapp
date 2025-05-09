@@ -1,59 +1,93 @@
-const bankDetailsService = require('../services/bankDetailService');
+const bankDetailService = require('../services/bankDetailService');
 const logger = require('../utils/logger');
 
-const createBankDetail = async (req, res) => {
-  try {
-    const bankDetailData = req.body; // Receive the bank detail data from request body
-    logger.info('Create bank detail service called');
-    const bankDetail = await bankDetailsService.createBankDetail(bankDetailData);
-    res.status(201).json(bankDetail);
-  } catch (error) {
-    logger.error(`Error creating bank detail: ${error.message}`);
-    res.status(500).json({ message: error.message });
+const bankDetailController = {
+  async getAllBankDetails(req, res) {
+    try {
+      const bankDetails = await bankDetailService.getAllBankDetails();
+      res.json(bankDetails);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getBankDetailById(req, res) {
+    try {
+      const bankDetail = await bankDetailService.getBankDetailById(req.params.id);
+      res.json(bankDetail);
+    } catch (error) {
+      if (error.message === 'Bank detail not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async createBankDetail(req, res) {
+    try {
+      const bankDetail = await bankDetailService.createBankDetail(req.body);
+      res.status(201).json(bankDetail);
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async updateBankDetail(req, res) {
+    try {
+      const bankDetail = await bankDetailService.updateBankDetail(req.params.id, req.body);
+      res.json(bankDetail);
+    } catch (error) {
+      if (error.message === 'Bank detail not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async deleteBankDetail(req, res) {
+    try {
+      const result = await bankDetailService.deleteBankDetail(req.params.id);
+      res.json(result);
+    } catch (error) {
+      if (error.message === 'Bank detail not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('active clients')) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async searchBankDetails(req, res) {
+    try {
+      const bankDetails = await bankDetailService.searchBankDetails(req.query.q);
+      res.json(bankDetails);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getBankDetailClients(req, res) {
+    try {
+      const clients = await bankDetailService.getBankDetailClients(req.params.id);
+      res.json(clients);
+    } catch (error) {
+      if (error.message === 'Bank detail not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
   }
 };
 
-const getAllBankDetails = async (req, res) => {
-  try {
-    logger.info('Get all bank details service called');
-    const bankDetails = await bankDetailsService.getAllBankDetails();
-    res.status(200).json(bankDetails);
-  } catch (error) {
-    logger.error(`Error fetching bank details: ${error.message}`);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const updateBankDetail = async (req, res) => {
-  const { bankDetailId } = req.params;
-  const updates = req.body;
-
-  try {
-    logger.info(`Update bank detail service called for bankDetailId: ${bankDetailId}`);
-    const updatedBankDetail = await bankDetailsService.updateBankDetail(bankDetailId, updates);
-    res.status(200).json(updatedBankDetail);
-  } catch (error) {
-    logger.error(`Error updating bank detail: ${error.message}`);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const deleteBankDetail = async (req, res) => {
-  const { bankDetailId } = req.params;
-
-  try {
-    logger.info(`Delete bank detail service called for bankDetailId: ${bankDetailId}`);
-    const result = await bankDetailsService.deleteBankDetail(bankDetailId);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error(`Error deleting bank detail: ${error.message}`);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = {
-  createBankDetail,
-  getAllBankDetails,
-  updateBankDetail,
-  deleteBankDetail,
-};
+module.exports = bankDetailController;

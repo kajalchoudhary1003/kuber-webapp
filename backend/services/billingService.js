@@ -1,7 +1,9 @@
 // services/billingService.js
+const { Op } = require('sequelize');
 const BillingDetail = require('../models/billingDetailModel');
-const Client = require('../models/clientModel');
+const ClientEmployee = require('../models/clientEmployeeModel');
 const Employee = require('../models/employeeModel');
+const Client = require('../models/clientModel');
 const Currency = require('../models/currencyModel');
 const logger = require('../utils/logger');
 
@@ -47,7 +49,7 @@ const getBillingData = async (clientId, year) => {
           include: [
             {
               model: Currency,
-              attributes: ['CurrencyCode'],
+              attributes: ['Code'],
               as: 'BillingCurrency',
             },
           ],
@@ -72,7 +74,7 @@ const getBillingData = async (clientId, year) => {
       Jan: detail.Jan,
       Feb: detail.Feb,
       Mar: detail.Mar,
-      currencyCode: detail.Client.BillingCurrency.CurrencyCode,
+      currencyCode: detail.Client.BillingCurrency.Code,
     }));
   } catch (error) {
     logger.error(`Error fetching billing data: ${error.message}`);
@@ -87,16 +89,18 @@ const updateBillingData = async (id, month, amount) => {
     if (!billingDetail) {
       throw new Error(`Billing detail with id ${id} not found`);
     }
-    billingDetail[month] = amount;
-    await billingDetail.save();
+    await billingDetail.update({ [month]: amount });
+    return billingDetail;
   } catch (error) {
     logger.error(`Error updating billing data: ${error.message}`);
     throw new Error(`Error updating billing data: ${error.message}`);
   }
 };
 
-module.exports = {
+const billingService = {
   getClientsForYear,
   getBillingData,
-  updateBillingData,
+  updateBillingData
 };
+
+module.exports = billingService;

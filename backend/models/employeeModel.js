@@ -1,6 +1,9 @@
-// models/employeeModel.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
+const Role = require('./roleModel');
+const Level = require('./levelModel');
+const Organisation = require('./organisationModel');
+const ClientEmployee = require('./clientEmployeeModel');
 
 const Employee = sequelize.define('Employee', {
   id: {
@@ -62,5 +65,11 @@ const Employee = sequelize.define('Employee', {
   timestamps: true,
   paranoid: true, // Enables soft delete
 });
+
+// Define associations
+Employee.belongsTo(Role, { foreignKey: 'RoleID' });
+Employee.belongsTo(Level, { foreignKey: 'LevelID' });
+Employee.belongsTo(Organisation, { foreignKey: 'OrganisationID' });
+Employee.hasMany(ClientEmployee, { foreignKey: 'EmployeeID' });
 
 module.exports = Employee;

@@ -1,56 +1,119 @@
 const clientEmployeeService = require('../services/clientEmployeeService');
 const logger = require('../utils/logger');
 
-exports.assignEmployeeToClient = async (req, res) => {
-  try {
-    const result = await clientEmployeeService.assignEmployeeToClient(req.body);
-    res.status(201).json(result);
-  } catch (error) {
-    logger.error(`Error assigning employee: ${error.message}`);
-    res.status(500).json({ error: error.message });
+const clientEmployeeController = {
+  async getAllClientEmployees(req, res) {
+    try {
+      const clientEmployees = await clientEmployeeService.getAllClientEmployees();
+      res.json(clientEmployees);
+    } catch (error) {
+      logger.error(`Error fetching client employees: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getClientEmployeeById(req, res) {
+    try {
+      const clientEmployee = await clientEmployeeService.getClientEmployeeById(req.params.id);
+      res.json(clientEmployee);
+    } catch (error) {
+      if (error.message === 'Client employee not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        logger.error(`Error fetching client employee: ${error.message}`);
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async createClientEmployee(req, res) {
+    try {
+      const clientEmployee = await clientEmployeeService.createClientEmployee(req.body);
+      res.status(201).json(clientEmployee);
+    } catch (error) {
+      logger.error(`Error creating client employee: ${error.message}`);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  async updateClientEmployee(req, res) {
+    try {
+      const clientEmployee = await clientEmployeeService.updateClientEmployee(req.params.id, req.body);
+      res.json(clientEmployee);
+    } catch (error) {
+      if (error.message === 'Client employee not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        logger.error(`Error updating client employee: ${error.message}`);
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async deleteClientEmployee(req, res) {
+    try {
+      const result = await clientEmployeeService.deleteClientEmployee(req.params.id);
+      res.json(result);
+    } catch (error) {
+      if (error.message === 'Client employee not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        logger.error(`Error deleting client employee: ${error.message}`);
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async searchClientEmployees(req, res) {
+    try {
+      const clientEmployees = await clientEmployeeService.searchClientEmployees(req.query.q);
+      res.json(clientEmployees);
+    } catch (error) {
+      logger.error(`Error searching client employees: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getClientEmployeesByClient(req, res) {
+    try {
+      const clientEmployees = await clientEmployeeService.getClientEmployeesByClient(req.params.clientId);
+      res.json(clientEmployees);
+    } catch (error) {
+      logger.error(`Error fetching client employees: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getClientEmployeesByEmployee(req, res) {
+    try {
+      const clientEmployees = await clientEmployeeService.getClientEmployeesByEmployee(req.params.employeeId);
+      res.json(clientEmployees);
+    } catch (error) {
+      logger.error(`Error fetching client employees: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getClientEmployeesByStatus(req, res) {
+    try {
+      const { status } = req.params;
+      const clientEmployees = await clientEmployeeService.getClientEmployeesByStatus(status);
+      res.json(clientEmployees);
+    } catch (error) {
+      logger.error(`Error fetching client employees by status: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getClientEmployeeSummary(req, res) {
+    try {
+      const summary = await clientEmployeeService.getClientEmployeeSummary();
+      res.json(summary);
+    } catch (error) {
+      logger.error(`Error fetching client employee summary: ${error.message}`);
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
-exports.getAllClientEmployees = async (req, res) => {
-  try {
-    const { clientId } = req.params;
-    const employees = await clientEmployeeService.getClientEmployees(clientId);
-    res.json(employees);
-  } catch (error) {
-    logger.error(`Error fetching client employees: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.getClientEmployeeById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const employee = await clientEmployeeService.getClientEmployeeById(id);
-    res.json(employee);
-  } catch (error) {
-    logger.error(`Error fetching employee: ${error.message}`);
-    res.status(404).json({ error: error.message });
-  }
-};
-
-exports.updateClientEmployee = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updated = await clientEmployeeService.updateClientEmployee(id, req.body);
-    res.json(updated);
-  } catch (error) {
-    logger.error(`Error updating employee: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.deleteClientEmployee = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await clientEmployeeService.deleteClientEmployee(id);
-    res.json(result);
-  } catch (error) {
-    logger.error(`Error deleting employee: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
+module.exports = clientEmployeeController;

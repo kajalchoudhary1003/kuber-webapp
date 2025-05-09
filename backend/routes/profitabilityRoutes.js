@@ -1,14 +1,11 @@
 const express = require('express');
-const router = express.Router();
 const profitabilityController = require('../controllers/profitabilityController');
 
-// Route to get the profitability report for a client
-router.get('/get-profitability-report', profitabilityController.getProfitabilityReport);
+const router = express.Router();
 
-// Route to get the employee profitability report
-router.get('/get-employee-profitability-report', profitabilityController.getEmployeeProfitabilityReport);
-
-// Route to get the client profitability report
-router.get('/get-client-profitability-report', profitabilityController.getClientProfitabilityReport);
+// Define routes
+router.get('/profitability/:clientId/:financialYear', profitabilityController.getProfitabilityReport);
+router.get('/employee-profitability/:financialYear', profitabilityController.getEmployeeProfitabilityReport);
+router.get('/client-profitability/:financialYear', profitabilityController.getClientProfitabilityReport);
 
 module.exports = router;

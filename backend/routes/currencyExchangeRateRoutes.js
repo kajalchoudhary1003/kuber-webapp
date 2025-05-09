@@ -2,16 +2,25 @@ const express = require('express');
 const router = express.Router();
 const currencyExchangeRateController = require('../controllers/currencyExchangeRateController');
 
-// Create
-router.post('/', currencyExchangeRateController.createCurrencyExchangeRate);
+// Get all exchange rates
+router.get('/', currencyExchangeRateController.getAllExchangeRates);
 
-// Read (Get all for a specific year)
-router.get('/:year', currencyExchangeRateController.getAllCurrencyExchangeRates);
+// Get exchange rate by ID
+router.get('/:id', currencyExchangeRateController.getExchangeRateById);
 
-// Update
-router.put('/:id', currencyExchangeRateController.updateCurrencyExchangeRate);
+// Create new exchange rate
+router.post('/', currencyExchangeRateController.createExchangeRate);
 
-// Delete
-router.delete('/:id', currencyExchangeRateController.deleteCurrencyExchangeRate);
+// Update exchange rate
+router.put('/:id', currencyExchangeRateController.updateExchangeRate);
+
+// Delete exchange rate
+router.delete('/:id', currencyExchangeRateController.deleteExchangeRate);
+
+// Search exchange rates
+router.get('/search', currencyExchangeRateController.searchExchangeRates);
+
+// Get exchange rate by currencies
+router.get('/rate', currencyExchangeRateController.getExchangeRateByCurrencies);
 
 module.exports = router;

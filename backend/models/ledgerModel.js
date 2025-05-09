@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
-const Client = require('./clientModel'); 
+const sequelize = require('../db/sequelize');
+const Client = require('./clientModel');
 
 const Ledger = sequelize.define('Ledger', {
   id: {
@@ -29,9 +29,10 @@ const Ledger = sequelize.define('Ledger', {
     allowNull: false,
   },
 }, {
-  timestamps: true, 
+  timestamps: true,
 });
 
+// Define associations
 Ledger.belongsTo(Client, { foreignKey: 'ClientID' });
 
 module.exports = Ledger;

@@ -1,8 +1,8 @@
 // models/billingDetailModel.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
-const Employee = require('./employeeModel');
+const sequelize = require('../db/sequelize');
 const Client = require('./clientModel');
+const Employee = require('./employeeModel');
 
 const BillingDetail = sequelize.define('BillingDetail', {
   id: {
@@ -92,11 +92,12 @@ const BillingDetail = sequelize.define('BillingDetail', {
   },
 }, {
   timestamps: true,
-  uniqueKeys: {
-    uniqueBilling: {
-      fields: ['EmployeeID', 'ClientID', 'Year'],
-    },
-  },
+  indexes: [
+    {
+      unique: true,
+      fields: ['EmployeeID', 'ClientID', 'Year']
+    }
+  ]
 });
 
 Employee.hasMany(BillingDetail, { foreignKey: 'EmployeeID' });

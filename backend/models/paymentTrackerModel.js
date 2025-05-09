@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
 const Client = require('./clientModel');
 
 const PaymentTracker = sequelize.define('PaymentTracker', {
@@ -31,7 +31,7 @@ const PaymentTracker = sequelize.define('PaymentTracker', {
 }, {
   timestamps: true,
 });
-
+// Define associations
 PaymentTracker.belongsTo(Client, { foreignKey: 'ClientID' });
 
 module.exports = PaymentTracker;

@@ -1,55 +1,93 @@
 const organisationService = require('../services/organisationService');
 const logger = require('../utils/logger');
 
-const createOrganisation = async (req, res) => {
-  try {
-    logger.info('Create organisation service called');
-    const organisation = await organisationService.createOrganisation(req.body);
-    res.status(201).json(organisation);
-  } catch (error) {
-    logger.error(`Error creating organisation: ${error.message}`);
-    res.status(500).json({ error: error.message });
+const organisationController = {
+  async getAllOrganisations(req, res) {
+    try {
+      const organisations = await organisationService.getAllOrganisations();
+      res.json(organisations);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getOrganisationById(req, res) {
+    try {
+      const organisation = await organisationService.getOrganisationById(req.params.id);
+      res.json(organisation);
+    } catch (error) {
+      if (error.message === 'Organisation not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async createOrganisation(req, res) {
+    try {
+      const organisation = await organisationService.createOrganisation(req.body);
+      res.status(201).json(organisation);
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async updateOrganisation(req, res) {
+    try {
+      const organisation = await organisationService.updateOrganisation(req.params.id, req.body);
+      res.json(organisation);
+    } catch (error) {
+      if (error.message === 'Organisation not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async deleteOrganisation(req, res) {
+    try {
+      const result = await organisationService.deleteOrganisation(req.params.id);
+      res.json(result);
+    } catch (error) {
+      if (error.message === 'Organisation not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('active clients')) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async searchOrganisations(req, res) {
+    try {
+      const organisations = await organisationService.searchOrganisations(req.query.q);
+      res.json(organisations);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getOrganisationClients(req, res) {
+    try {
+      const clients = await organisationService.getOrganisationClients(req.params.id);
+      res.json(clients);
+    } catch (error) {
+      if (error.message === 'Organisation not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
   }
 };
 
-const getAllOrganisations = async (req, res) => {
-  try {
-    logger.info('Get all organisations service called');
-    const organisations = await organisationService.getAllOrganisations();
-    res.status(200).json(organisations);
-  } catch (error) {
-    logger.error(`Error fetching organisations: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const updateOrganisation = async (req, res) => {
-  const { id } = req.params;
-  try {
-    logger.info(`Update organisation service called for id: ${id}`);
-    const updatedOrganisation = await organisationService.updateOrganisation(id, req.body);
-    res.status(200).json(updatedOrganisation);
-  } catch (error) {
-    logger.error(`Error updating organisation: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const deleteOrganisation = async (req, res) => {
-  const { id } = req.params;
-  try {
-    logger.info(`Delete organisation service called for id: ${id}`);
-    const result = await organisationService.deleteOrganisation(id);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error(`Error deleting organisation: ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-module.exports = {
-  createOrganisation,
-  getAllOrganisations,
-  updateOrganisation,
-  deleteOrganisation,
-};
+module.exports = organisationController;

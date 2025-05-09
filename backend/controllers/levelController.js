@@ -1,58 +1,101 @@
 const levelService = require('../services/levelService');
 const logger = require('../utils/logger');
 
-const createLevel = async (req, res) => {
-  try {
-    logger.info('Create level service called');
-    const level = await levelService.createLevel(req.body);
-    res.status(201).json(level);
-  } catch (error) {
-    logger.error(`Error creating level: ${error.message}`);
-    res.status(500).json({ error: 'Error creating level' });
+const levelController = {
+  async getAllLevels(req, res) {
+    try {
+      const levels = await levelService.getAllLevels();
+      res.json(levels);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getLevelById(req, res) {
+    try {
+      const level = await levelService.getLevelById(req.params.id);
+      res.json(level);
+    } catch (error) {
+      if (error.message === 'Level not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async createLevel(req, res) {
+    try {
+      const level = await levelService.createLevel(req.body);
+      res.status(201).json(level);
+    } catch (error) {
+      if (error.message === 'Level number already exists') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async updateLevel(req, res) {
+    try {
+      const level = await levelService.updateLevel(req.params.id, req.body);
+      res.json(level);
+    } catch (error) {
+      if (error.message === 'Level not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message === 'Level number already exists') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  },
+
+  async deleteLevel(req, res) {
+    try {
+      const result = await levelService.deleteLevel(req.params.id);
+      res.json(result);
+    } catch (error) {
+      if (error.message === 'Level not found') {
+        res.status(404).json({ error: error.message });
+      } else if (error.message === 'Cannot delete level as it is assigned to one or more employees') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+
+  async searchLevels(req, res) {
+    try {
+      const { query } = req.query;
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      const levels = await levelService.searchLevels(query);
+      res.json(levels);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async getLevelEmployees(req, res) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: 'Level ID is required' });
+      }
+      const employees = await levelService.getLevelEmployees(id);
+      res.json(employees);
+    } catch (error) {
+      if (error.message === 'Level not found') {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
   }
 };
 
-const getAllLevels = async (req, res) => {
-  try {
-    logger.info('Get all levels service called');
-    const levels = await levelService.getAllLevels();
-    res.status(200).json(levels);
-  } catch (error) {
-    logger.error(`Error fetching levels: ${error.message}`);
-    res.status(500).json({ error: 'Error fetching levels' });
-  }
-};
-
-const updateLevel = async (req, res) => {
-  const { levelId } = req.params;
-  const updates = req.body;
-
-  try {
-    logger.info(`Update level service called for levelId: ${levelId}`);
-    const updatedLevel = await levelService.updateLevel(levelId, updates);
-    res.status(200).json(updatedLevel);
-  } catch (error) {
-    logger.error(`Error updating level: ${error.message}`);
-    res.status(500).json({ error: 'Error updating level' });
-  }
-};
-
-const deleteLevel = async (req, res) => {
-  const { levelId } = req.params;
-
-  try {
-    logger.info(`Delete level service called for levelId: ${levelId}`);
-    const result = await levelService.deleteLevel(levelId);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error(`Error deleting level: ${error.message}`);
-    res.status(500).json({ error: 'Error deleting level' });
-  }
-};
-
-module.exports = {
-  createLevel,
-  getAllLevels,
-  updateLevel,
-  deleteLevel,
-};
+module.exports = levelController;

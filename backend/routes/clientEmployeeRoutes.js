@@ -2,19 +2,34 @@ const express = require('express');
 const router = express.Router();
 const clientEmployeeController = require('../controllers/clientEmployeeController');
 
-// Assign employee to client
-router.post('/assign', clientEmployeeController.assignEmployeeToClient);
+// Get all client employees
+router.get('/', clientEmployeeController.getAllClientEmployees);
 
-// Get all client employees for a client
-router.get('/:clientId/employees', clientEmployeeController.getAllClientEmployees);
+// Get client employee by ID
+router.get('/:id', clientEmployeeController.getClientEmployeeById);
 
-// Get one client employee by ID
-router.get('/employee/:id', clientEmployeeController.getClientEmployeeById);
+// Create new client employee
+router.post('/', clientEmployeeController.createClientEmployee);
 
-// Update a client employee
-router.put('/employee/:id', clientEmployeeController.updateClientEmployee);
+// Update client employee
+router.put('/:id', clientEmployeeController.updateClientEmployee);
 
-// Delete a client employee
-router.delete('/employee/:id', clientEmployeeController.deleteClientEmployee);
+// Delete client employee
+router.delete('/:id', clientEmployeeController.deleteClientEmployee);
+
+// Search client employees
+router.get('/search', clientEmployeeController.searchClientEmployees);
+
+// Get client employees by client
+router.get('/client/:clientId', clientEmployeeController.getClientEmployeesByClient);
+
+// Get client employees by employee
+router.get('/employee/:employeeId', clientEmployeeController.getClientEmployeesByEmployee);
+
+// Get client employees by status
+router.get('/status/:status', clientEmployeeController.getClientEmployeesByStatus);
+
+// Get client employee summary
+router.get('/summary', clientEmployeeController.getClientEmployeeSummary);
 
 module.exports = router;

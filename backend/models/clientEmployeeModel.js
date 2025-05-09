@@ -1,6 +1,5 @@
-// models/clientEmployeeModel.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
 
 const ClientEmployee = sequelize.define('ClientEmployee', {
   id: {

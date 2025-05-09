@@ -1,7 +1,6 @@
-// models/invoiceModel.js
-
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/sequelize');
+const sequelize = require('../db/sequelize');
+
 const Client = require('./clientModel');
 
 const Invoice = sequelize.define('Invoice', {
@@ -48,15 +47,19 @@ const Invoice = sequelize.define('Invoice', {
   },
   InvoicedOn: {
     type: DataTypes.DATE,
-    allowNull: true, // or false, depending on your requirement
+    allowNull: true,
   },
   GeneratedOn: {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
-},);
+}, {
+  timestamps: true,
+  paranoid: true
+});
 
+// Define associations
 Invoice.belongsTo(Client, { foreignKey: 'ClientID' });
 
 module.exports = Invoice;
