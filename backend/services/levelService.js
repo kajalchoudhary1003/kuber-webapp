@@ -6,7 +6,7 @@ const levelService = {
   async getAllLevels() {
     try {
       const levels = await Level.findAll({
-        order: [['LevelNumber', 'ASC']]
+        order: [['LevelName', 'ASC']]
       });
       return levels;
     } catch (error) {
@@ -14,27 +14,15 @@ const levelService = {
     }
   },
 
-  async getLevelById(id) {
-    try {
-      const level = await Level.findByPk(id);
-      if (!level) {
-        throw new Error('Level not found');
-      }
-      return level;
-    } catch (error) {
-      throw new Error('Error fetching level: ' + error.message);
-    }
-  },
-
   async createLevel(levelData) {
     try {
-      // Check for existing level number
+      // Check for existing level name
       const existingLevel = await Level.findOne({
-        where: { LevelNumber: levelData.LevelNumber }
+        where: { LevelName: levelData.LevelName }
       });
 
       if (existingLevel) {
-        throw new Error('Level number already exists');
+        throw new Error('Level name already exists');
       }
 
       const level = await Level.create(levelData);
@@ -51,17 +39,17 @@ const levelService = {
         throw new Error('Level not found');
       }
 
-      // Check for duplicate level number if it's being changed
-      if (levelData.LevelNumber && levelData.LevelNumber !== level.LevelNumber) {
+      // Check for duplicate level name if it's being changed
+      if (levelData.LevelName && levelData.LevelName !== level.LevelName) {
         const existingLevel = await Level.findOne({
           where: {
-            LevelNumber: levelData.LevelNumber,
+            LevelName: levelData.LevelName,
             id: { [Op.ne]: id }
           }
         });
 
         if (existingLevel) {
-          throw new Error('Level number already exists');
+          throw new Error('Level name already exists');
         }
       }
 
@@ -94,37 +82,6 @@ const levelService = {
       throw new Error('Error deleting level: ' + error.message);
     }
   },
+}
 
-  async searchLevels(query) {
-    try {
-      const levels = await Level.findAll({
-        where: {
-          [Op.or]: [
-            { LevelName: { [Op.like]: `%${query}%` } },
-            { Description: { [Op.like]: `%${query}%` } }
-          ]
-        },
-        order: [['LevelNumber', 'ASC']]
-      });
-      return levels;
-    } catch (error) {
-      throw new Error('Error searching levels: ' + error.message);
-    }
-  },
-
-  async getLevelEmployees(id) {
-    try {
-      const level = await Level.findByPk(id, {
-        include: [{ model: Employee, as: 'Employees' }]
-      });
-      if (!level) {
-        throw new Error('Level not found');
-      }
-      return level.Employees;
-    } catch (error) {
-      throw new Error('Error fetching level employees: ' + error.message);
-    }
-  }
-};
-
-module.exports = levelService;
+module.exports = levelService
