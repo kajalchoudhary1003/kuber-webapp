@@ -52,7 +52,7 @@ const ClientMaster = () => {
       setFilteredClients(fetchedClients);
     } catch (error) {
       console.error('Error fetching clients:', error);
-      alert('Error fetching clients'); // Replaced toast with an alert for simplicity
+      alert('Error fetching clients');
     }
   };
 
@@ -79,15 +79,15 @@ const ClientMaster = () => {
       try {
         await fetchClients();
         if (selectedClient) {
-          alert('Client updated successfully'); // Replaced toast with an alert
+          alert('Client updated successfully');
         } else {
-          alert('Client created successfully'); // Replaced toast with an alert
+          alert('Client created successfully');
         }
       } catch (error) {
         if (error.message.includes('Client with the same name already exists')) {
-          alert('Client with the same name already exists'); // Replaced toast with an alert
+          alert('Client with the same name already exists');
         } else {
-          alert('Error fetching clients after update'); // Replaced toast with an alert
+          alert('Error fetching clients after update');
         }
       }
     }
@@ -101,10 +101,10 @@ const ClientMaster = () => {
   const handleDeleteClient = async (clientId) => {
     if (window.confirm('Are you sure you want to delete this client? This will also delete all associated resources.')) {
       try {
-        alert('Client and associated resources deleted successfully'); // Replaced toast with an alert
+        alert('Client and associated resources deleted successfully');
         fetchClients();
       } catch (error) {
-        alert('An error occurred while deleting the client.'); // Replaced toast with an alert
+        alert('An error occurred while deleting the client.');
       }
     }
   };
@@ -126,7 +126,7 @@ const ClientMaster = () => {
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-sm"
               />
             </div>
-            <Button className="bg-blue-500 text-white  cursor-pointer hover:bg-blue-500/90 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
+            <Button className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
           </div>
         </div>
 
