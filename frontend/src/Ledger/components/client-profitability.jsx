@@ -45,11 +45,11 @@ export default function ClientProfitability() {
               </Select>
 
               <Button 
-                className="bg-blue-500 hover:bg-blue-600"
+                className="bg-blue-500 hover:bg-blue-500/90 text-white cursor-pointer rounded-full"
                 disabled={!selectedClient}
                 onClick={handleShowReport}
               >
-                SHOW PROFITABILITY REPORT
+                Show Profitability Report
               </Button>
             </div>
           </div>
