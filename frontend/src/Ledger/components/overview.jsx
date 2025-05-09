@@ -64,7 +64,7 @@ export default function Overview() {
                 </SelectContent>
               </Select>
 
-              <Button className="bg-blue-500 cursor-pointer hover:bg-blue-600">SHOW PROFITABILITY REPORT</Button>
+              <Button className="bg-blue-500 cursor-pointer hover:bg-blue-500/90 text-white rounded-full">Show Profitability Report</Button>
             </div>
           </div>
         </CardContent>

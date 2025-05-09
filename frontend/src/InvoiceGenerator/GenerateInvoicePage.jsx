@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,14 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ChevronDown } from 'lucide-react';
-import { useYear } from '../contexts/YearContexts';
+
+// Create a local context if the global one isn't available
+const YearContext = createContext();
+const useYear = () => {
+  const context = useContext(YearContext);
+  // Return a default value if context is not available
+  return context || { selectedYear: null, setSelectedYear: () => {} };
+};
 
 const fiscalMonths = [
   { label: 'April', value: 4 },
@@ -39,7 +46,19 @@ const GenerateInvoicePage = () => {
   const [generatedInvoices, setGeneratedInvoices] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [allSelected, setAllSelected] = useState(false);
+  
+  // Use the context with fallback
   const { selectedYear, setSelectedYear } = useYear();
+  // Add local state as fallback
+  const [localSelectedYear, setLocalSelectedYear] = useState(null);
+  
+  // Use either the context value or the local state
+  const effectiveYear = selectedYear || localSelectedYear;
+  const setEffectiveYear = (year) => {
+    setSelectedYear(year);
+    setLocalSelectedYear(year);
+  };
+  
   const [financialYears, setFinancialYears] = useState([]);
   const [showMoreAvailable, setShowMoreAvailable] = useState(true);
   const [page, setPage] = useState(1);
@@ -58,7 +77,7 @@ const GenerateInvoicePage = () => {
         });
 
         if (financialYears.length > 0 && page === 1) {
-          setSelectedYear(financialYears[0].year);
+          setEffectiveYear(financialYears[0].year);
         }
       } catch (error) {
         console.error('Error fetching financial years:', error);
@@ -66,10 +85,10 @@ const GenerateInvoicePage = () => {
     };
 
     fetchData();
-  }, [page, setSelectedYear]);
+  }, [page]);
 
   const handleYearChange = (year) => {
-    setSelectedYear(year);
+    setEffectiveYear(year);
   };
 
   const handleShowMoreYears = () => {
@@ -84,7 +103,7 @@ const GenerateInvoicePage = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const fetchedClients = await window.electron.ipcRenderer.invoke('get-clients-for-year', selectedYear);
+        const fetchedClients = await window.electron.ipcRenderer.invoke('get-clients-for-year', effectiveYear);
         const clientsData = fetchedClients.map((client) => client.dataValues);
         setClients(clientsData);
       } catch (error) {
@@ -92,14 +111,14 @@ const GenerateInvoicePage = () => {
       }
     };
 
-    if (selectedYear) {
+    if (effectiveYear) {
       fetchClients();
     }
-  }, [selectedYear]);
+  }, [effectiveYear]);
 
   const fetchGeneratedInvoices = async () => {
     try {
-      const invoices = await window.electron.ipcRenderer.invoke('get-generated-invoices', selectedYear, selectedMonth);
+      const invoices = await window.electron.ipcRenderer.invoke('get-generated-invoices', effectiveYear, selectedMonth);
       const formattedInvoices = invoices.map((invoice) => ({
         ...invoice,
         generatedOn: new Date(invoice.generatedOn),
@@ -112,9 +131,15 @@ const GenerateInvoicePage = () => {
   };
 
   useEffect(() => {
-    fetchGeneratedInvoices();
-  }, [selectedYear, selectedMonth]);
+    if (effectiveYear) {
+      fetchGeneratedInvoices();
+    }
+  }, [effectiveYear, selectedMonth]);
 
+  // Rest of your component code remains the same...
+  
+  // Make sure to use effectiveYear instead of selectedYear in the rest of your code
+  
   const handleSelectAll = (checked) => {
     setAllSelected(checked);
     if (checked) {
@@ -146,7 +171,7 @@ const GenerateInvoicePage = () => {
     });
 
     try {
-      await window.electron.ipcRenderer.invoke('generate-invoices', clientIdsToGenerate, selectedYear, selectedMonth);
+      await window.electron.ipcRenderer.invoke('generate-invoices', clientIdsToGenerate, effectiveYear, selectedMonth);
       setSelectedRows([]);
       fetchGeneratedInvoices();
     } catch (error) {
@@ -253,7 +278,7 @@ const GenerateInvoicePage = () => {
       <Card className="w-full rounded-4xl shadow-sm bg-white border-white h-28">
         <CardHeader className="flex flex-row items-center justify-between px-7 py-7">
           <h2 className="text-2xl font-normal text-black">
-            FY: {selectedYear ? formatYear(selectedYear) : 'Select Year'}
+            FY: {effectiveYear ? formatYear(effectiveYear) : 'Select Year'}
           </h2>
           <div className="flex borderitems-center gap-3">
             <Select
@@ -277,7 +302,7 @@ const GenerateInvoicePage = () => {
                   variant="outline"
                   className="flex items-center justify-between w-40 rounded-full border-gray-300 text-black hover:border-blue-500"
                 >
-                  {selectedYear ? formatYear(selectedYear) : 'Select Year'}
+                  {effectiveYear ? formatYear(effectiveYear) : 'Select Year'}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -301,6 +326,7 @@ const GenerateInvoicePage = () => {
         </CardHeader>
       </Card>
 
+      {/* Rest of your component JSX remains the same */}
       <Card className="w-full bg-white rounded-3xl shadow-sm">
         <CardContent className="p-7">
           <div className="flex justify-between items-center mb-5">
@@ -344,76 +370,88 @@ const GenerateInvoicePage = () => {
                 onClick={handleGenerateInvoice}
                 disabled={selectedRows.length === 0}
                 className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-              >
-                Generate Invoice(s)
-              </Button>
-            )}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-3 text-center">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={handleSelectAll}
-                      indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
-                    />
-                  </th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Total Billing Amount</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Generated On</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Month & Year</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Status</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mergedInvoices.map((invoice, index) => (
-                  <tr key={`${invoice.id || invoice.clientId}-${index}`} className="border-b border-gray-200">
-                    <td className="p-3 text-center">
+                >
+                  Generate Invoice(s)
+                </Button>
+              )}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-3 text-center">
                       <Checkbox
-                        checked={selectedRows.includes(invoice.id || invoice.clientId)}
-                        onCheckedChange={(checked) => handleRowSelect(checked, invoice.id || invoice.clientId)}
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                        indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
                       />
-                    </td>
-                    <td className="p-3 text-center">{invoice.clientName}</td>
-                    <td className="p-3 text-center">
-                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString()}` : 'N/A'}
-                    </td>
-                    <td className="p-3 text-center">
-                      {invoice.generatedOn && invoice.generatedOn.getTime() !== 0
-                        ? new Date(invoice.generatedOn).toLocaleDateString()
-                        : 'N/A'}
-                    </td>
-                    <td className="p-3 text-center">
-                      {invoice.invoicedOn && invoice.invoicedOn.getTime() !== 0
-                        ? new Date(invoice.invoicedOn).toLocaleDateString()
-                        : 'N/A'}
-                    </td>
-                    <td className="p-3 text-center">{invoice.status}</td>
-                    <td className="p-3 text-center">
-                      {invoice.pdfPath ? (
-                        <Button
-                          variant="outline"
-                          className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
-                          onClick={() => handleViewInvoice(invoice.pdfPath)}
-                        >
-                          View
-                        </Button>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
+                    </th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Total Billing Amount</th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Generated On</th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Month & Year</th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Status</th>
+                    <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default GenerateInvoicePage;
+                </thead>
+                <tbody>
+                  {mergedInvoices.map((invoice, index) => (
+                    <tr key={`${invoice.id || invoice.clientId}-${index}`} className="border-b border-gray-200">
+                      <td className="p-3 text-center">
+                        <Checkbox
+                          checked={selectedRows.includes(invoice.id || invoice.clientId)}
+                          onCheckedChange={(checked) => handleRowSelect(checked, invoice.id || invoice.clientId)}
+                        />
+                      </td>
+                      <td className="p-3 text-center">{invoice.clientName}</td>
+                      <td className="p-3 text-center">
+                        {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString()}` : 'N/A'}
+                      </td>
+                      <td className="p-3 text-center">
+                        {invoice.generatedOn && invoice.generatedOn.getTime() !== 0
+                          ? new Date(invoice.generatedOn).toLocaleDateString()
+                          : 'N/A'}
+                      </td>
+                      <td className="p-3 text-center">
+                        {invoice.invoicedOn && invoice.invoicedOn.getTime() !== 0
+                          ? new Date(invoice.invoicedOn).toLocaleDateString()
+                          : 'N/A'}
+                      </td>
+                      <td className="p-3 text-center">{invoice.status}</td>
+                      <td className="p-3 text-center">
+                        {invoice.pdfPath ? (
+                          <Button
+                            variant="outline"
+                            className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                            onClick={() => handleViewInvoice(invoice.pdfPath)}
+                          >
+                            View
+                          </Button>
+                        ) : (
+                          'N/A'
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+  
+  // Create a wrapper component that provides the YearContext
+  const GenerateInvoicePageWithYearContext = () => {
+    const [selectedYear, setSelectedYear] = useState(null);
+  
+    return (
+      <YearContext.Provider value={{ selectedYear, setSelectedYear }}>
+        <GenerateInvoicePage />
+      </YearContext.Provider>
+    );
+  };
+  
+  export default GenerateInvoicePageWithYearContext;
+  
