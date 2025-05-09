@@ -126,7 +126,7 @@ const ClientMaster = () => {
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-sm"
               />
             </div>
-            <Button className="bg-blue-500 text-white  cursor-pointer hover:bg-blue-500/85 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
+            <Button className="bg-blue-500 text-white  cursor-pointer hover:bg-blue-500/90 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
           </div>
         </div>
 

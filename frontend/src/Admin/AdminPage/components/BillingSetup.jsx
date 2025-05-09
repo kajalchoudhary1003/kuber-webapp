@@ -148,12 +148,12 @@ const BillingSetup = () => {
         <h2 className="text-xl font-semibold text-primary-federal-blue m-0">Billing Setup</h2>
         <div className="flex gap-2">
           <Select onValueChange={setSelectedClient} value={selectedClient}>
-            <SelectTrigger className="min-w-[180px]">
+            <SelectTrigger className=" cursor-pointer min-w-[180px]">
               <SelectValue placeholder="Select Client" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
+                <SelectItem className="cursor-pointer" key={client.id} value={client.id}>
                   {client.ClientName} ({client.Abbreviation})
                 </SelectItem>
               ))}
@@ -161,11 +161,11 @@ const BillingSetup = () => {
           </Select>
 
           <Select value={effectiveYear} disabled>
-            <SelectTrigger className="min-w-[120px]">
+            <SelectTrigger className=" cursor-pointer min-w-[120px]">
               <SelectValue placeholder={effectiveYear || 'Select Year'} />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={effectiveYear}>{effectiveYear}</SelectItem>
+            <SelectContent className="bg-white">
+              <SelectItem className="cursor-pointer" value={effectiveYear}>{effectiveYear}</SelectItem>
             </SelectContent>
           </Select>
         </div>

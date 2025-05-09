@@ -113,7 +113,7 @@ const EmployeeMaster = () => {
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
-            <Button onClick={() => handleOpenModal()} className="whitespace-nowrap text-base px-6 py-2">
+            <Button onClick={() => handleOpenModal()} className="whitespace-nowrap bg-blue-500 rounded-full text-white hover:bg-blue-500/90 cursor-pointer px-6 py-2">
               Create Employee
             </Button>
           </div>
