@@ -77,7 +77,7 @@ const invoiceService = {
           {
             model: Currency,
             as: 'Currency',
-            attributes: ['Name', 'Code', 'Symbol']
+            attributes: ['CurrencyName', 'CurrencyCode']
           }
         ]
       });
@@ -98,7 +98,7 @@ const invoiceService = {
           {
             model: Currency,
             as: 'Currency',
-            attributes: ['Name', 'Code', 'Symbol']
+            attributes: ['CurrencyName', 'CurrencyCode']
           }
         ]
       });
