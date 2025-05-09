@@ -81,7 +81,7 @@ const levelService = {
     } catch (error) {
       throw new Error('Error deleting level: ' + error.message);
     }
-  },
-}
+  }
+};
 
-module.exports = levelService
+module.exports = levelService;

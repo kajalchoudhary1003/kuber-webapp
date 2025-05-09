@@ -31,6 +31,7 @@ const addFinancialYear = async () => {
   const transaction = await sequelize.transaction();
 
   try {
+    // Get the new financial year
     const financialYears = await getFinancialYears({ page: 1, limit: 100 });
     let newFinancialYear;
 
@@ -44,91 +45,89 @@ const addFinancialYear = async () => {
       logger.info(`Last year: ${lastYear}, new year: ${newFinancialYear}`);
     }
 
+    // Create the new financial year
     const financialYear = await FinancialYear.create({ year: newFinancialYear }, { transaction });
-
     logger.info(`New financial year created: ${newFinancialYear}`);
 
-    // Billing Details
+    // Get all active client employees
     const activeClientEmployees = await ClientEmployee.findAll({
-      where: { Status: 'Active' },
+      where: { 
+        Status: 'Active',
+        EndDate: {
+          [Op.or]: [null, { [Op.gt]: new Date() }]
+        }
+      },
+      include: [{
+        model: Employee,
+        where: { Status: 'Active' },
+        required: true
+      }]
     });
 
     logger.info(`Active client employees found: ${activeClientEmployees.length}`);
 
-    const billingDetails = activeClientEmployees.flatMap(clientEmployee => {
-      if (clientEmployee.Status !== 'Active') return [];
-
-      return [{
-        EmployeeID: clientEmployee.EmployeeID,
-        ClientID: clientEmployee.ClientID,
-        Year: parseInt(newFinancialYear, 10),
-        Apr: clientEmployee.MonthlyBilling,
-        May: clientEmployee.MonthlyBilling,
-        Jun: clientEmployee.MonthlyBilling,
-        Jul: clientEmployee.MonthlyBilling,
-        Aug: clientEmployee.MonthlyBilling,
-        Sep: clientEmployee.MonthlyBilling,
-        Oct: clientEmployee.MonthlyBilling,
-        Nov: clientEmployee.MonthlyBilling,
-        Dec: clientEmployee.MonthlyBilling,
-        Jan: clientEmployee.MonthlyBilling,
-        Feb: clientEmployee.MonthlyBilling,
-        Mar: clientEmployee.MonthlyBilling,
-      }];
-    });
-
-    logger.info(`Billing details to be added: ${billingDetails.length}`);
+    // Create billing details for active client employees
+    const billingDetails = activeClientEmployees.map(clientEmployee => ({
+      EmployeeID: clientEmployee.EmployeeID,
+      ClientID: clientEmployee.ClientID,
+      Year: parseInt(newFinancialYear, 10),
+      Apr: clientEmployee.MonthlyBilling,
+      May: clientEmployee.MonthlyBilling,
+      Jun: clientEmployee.MonthlyBilling,
+      Jul: clientEmployee.MonthlyBilling,
+      Aug: clientEmployee.MonthlyBilling,
+      Sep: clientEmployee.MonthlyBilling,
+      Oct: clientEmployee.MonthlyBilling,
+      Nov: clientEmployee.MonthlyBilling,
+      Dec: clientEmployee.MonthlyBilling,
+      Jan: clientEmployee.MonthlyBilling,
+      Feb: clientEmployee.MonthlyBilling,
+      Mar: clientEmployee.MonthlyBilling,
+    }));
 
     if (billingDetails.length > 0) {
-      await BillingDetail.bulkCreate(billingDetails, { transaction });
+      await BillingDetail.bulkCreate(billingDetails, { 
+        transaction,
+        ignoreDuplicates: true // This will skip any duplicates instead of failing
+      });
+      logger.info(`Created billing details for ${billingDetails.length} client employees`);
     }
 
-    // Employee Costs
+    // Get all active employees
     const activeEmployees = await Employee.findAll({
-      where: { Status: 'Active' },
+      where: { Status: 'Active' }
     });
 
     logger.info(`Active employees found: ${activeEmployees.length}`);
 
-    const employeeCosts = [];
-
-    for (const employee of activeEmployees) {
-      const existingCost = await EmployeeCost.findOne({
-        where: {
-          EmployeeID: employee.id,
-          Year: newFinancialYear,
-        },
-        transaction,
-      });
-
-      if (!existingCost) {
-        employeeCosts.push({
-          EmployeeID: employee.id,
-          Year: parseInt(newFinancialYear, 10),
-          Apr: employee.CTCMonthly,
-          May: employee.CTCMonthly,
-          Jun: employee.CTCMonthly,
-          Jul: employee.CTCMonthly,
-          Aug: employee.CTCMonthly,
-          Sep: employee.CTCMonthly,
-          Oct: employee.CTCMonthly,
-          Nov: employee.CTCMonthly,
-          Dec: employee.CTCMonthly,
-          Jan: employee.CTCMonthly,
-          Feb: employee.CTCMonthly,
-          Mar: employee.CTCMonthly,
-        });
-      }
-    }
-
-    logger.info(`Employee costs to be added: ${employeeCosts.length}`);
+    // Create employee costs for active employees
+    const employeeCosts = activeEmployees.map(employee => ({
+      EmployeeID: employee.id,
+      Year: parseInt(newFinancialYear, 10),
+      Apr: employee.CTCMonthly,
+      May: employee.CTCMonthly,
+      Jun: employee.CTCMonthly,
+      Jul: employee.CTCMonthly,
+      Aug: employee.CTCMonthly,
+      Sep: employee.CTCMonthly,
+      Oct: employee.CTCMonthly,
+      Nov: employee.CTCMonthly,
+      Dec: employee.CTCMonthly,
+      Jan: employee.CTCMonthly,
+      Feb: employee.CTCMonthly,
+      Mar: employee.CTCMonthly,
+    }));
 
     if (employeeCosts.length > 0) {
-      await EmployeeCost.bulkCreate(employeeCosts, { transaction });
+      await EmployeeCost.bulkCreate(employeeCosts, { 
+        transaction,
+        ignoreDuplicates: true // This will skip any duplicates instead of failing
+      });
+      logger.info(`Created employee costs for ${employeeCosts.length} employees`);
     }
 
     await transaction.commit();
-    logger.info('Transaction committed');
+    logger.info('Transaction committed successfully');
 
     return financialYear;
 
