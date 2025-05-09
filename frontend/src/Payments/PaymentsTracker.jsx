@@ -153,7 +153,7 @@ export default function PaymentTracker() {
               <Input id="remark" placeholder="Remark" value={remark} onChange={(e) => setRemark(e.target.value)} />
             </div>
 
-            <Button className="bg-blue-500 hover:bg-blue-600 h-10 cursor-pointer" onClick={handleRecordPayment}>
+            <Button className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer" onClick={handleRecordPayment}>
               Record Payment
             </Button>
           </div>

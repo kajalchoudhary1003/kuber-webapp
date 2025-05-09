@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
-import RoleModal from '../../Modal/EmployeeModal/RoleModal';
-import OrganisationModal from '../../Modal/EmployeeModal/OrganisationModal';
-import LevelModal from '../../Modal/EmployeeModal/LevelModal';
-import CurrencyExchangeModal from '../../Modal/EmployeeModal/CurrencyExchangeModal';
-import CurrencyModal from '../../Modal/EmployeeModal/CurrencyModal';
-import BankDetailModal from '../../Modal/EmployeeModal/BankDetailModal';
-import ConfirmationModal from '../../Modal/EmployeeModal/ConfirmationModal';
+import RoleModal from '../../../Modal/EmployeeModal/RoleModal';
+import OrganisationModal from '../../../Modal/EmployeeModal/OrganisationModal';
+import LevelModal from '../../../Modal/EmployeeModal/LevelModal';
+import CurrencyExchangeModal from '../../../Modal/EmployeeModal/CurrencyExchangeModal';
+import CurrencyModal from '../../../Modal/EmployeeModal/CurrencyModal';
+import BankDetailModal from '../../../Modal/EmployeeModal/BankDetailModal';
+import ConfirmationModal from '../../../Modal/EmployeeModal/ConfirmationModal';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useYear } from '../../contexts/YearContexts';
+import { useYear } from '../../../contexts/YearContexts';
+
+
+// Fallback for useYear if context is not available
+const useYearWithFallback = () => {
+  try {
+    return useYear() || { selectedYear: null, setSelectedYear: () => {} };
+  } catch (e) {
+    return { selectedYear: null, setSelectedYear: () => {} };
+  }
+};
+
+
 
 // Dummy data to simulate backend responses
 const dummyData = {
@@ -123,7 +135,8 @@ export const OtherSettings = () => {
   const [bankDetailModalData, setBankDetailModalData] = useState(null);
 
   const [financialYears, setFinancialYears] = useState([]);
-  const { selectedYear, setSelectedYear } = useYear();
+  const { selectedYear, setSelectedYear } = useYearWithFallback();
+
   const [page, setPage] = useState(1);
   const limit = 2;
   const [totalYears, setTotalYears] = useState(0);
@@ -551,7 +564,7 @@ export const OtherSettings = () => {
     <div className="flex flex-col items-center p-5">
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-2xl text-blue-900 font-semibold">Financial Year</h2>
+          <h2 className="text-xl  font-semibold">Financial Year</h2>
           <div className="flex gap-2.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -577,7 +590,7 @@ export const OtherSettings = () => {
             </DropdownMenu>
             <Button
               onClick={handleAddUpcomingYear}
-              className="bg-blue-600 text-white hover:bg-blue-700 rounded-full"
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
             >
               Add Financial Year
             </Button>
@@ -587,12 +600,12 @@ export const OtherSettings = () => {
 
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-2xl text-blue-900 font-semibold">Backup and Restore</h2>
+          <h2 className="text-xl  font-semibold">Backup and Restore</h2>
           <div className="flex gap-2.5">
-            <Button onClick={backupDatabase} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <Button onClick={backupDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Backup Database
             </Button>
-            <Button onClick={restoreDatabase} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <Button onClick={restoreDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Restore Database
             </Button>
           </div>
@@ -602,8 +615,8 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-blue-900 font-semibold">Employee Levels</h2>
-            <Button onClick={handleAddEmployeeLevel} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Employee Levels</h2>
+            <Button onClick={handleAddEmployeeLevel} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Level
             </Button>
           </div>
@@ -650,8 +663,8 @@ export const OtherSettings = () => {
 
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-blue-900 font-semibold">Employee Roles</h2>
-            <Button onClick={handleAddEmployeeRole} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Employee Roles</h2>
+            <Button onClick={handleAddEmployeeRole} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Role
             </Button>
           </div>
@@ -700,8 +713,8 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-blue-900 font-semibold">Organisations</h2>
-            <Button onClick={handleAddOrganisation} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Organisations</h2>
+            <Button onClick={handleAddOrganisation} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Organisation
             </Button>
           </div>
@@ -758,8 +771,8 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-black font-normal">Bank Details</h2>
-            <Button onClick={handleAddBankDetail} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Bank Details</h2>
+            <Button onClick={handleAddBankDetail} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Bank Detail
             </Button>
           </div>
@@ -820,8 +833,8 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-blue-900 font-semibold">Currencies</h2>
-            <Button onClick={handleAddCurrency} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Currencies</h2>
+            <Button onClick={handleAddCurrency} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Currency
             </Button>
           </div>
@@ -871,8 +884,8 @@ export const OtherSettings = () => {
         </div>
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl text-blue-900 font-semibold">Currency Exchange Rate</h2>
-            <Button onClick={handleAddExchangeRate} className="bg-blue-600 text-white hover:bg-blue-700 rounded-full">
+            <h2 className="text-xl  font-semibold">Currency Exchange Rate</h2>
+            <Button onClick={handleAddExchangeRate} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Add New Exchange Rate
             </Button>
           </div>

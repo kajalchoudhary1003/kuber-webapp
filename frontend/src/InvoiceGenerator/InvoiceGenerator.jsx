@@ -6,7 +6,7 @@ export const InvoiceGeneratorPage = () => {
   return (
     <div className="p-4">
         <CardHeader className="flex items-center justify-between px-8 py-4">
-          <h1 className="text-2xl font-normal text-black">Invoice Generator</h1>
+          <h1 className="text-2xl font-bold text-black">Invoice Generator</h1>
         </CardHeader>
       <GenerateInvoicePage />
     </div>

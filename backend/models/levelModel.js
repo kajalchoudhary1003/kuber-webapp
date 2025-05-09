@@ -1,4 +1,3 @@
-// models/levelModel.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 

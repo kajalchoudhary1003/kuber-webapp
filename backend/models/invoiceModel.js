@@ -1,6 +1,6 @@
-// models/invoiceModel.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
+
 const Client = require('./clientModel');
 
 const Invoice = sequelize.define('Invoice', {

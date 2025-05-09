@@ -148,11 +148,11 @@ export default function ClientLedger() {
               )}
 
               <Button 
-                className="bg-blue-500 cursor-pointer hover:bg-blue-600" 
+                className="bg-blue-500 cursor-pointer hover:bg-blue-500/90 text-white rounded-full" 
                 disabled={isButtonDisabled()}
                 onClick={handleShowLedger}
               >
-                SHOW LEDGER
+                Show Ledger
               </Button>
             </div>
           </div>

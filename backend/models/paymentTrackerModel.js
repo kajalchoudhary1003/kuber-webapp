@@ -31,7 +31,6 @@ const PaymentTracker = sequelize.define('PaymentTracker', {
 }, {
   timestamps: true,
 });
-
 // Define associations
 PaymentTracker.belongsTo(Client, { foreignKey: 'ClientID' });
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 // import axios from 'axios';
-import SearchBar from '../SearchBar/SearchBar';
-import EmployeeTable from '../EmployeeTable/EmployeeTable';
-import EmployeeModal from '../../Modal/EmployeeModal/EmployeeModal';
+import SearchBar from '@/Admin/SearchBar/SearchBar';
+import EmployeeTable from '@/Admin/EmployeeTable/EmployeeTable';
+import EmployeeModal from '@/Modal/EmployeeModal/EmployeeModal';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -113,7 +113,7 @@ const EmployeeMaster = () => {
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
-            <Button onClick={() => handleOpenModal()} className="whitespace-nowrap text-base px-6 py-2">
+            <Button onClick={() => handleOpenModal()} className="whitespace-nowrap bg-blue-500 rounded-full text-white hover:bg-blue-500/90 cursor-pointer px-6 py-2">
               Create Employee
             </Button>
           </div>

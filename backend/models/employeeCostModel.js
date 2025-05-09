@@ -90,7 +90,6 @@ const EmployeeCost = sequelize.define('EmployeeCost', {
   },
 });
 
-// Define associations
 Employee.hasMany(EmployeeCost, { foreignKey: 'EmployeeID' });
 EmployeeCost.belongsTo(Employee, { foreignKey: 'EmployeeID' });
 

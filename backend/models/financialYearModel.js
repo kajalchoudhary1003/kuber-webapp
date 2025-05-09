@@ -2,6 +2,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 
+
 const FinancialYear = sequelize.define('FinancialYear', {
   year: {
     type: DataTypes.INTEGER,

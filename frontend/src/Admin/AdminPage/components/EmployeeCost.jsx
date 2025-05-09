@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { useYear } from '../../contexts/YearContexts';
+
+// Create a local context if the global one isn't available
+const YearContext = createContext();
+const useYear = () => {
+  const context = useContext(YearContext);
+  // Return a default value if context is not available
+  return context || { selectedYear: new Date().getFullYear().toString() };
+};
 
 // Static data for employee cost
 const staticEmployeeCostData = [
@@ -44,15 +51,22 @@ const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "D
 
 const EmployeeCost = () => {
   const [data, setData] = useState([]);
+  // Use the context with fallback
   const { selectedYear } = useYear();
+  // Add local state as fallback
+  const [localYear] = useState(new Date().getFullYear().toString());
+  
+  // Use either the context value or the local state
+  const effectiveYear = selectedYear || localYear;
+  
   const [editIndex, setEditIndex] = useState({ row: -1, column: '' });
   const [tempValue, setTempValue] = useState('');
 
   useEffect(() => {
-    if (selectedYear) {
+    if (effectiveYear) {
       setData(staticEmployeeCostData);
     }
-  }, [selectedYear]);
+  }, [effectiveYear]);
 
   const handleDoubleClick = (row, column, value) => {
     setEditIndex({ row, column });
@@ -87,19 +101,19 @@ const EmployeeCost = () => {
         <div className="flex justify-between items-center w-full mb-2">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
           <div className="w-32">
-            <Select disabled value={selectedYear}>
+            <Select disabled value={effectiveYear}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={selectedYear}>{selectedYear}</SelectItem>
+                <SelectItem value={effectiveYear}>{effectiveYear}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="w-full overflow-x-auto">
-          {selectedYear && (
+          {effectiveYear && (
             <Table className="bg-white shadow-sm">
               <TableHeader className="text-[16px] bg-[#EDEFF2] ">
                 <TableRow className="border-b border-[#9DA4B3]">
@@ -141,14 +155,23 @@ const EmployeeCost = () => {
                   </TableRow>
                 ))}
               </TableBody>
-
             </Table>
           )}
         </div>
       </div>
     </div>
-
   );
 };
 
-export default EmployeeCost;
+// Create a wrapper component that provides the YearContext
+const EmployeeCostWithYearContext = () => {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  return (
+    <YearContext.Provider value={{ selectedYear, setSelectedYear }}>
+      <EmployeeCost />
+    </YearContext.Provider>
+  );
+};
+
+export default EmployeeCostWithYearContext;
