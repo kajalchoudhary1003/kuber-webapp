@@ -12,7 +12,7 @@ export default function Ledger() {
   const [activeTab, setActiveTab] = useState("overview")
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-6 min-h-screen max-w-[100vw] overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Ledger & Reports</h1>
       </div>
@@ -26,17 +26,19 @@ export default function Ledger() {
           </TabsList>
         </div>
 
-        <TabsContent value="overview">
-          <Overview />
-        </TabsContent>
+        <div className="w-full overflow-x-hidden">
+          <TabsContent value="overview" className="w-full">
+            <Overview />
+          </TabsContent>
 
-        <TabsContent value="client-ledger">
-          <ClientLedger />
-        </TabsContent>
+          <TabsContent value="client-ledger" className="w-full">
+            <ClientLedger />
+          </TabsContent>
 
-        <TabsContent value="client-profitability">
-          <ClientProfitability />
-        </TabsContent>
+          <TabsContent value="client-profitability" className="w-full">
+            <ClientProfitability />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   )
