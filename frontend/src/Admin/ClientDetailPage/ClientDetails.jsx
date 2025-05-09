@@ -3,28 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
-
-// Dummy data to resolve undefined errors
+import ResourceModal from "../../Modal/EmployeeModal/ResourceModal"; // Adjust path if needed
+import ClientModal from "../../Modal/EmployeeModal/ClientModel";
+// Dummy data for client
 const dummyClient = {
+  _id: "1",
   ClientName: "Acme Corp",
   Abbreviation: "ACME",
   ContactPerson: "John Doe",
   Email: "john@acme.com",
   RegisteredAddress: "123 Acme St, Springfield",
+  BillingCurrencyID: "usd123",
+  OrganisationID: "org123",
+  BankDetailID: "bank123",
   BillingCurrency: {
     CurrencyName: "USD",
-    CurrencyCode: "USD"
+    CurrencyCode: "USD",
   },
   Organisation: {
-    OrganisationName: "Acme Corporation"
+    OrganisationName: "Acme Corporation",
   },
   BankDetail: {
-    BankName: "Bank of Springfield"
-  }
+    BankName: "Bank of Springfield",
+  },
 };
 
-// Updated dummyResources to match EmployeeMaster.jsx structure
+// Dummy data for resources
 const initialResources = [
   {
     id: 1,
@@ -34,13 +38,13 @@ const initialResources = [
       EmpCode: "EMP001",
       Role: { RoleName: "Manager" },
       Level: { LevelName: "Senior" },
-      Organisation: { Abbreviation: "XYZ" }
+      Organisation: { Abbreviation: "XYZ" },
     },
     StartDate: new Date("2024-01-01"),
     EndDate: new Date("2024-12-31"),
     MonthlyBilling: 5000,
     Status: "Active",
-    EmployeeID: "1"
+    EmployeeID: "1",
   },
   {
     id: 2,
@@ -50,13 +54,13 @@ const initialResources = [
       EmpCode: "EMP002",
       Role: { RoleName: "Developer" },
       Level: { LevelName: "Mid" },
-      Organisation: { Abbreviation: "ABC" }
+      Organisation: { Abbreviation: "ABC" },
     },
     StartDate: new Date("2023-06-01"),
     EndDate: new Date("2024-06-01"),
     MonthlyBilling: 3000,
     Status: "Inactive",
-    EmployeeID: "2"
+    EmployeeID: "2",
   },
   {
     id: 3,
@@ -66,75 +70,154 @@ const initialResources = [
       EmpCode: "EMP003",
       Role: { RoleName: "Designer" },
       Level: { LevelName: "Junior" },
-      Organisation: { Abbreviation: "TS" }
+      Organisation: { Abbreviation: "TS" },
     },
     StartDate: new Date("2023-09-01"),
     EndDate: new Date("2024-09-01"),
     MonthlyBilling: 2500,
     Status: "Active",
-    EmployeeID: "3"
-  }
+    EmployeeID: "3",
+  },
+];
+
+// Dummy employee data (to sync with ResourceModal)
+const dummyEmployees = [
+  { id: "1", FirstName: "John", LastName: "Doe", EmpCode: "EMP001", Role: { RoleName: "Manager" }, Level: { LevelName: "Senior" }, Organisation: { Abbreviation: "XYZ" } },
+  { id: "2", FirstName: "Jane", LastName: "Smith", EmpCode: "EMP002", Role: { RoleName: "Developer" }, Level: { LevelName: "Mid" }, Organisation: { Abbreviation: "ABC" } },
+  { id: "3", FirstName: "Samuel", LastName: "Lee", EmpCode: "EMP003", Role: { RoleName: "Designer" }, Level: { LevelName: "Junior" }, Organisation: { Abbreviation: "TS" } },
 ];
 
 const ClientDetails = () => {
-  const [activeTab, setActiveTab] = useState('Active');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Active");
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
   const [resources, setResources] = useState(initialResources);
   const navigate = useNavigate();
-  const filteredResources = resources.filter(r => r.Status === activeTab);
-  const formatDate = (date) => date.toISOString().split('T')[0];
+  const filteredResources = resources.filter((r) => r.Status === activeTab);
 
+  const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : "N/A");
+
+  // Handle adding a new resource (opens ResourceModal without initialData)
+  const handleAddResource = () => {
+    setSelectedResource({ ClientID: dummyClient._id }); // Pass ClientID for new resource
+    setIsResourceModalOpen(true);
+  };
+
+  // Handle editing a resource (opens ResourceModal with initialData)
   const handleEditResource = (resource) => {
-    setSelectedResource(resource);
-    setIsModalOpen(true);
+    setSelectedResource({ ...resource, ClientID: dummyClient._id }); // Include ClientID
+    setIsResourceModalOpen(true);
   };
 
+  // Handle submitting resource updates or additions
   const handleResourceSubmit = (payload) => {
-    console.log('Resource updated:', payload);
-    // TODO: Implement actual update logic (e.g., API call or state update)
-  };
+    if (payload.delete) {
+      // Handle resource deletion
+      setResources((prev) => prev.filter((r) => r.EmployeeID !== payload.EmployeeID));
+      console.log(`Resource ${payload.EmployeeID} deleted`);
+      // TODO: Implement API call to delete resource
+      // e.g., fetch(`http://localhost:5000/api/resources/${payload.EmployeeID}`, { method: "DELETE" })
+    } else {
+      // Find employee data from dummyEmployees
+      const employee = dummyEmployees.find((emp) => emp.id === payload.EmployeeID) || {
+        FirstName: "Unknown",
+        LastName: "",
+        EmpCode: payload.EmployeeID,
+        Role: { RoleName: "Unknown" },
+        Level: { LevelName: "Unknown" },
+        Organisation: { Abbreviation: "Unknown" },
+      };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+      const newResource = {
+        id: selectedResource && selectedResource.id ? selectedResource.id : resources.length + 1,
+        Employee: employee,
+        EmployeeID: payload.EmployeeID,
+        StartDate: new Date(payload.StartDate),
+        EndDate: payload.EndDate ? new Date(payload.EndDate) : null,
+        MonthlyBilling: Number(payload.MonthlyBilling),
+        Status: payload.Status,
+      };
+
+      if (selectedResource && selectedResource.id) {
+        // Update existing resource
+        setResources((prev) =>
+          prev.map((r) => (r.id === selectedResource.id ? newResource : r))
+        );
+        console.log("Resource updated:", newResource);
+        // TODO: Implement API call to update resource
+        // e.g., fetch(`http://localhost:5000/api/resources/${selectedResource.id}`, { method: "PUT", body: JSON.stringify(newResource) })
+      } else {
+        // Add new resource
+        setResources((prev) => [...prev, newResource]);
+        console.log("Resource added:", newResource);
+        // TODO: Implement API call to add resource
+        // e.g., fetch(`http://localhost:5000/api/resources`, { method: "POST", body: JSON.stringify(newResource) })
+      }
+    }
+
+    // Close modal and clear selected resource
+    setIsResourceModalOpen(false);
     setSelectedResource(null);
   };
 
+  // Handle closing ResourceModal
+  const handleCloseResourceModal = () => {
+    setIsResourceModalOpen(false);
+    setSelectedResource(null);
+  };
+
+  // Handle editing client (opens ClientModal)
+  const handleEditClient = () => {
+    setIsClientModalOpen(true);
+  };
+
+  // Handle submitting client updates
+  const handleClientSubmit = (updatedClientData) => {
+    console.log("Client updated:", updatedClientData);
+    // TODO: Implement API call to update client
+    // e.g., fetch(`http://localhost:5000/api/clients/${dummyClient._id}`, { method: "PUT", body: JSON.stringify(updatedClientData) })
+    setIsClientModalOpen(false);
+  };
+
+  // Handle closing ClientModal
+  const handleCloseClientModal = () => {
+    setIsClientModalOpen(false);
+  };
+
+  // Handle deleting a resource
   const handleDeleteResource = (resourceId) => {
-    if (window.confirm('Are you sure you want to delete this resource?')) {
-      setResources(resources.filter(r => r.id !== resourceId));
+    if (window.confirm("Are you sure you want to delete this resource?")) {
+      setResources((prev) => prev.filter((r) => r.id !== resourceId));
       console.log(`Resource ${resourceId} deleted`);
+      // TODO: Implement API call to delete resource
+      // e.g., fetch(`http://localhost:5000/api/resources/${resourceId}`, { method: "DELETE" })
     }
   };
 
+  // Handle deleting the client
   const handleDeleteClient = () => {
-    if (window.confirm('Are you sure you want to delete this client and all associated resources?')) {
-      console.log('Client deleted:', dummyClient.ClientName);
-      navigate('/admin');
+    if (window.confirm("Are you sure you want to delete this client and all associated resources?")) {
+      console.log("Client deleted:", dummyClient.ClientName);
+      navigate("/admin");
+      // TODO: Implement API call to delete client
+      // e.g., fetch(`http://localhost:5000/api/clients/${dummyClient._id}`, { method: "DELETE" })
     }
   };
 
   return (
-    <div className="p-6 space-y-6  min-h-screen">
+    <div className="p-6 space-y-6 min-h-screen">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-blue-900">
           {`${dummyClient.ClientName} (${dummyClient.Abbreviation})`}
         </h2>
         <div className="space-x-2">
           <Button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate("/admin")}
             className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
           >
             Back to Client Master
           </Button>
-          {/* Optional: Additional Delete Client button in header, commented out unless needed */}
-          {/* <Button
-            variant="destructive"
-            className="rounded-3xl px-6 py-2"
-            onClick={handleDeleteClient}
-          >
-            Delete Client
-          </Button> */}
         </div>
       </div>
 
@@ -144,6 +227,7 @@ const ClientDetails = () => {
           <h3 className="text-[24px] text-[#272727]">Client Details</h3>
           <div className="space-x-2">
             <Button
+              onClick={handleEditClient}
               className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Edit
@@ -202,27 +286,31 @@ const ClientDetails = () => {
         </div>
       </div>
 
+      {/* Resources Assigned Section */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
         <div className="flex justify-between items-center pb-4">
           <h3 className="text-[24px] text-[#272727]">Resources Assigned</h3>
           <div className="flex gap-2">
-            <div className="flex  gap-2">
+            <div className="flex gap-2">
               <Button
-                onClick={() => setActiveTab('Active')}
-                variant={activeTab === 'Active'  }
-                className={activeTab === 'Active' ? 'border-none text-black' : ''}
+                onClick={() => setActiveTab("Active")}
+                variant={activeTab === "Active"}
+                className={activeTab === "Active" ? "border-none text-black" : ""}
               >
                 Active Resources
               </Button>
               <Button
-                onClick={() => setActiveTab('Inactive')}
-                variant={activeTab === 'Inactive' }
-                className={activeTab === 'Inactive' ? 'text-black ' : ''}
+                onClick={() => setActiveTab("Inactive")}
+                variant={activeTab === "Inactive"}
+                className={activeTab === "Inactive" ? "text-black" : ""}
               >
                 Inactive Resources
               </Button>
             </div>
-            <Button className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            <Button
+              onClick={handleAddResource}
+              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+            >
               Add Resource
             </Button>
           </div>
@@ -274,11 +362,20 @@ const ClientDetails = () => {
         </Table>
       </div>
 
+      {/* Resource Modal for adding/editing resources */}
       <ResourceModal
-        open={isModalOpen}
-        onClose={handleCloseModal}
+        open={isResourceModalOpen}
+        onClose={handleCloseResourceModal}
         initialData={selectedResource}
         onSubmit={handleResourceSubmit}
+      />
+
+      {/* Client Modal for editing client details */}
+      <ClientModal
+        open={isClientModalOpen}
+        onClose={handleCloseClientModal}
+        initialData={dummyClient}
+        onSubmit={handleClientSubmit}
       />
     </div>
   );

@@ -9,41 +9,51 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [abbreviation, setAbbreviation] = useState('');
   const [regNumber, setRegNumber] = useState('');
 
+  // Reset form when modal opens or mode/initialData changes
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setOrganisationName(initialData.OrganisationName);
-      setAbbreviation(initialData.Abbreviation);
-      setRegNumber(initialData.RegNumber);
-    } else {
-      setOrganisationName('');
-      setAbbreviation('');
-      setRegNumber('');
+    if (open) {
+      if (mode === 'edit' && initialData) {
+        setOrganisationName(initialData.OrganisationName || '');
+        setAbbreviation(initialData.Abbreviation || '');
+        setRegNumber(initialData.RegNumber || '');
+      } else {
+        setOrganisationName('');
+        setAbbreviation('');
+        setRegNumber('');
+      }
     }
   }, [open, mode, initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'OrganisationName') {
-      setOrganisationName(value);
-    } else if (name === 'Abbreviation') {
-      setAbbreviation(value);
-    } else if (name === 'RegNumber') {
-      setRegNumber(value);
+    switch (name) {
+      case 'OrganisationName':
+        setOrganisationName(value);
+        break;
+      case 'Abbreviation':
+        setAbbreviation(value);
+        break;
+      case 'RegNumber':
+        setRegNumber(value);
+        break;
+      default:
+        break;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await onSubmit({ 
-        ...initialData, 
+      const formData = {
+        id: initialData?.id, // Include id for edit mode
         OrganisationName: organisationName,
         Abbreviation: abbreviation,
-        RegNumber: regNumber
-      });
-      onClose();
+        RegNumber: regNumber,
+      };
+      await onSubmit(formData);
+      onClose(); // Close modal after successful submission
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error submitting organisation form:', error);
     }
   };
 
@@ -55,41 +65,67 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
             {mode === 'edit' ? 'Edit Organisation' : 'Create Organisation'}
           </DialogTitle>
           
+        
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
+            <label htmlFor="OrganisationName" className="text-sm font-medium">
+              Organisation Name
+            </label>
             <Input
+              id="OrganisationName"
               type="text"
               name="OrganisationName"
               placeholder="Organisation Name"
               value={organisationName}
               onChange={handleChange}
               required
+              className="mt-1"
             />
           </div>
           <div>
+            <label htmlFor="Abbreviation" className="text-sm font-medium">
+              Abbreviation
+            </label>
             <Input
+              id="Abbreviation"
               type="text"
               name="Abbreviation"
               placeholder="Abbreviation"
               value={abbreviation}
               onChange={handleChange}
               required
+              className="mt-1"
             />
           </div>
           <div>
+            <label htmlFor="RegNumber" className="text-sm font-medium">
+              Registration Number
+            </label>
             <Input
+              id="RegNumber"
               type="text"
               name="RegNumber"
               placeholder="Registration Number"
               value={regNumber}
               onChange={handleChange}
               required
+              className="mt-1"
             />
           </div>
-          <div className="flex justify-end">
-            <Button type="submit" className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all">
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-200 text-black hover:bg-gray-300 rounded-3xl px-6 py-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+            >
               {mode === 'edit' ? 'Update Organisation' : 'Create Organisation'}
             </Button>
           </div>

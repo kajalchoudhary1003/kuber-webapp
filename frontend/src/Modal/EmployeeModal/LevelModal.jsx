@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,13 @@ const LevelModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [levelName, setLevelName] = useState('');
 
   useEffect(() => {
-    console.log('LevelModal initialData:', initialData); // Debug
-    if (mode === 'edit' && initialData) {
-      setLevelName(initialData.LevelName);
-    } else {
-      setLevelName('');
+    console.log('LevelModal props:', { open, mode, initialData }); // Debug
+    if (open) {
+      if (mode === 'edit' && initialData && initialData.LevelName) {
+        setLevelName(initialData.LevelName);
+      } else {
+        setLevelName('');
+      }
     }
   }, [open, mode, initialData]);
 
@@ -22,19 +23,23 @@ const LevelModal = ({ open, onClose, mode, initialData, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!levelName.trim()) {
+      console.error('Level name is required');
+      return;
+    }
     try {
       console.log('Submitting level:', { id: initialData?.id, LevelName: levelName }); // Debug
       await onSubmit({ id: initialData?.id, LevelName: levelName });
+      setLevelName(''); // Reset form
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);
-      // Removed toast error message
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl bg-white  border-none rounded-2xl">
+      <DialogContent className="max-w-xl bg-white border-none rounded-2xl">
         <DialogHeader className="flex flex-row justify-between items-center border-b border-gray-200 pb-3">
           <DialogTitle className="text-lg font-normal">
             {mode === 'edit' ? 'Edit Level' : 'Create Level'}
