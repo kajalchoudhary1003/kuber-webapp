@@ -6,11 +6,11 @@ import EmployeeCost from '../components/EmployeeCost';
 import ClientMaster from '../components/ClientMaster';
 import BillingSetup from '../components/BillingSetup';
 import OtherSettings from '../components/OtherSettings';
-
+import { YearProvider } from '../../../contexts/YearContexts';
 // Wrap OtherSettings in a component that handles unmounting properly
 const OtherSettingsWrapper = () => {
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
     return () => {
@@ -20,7 +20,7 @@ const OtherSettingsWrapper = () => {
       }
     };
   }, [mounted]);
-  
+
   return <OtherSettings />;
 };
 
@@ -38,18 +38,23 @@ export const AdminPage = () => {
     <div className="p-4">
       <OrderHeader />
       {/* Use key to force re-render when path changes */}
-      <div 
-        className={!isOtherSettings ? 'mx-auto p-7' : ''} 
+      <div
+        className={!isOtherSettings ? 'mx-auto p-7' : ''}
         key={currentPath}
       >
-        <Routes>
-          <Route path="/" element={<Navigate to="employee-master" replace />} />
-          <Route path="employee-master" element={<EmployeeMaster />} />
-          <Route path="employee-cost" element={<EmployeeCost />} />
-          <Route path="client-master" element={<ClientMaster />} />
-          <Route path="billing-setup" element={<BillingSetup />} />
-          <Route path="other-settings" element={<OtherSettingsWrapper />} />
-        </Routes>
+        <YearProvider>
+          <Routes>
+
+            <Route path="/" element={<Navigate to="employee-master" replace />} />
+            <Route path="employee-master" element={<EmployeeMaster />} />
+            <Route path="employee-cost" element={<EmployeeCost />} />
+            <Route path="client-master" element={<ClientMaster />} />
+            <Route path="billing-setup" element={<BillingSetup />} />
+
+            <Route path="other-settings" element={<OtherSettingsWrapper />} />
+
+          </Routes>
+        </YearProvider>
       </div>
     </div>
   );

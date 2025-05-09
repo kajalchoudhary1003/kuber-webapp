@@ -17,7 +17,6 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useYear } from '../../../contexts/YearContexts';
 
-
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
   try {
@@ -27,8 +26,6 @@ const useYearWithFallback = () => {
   }
 };
 
-
-
 // Dummy data to simulate backend responses
 const dummyData = {
   financialYears: {
@@ -37,7 +34,7 @@ const dummyData = {
       { year: "2022" },
       { year: "2021" },
     ],
-    total: 5, // Simulate more years available for "Show More"
+    total: 5,
   },
   exchangeRates: [
     {
@@ -148,22 +145,20 @@ export const OtherSettings = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulate fetching data with dummy data
         setExchangeRates(dummyData.exchangeRates);
         setEmployeeRoles(dummyData.roles);
         setEmployeeLevels(dummyData.levels);
         setOrganisations(dummyData.organisations);
         setCurrencies(dummyData.currencies);
         setBankDetails(dummyData.bankDetails);
-        setFinancialYears((prevYears) => {
-          const newYears = dummyData.financialYears.financialYears.map((year) => year.year);
-          const uniqueYears = [...new Set([...prevYears, ...newYears])];
-          setShowMoreAvailable(uniqueYears.length < dummyData.financialYears.total);
-          return uniqueYears;
-        });
+        
+        const newYears = dummyData.financialYears.financialYears.map((year) => year.year);
+        const uniqueYears = [...new Set([...financialYears, ...newYears])];
+        setFinancialYears(uniqueYears);
+        setShowMoreAvailable(uniqueYears.length < dummyData.financialYears.total);
         setTotalYears(dummyData.financialYears.total);
 
-        if (dummyData.financialYears.financialYears.length > 0 && page === 1) {
+        if (dummyData.financialYears.financialYears.length > 0 && page === 1 && !selectedYear) {
           setSelectedYear(dummyData.financialYears.financialYears[0].year);
         }
       } catch (error) {
@@ -172,7 +167,7 @@ export const OtherSettings = () => {
     };
 
     fetchData();
-  }, [setSelectedYear, page]);
+  }, [page]);
 
   useEffect(() => {
     const fetchExchangeRatesForYear = async () => {
@@ -181,7 +176,6 @@ export const OtherSettings = () => {
           setExchangeRates([]);
           return;
         }
-        // Filter dummy exchange rates by selected year
         const filteredRates = dummyData.exchangeRates.filter((rate) => rate.Year === selectedYear);
         setExchangeRates(filteredRates);
       } catch (error) {
@@ -192,19 +186,26 @@ export const OtherSettings = () => {
     fetchExchangeRatesForYear();
   }, [selectedYear]);
 
-  const handleAddExchangeRate = () => {
+  const handleAddExchangeRate = (event) => {
+    event.stopPropagation();
     if (!selectedYear) {
+      console.error('No financial year selected');
+      alert('Please select a financial year first.');
       return;
     }
+    console.log('Opening CurrencyExchangeModal in create mode');
     setCurrencyExchangeModalMode('create');
     setCurrencyExchangeModalData(null);
     setCurrencyExchangeModalOpen(true);
   };
 
-  const handleEditExchangeRate = (rate) => {
+  const handleEditExchangeRate = (rate, event) => {
+    event.stopPropagation();
     if (!rate || !rate.CurrencyFrom || !rate.CurrencyTo) {
+      console.error('Invalid exchange rate data:', rate);
       return;
     }
+    console.log('Opening CurrencyExchangeModal in edit mode with:', rate);
     setCurrencyExchangeModalMode('edit');
     setCurrencyExchangeModalData({
       id: rate._id,
@@ -232,25 +233,23 @@ export const OtherSettings = () => {
 
       if (exchangeRate.id) {
         const updatedRate = { ...exchangeRateWithYear, _id: exchangeRate.id };
-        updateExchangeRate(updatedRate);
+        setExchangeRates((prevRates) =>
+          prevRates.map((rate) => (rate._id === updatedRate._id ? updatedRate : rate))
+        );
       } else {
         const newRate = { ...exchangeRateWithYear, _id: `rate${Math.random().toString(36).substring(2, 9)}` };
-        addExchangeRate(newRate);
+        setExchangeRates((prevRates) => [...prevRates, newRate]);
       }
-
-      // Update exchange rates for the selected year
-      const filteredRates = dummyData.exchangeRates
-        .filter((rate) => rate.Year === selectedYear && rate._id !== exchangeRate.id)
-        .concat(exchangeRate.id ? [{ ...exchangeRateWithYear, _id: exchangeRate.id }] : [{ ...exchangeRateWithYear, _id: `rate${Math.random().toString(36).substring(2, 9)}` }]);
-      setExchangeRates(filteredRates);
       setCurrencyExchangeModalOpen(false);
     } catch (error) {
       console.error('Error submitting exchange rate:', error);
+      alert('Failed to submit exchange rate. Please try again.');
     }
   };
 
   const deleteExchangeRate = async (exchangeRateId) => {
     try {
+      console.log('Deleting exchange rate:', exchangeRateId);
       setExchangeRates((prevExchangeRates) =>
         prevExchangeRates.filter((rate) => rate._id !== exchangeRateId)
       );
@@ -259,53 +258,46 @@ export const OtherSettings = () => {
     }
   };
 
-  const addExchangeRate = (rate) => {
-    setExchangeRates((prevRates) => [...prevRates, rate]);
-  };
-
-  const updateExchangeRate = (updatedRate) => {
-    setExchangeRates((prevRates) =>
-      prevRates.map((rate) => (rate._id === updatedRate._id ? updatedRate : rate))
-    );
-  };
-
-  const handleAddEmployeeRole = () => {
+  const handleAddEmployeeRole = (event) => {
+    event.stopPropagation();
+    console.log('Opening RoleModal in create mode');
     setRoleModalMode('create');
     setRoleModalData(null);
     setRoleModalOpen(true);
   };
 
-  const handleEditEmployeeRole = (role) => {
+  const handleEditEmployeeRole = (role, event) => {
+    event.stopPropagation();
+    console.log('Opening RoleModal in edit mode with:', role);
     setRoleModalMode('edit');
     setRoleModalData({ id: role._id, RoleName: role.RoleName });
     setRoleModalOpen(true);
   };
 
   const handleRoleSubmit = async (role) => {
+    console.log('Handling role submit:', role);
     try {
+      if (!role.RoleName) {
+        throw new Error('Role name is required');
+      }
       if (role.id) {
         const updatedRole = { ...role, _id: role.id };
-        updateRole(updatedRole);
+        setEmployeeRoles((prevRoles) =>
+          prevRoles.map((r) => (r._id === updatedRole._id ? updatedRole : r))
+        );
       } else {
         const newRole = { ...role, _id: `role${Math.random().toString(36).substring(2, 9)}` };
-        addRole(newRole);
+        setEmployeeRoles((prevRoles) => [...prevRoles, newRole]);
       }
+      setRoleModalOpen(false);
     } catch (error) {
       console.error('Error submitting role:', error);
+      alert('Failed to submit role. Please try again.');
     }
   };
 
-  const addRole = (role) => {
-    setEmployeeRoles((prevRoles) => [...prevRoles, role]);
-  };
-
-  const updateRole = (updatedRole) => {
-    setEmployeeRoles((prevRoles) =>
-      prevRoles.map((role) => (role._id === updatedRole._id ? updatedRole : role))
-    );
-  };
-
   const deleteRole = async (roleId) => {
+    console.log('Deleting role:', roleId);
     try {
       setEmployeeRoles((prevRoles) => prevRoles.filter((role) => role._id !== roleId));
     } catch (error) {
@@ -313,13 +305,17 @@ export const OtherSettings = () => {
     }
   };
 
-  const handleAddOrganisation = () => {
+  const handleAddOrganisation = (event) => {
+    event.stopPropagation();
+    console.log('Opening OrganisationModal in create mode');
     setOrganisationModalMode('create');
     setOrganisationModalData(null);
     setOrganisationModalOpen(true);
   };
 
-  const handleEditOrganisation = (organisation) => {
+  const handleEditOrganisation = (organisation, event) => {
+    event.stopPropagation();
+    console.log('Opening OrganisationModal in edit mode with:', organisation);
     setOrganisationModalMode('edit');
     setOrganisationModalData({
       id: organisation._id,
@@ -332,30 +328,34 @@ export const OtherSettings = () => {
 
   const handleOrganisationSubmit = async (organisation) => {
     try {
+      console.log('Submitting organisation:', organisation);
       if (organisation.id) {
         const updatedOrganisation = { ...organisation, _id: organisation.id };
-        updateOrganisation(updatedOrganisation);
+        setOrganisations((prevOrganisations) =>
+          prevOrganisations.map((org) =>
+            org._id === updatedOrganisation._id ? updatedOrganisation : org
+          )
+        );
       } else {
-        const newOrganisation = { ...organisation, _id: `org${Math.random().toString(36).substring(2, 9)}` };
-        addOrganisation(newOrganisation);
+        const newOrganisation = {
+          ...organisation,
+          _id: `org${Math.random().toString(36).substring(2, 9)}`,
+        };
+        setOrganisations((prevOrganisations) => [
+          ...prevOrganisations,
+          newOrganisation,
+        ]);
       }
+      setOrganisationModalOpen(false);
     } catch (error) {
       console.error('Error submitting organisation:', error);
+      alert('Failed to submit organisation. Please try again.');
     }
-  };
-
-  const addOrganisation = (organisation) => {
-    setOrganisations((prevOrganisations) => [...prevOrganisations, organisation]);
-  };
-
-  const updateOrganisation = (updatedOrganisation) => {
-    setOrganisations((prevOrganisations) =>
-      prevOrganisations.map((org) => (org._id === updatedOrganisation._id ? updatedOrganisation : org))
-    );
   };
 
   const deleteOrganisation = async (organisationId) => {
     try {
+      console.log('Deleting organisation:', organisationId);
       setOrganisations((prevOrganisations) =>
         prevOrganisations.filter((org) => org._id !== organisationId)
       );
@@ -364,13 +364,17 @@ export const OtherSettings = () => {
     }
   };
 
-  const handleAddEmployeeLevel = () => {
+  const handleAddEmployeeLevel = (event) => {
+    event.stopPropagation();
+    console.log('Opening LevelModal in create mode');
     setLevelModalMode('create');
     setLevelModalData(null);
     setLevelModalOpen(true);
   };
 
-  const handleEditEmployeeLevel = (level) => {
+  const handleEditEmployeeLevel = (level, event) => {
+    event.stopPropagation();
+    console.log('Opening LevelModal in edit mode with:', level);
     setLevelModalMode('edit');
     setLevelModalData({ id: level._id, LevelName: level.LevelName });
     setLevelModalOpen(true);
@@ -378,43 +382,43 @@ export const OtherSettings = () => {
 
   const handleLevelSubmit = async (level) => {
     try {
+      console.log('Handling level submit:', level);
       if (level.id) {
         const updatedLevel = { ...level, _id: level.id };
-        updateLevel(updatedLevel);
+        setEmployeeLevels((prevLevels) =>
+          prevLevels.map((l) => (l._id === updatedLevel._id ? updatedLevel : l))
+        );
       } else {
         const newLevel = { ...level, _id: `level${Math.random().toString(36).substring(2, 9)}` };
-        addLevel(newLevel);
+        setEmployeeLevels((prevLevels) => [...prevLevels, newLevel]);
       }
+      setLevelModalOpen(false);
     } catch (error) {
       console.error('Error submitting level:', error);
+      alert('Failed to submit level. Please try again.');
     }
-  };
-
-  const addLevel = (level) => {
-    setEmployeeLevels((prevLevels) => [...prevLevels, level]);
-  };
-
-  const updateLevel = (updatedLevel) => {
-    setEmployeeLevels((prevLevels) =>
-      prevLevels.map((level) => (level._id === updatedLevel._id ? updatedLevel : level))
-    );
   };
 
   const deleteLevel = async (levelId) => {
     try {
+      console.log('Deleting level:', levelId);
       setEmployeeLevels((prevLevels) => prevLevels.filter((level) => level._id !== levelId));
     } catch (error) {
       console.error('Error deleting level:', error);
     }
   };
 
-  const handleAddCurrency = () => {
+  const handleAddCurrency = (event) => {
+    event.stopPropagation();
+    console.log('Opening CurrencyModal in create mode');
     setCurrencyModalMode('create');
     setCurrencyModalData(null);
     setCurrencyModalOpen(true);
   };
 
-  const handleEditCurrency = (currency) => {
+  const handleEditCurrency = (currency, event) => {
+    event.stopPropagation();
+    console.log('Opening CurrencyModal in edit mode with:', currency);
     setCurrencyModalMode('edit');
     setCurrencyModalData({
       id: currency._id,
@@ -426,43 +430,43 @@ export const OtherSettings = () => {
 
   const handleCurrencySubmit = async (currency) => {
     try {
+      console.log('Submitting currency:', currency);
       if (currency.id) {
         const updatedCurrency = { ...currency, _id: currency.id };
-        updateCurrency(updatedCurrency);
+        setCurrencies((prevCurrencies) =>
+          prevCurrencies.map((c) => (c._id === updatedCurrency._id ? updatedCurrency : c))
+        );
       } else {
         const newCurrency = { ...currency, _id: `curr${Math.random().toString(36).substring(2, 9)}` };
-        addCurrency(newCurrency);
+        setCurrencies((prevCurrencies) => [...prevCurrencies, newCurrency]);
       }
+      setCurrencyModalOpen(false);
     } catch (error) {
       console.error('Error submitting currency:', error);
+      alert('Failed to submit currency. Please try again.');
     }
-  };
-
-  const addCurrency = (currency) => {
-    setCurrencies((prevCurrencies) => [...prevCurrencies, currency]);
-  };
-
-  const updateCurrency = (updatedCurrency) => {
-    setCurrencies((prevCurrencies) =>
-      prevCurrencies.map((currency) => (currency._id === updatedCurrency._id ? updatedCurrency : currency))
-    );
   };
 
   const deleteCurrency = async (currencyId) => {
     try {
+      console.log('Deleting currency:', currencyId);
       setCurrencies((prevCurrencies) => prevCurrencies.filter((currency) => currency._id !== currencyId));
     } catch (error) {
       console.error('Error deleting currency:', error);
     }
   };
 
-  const handleAddBankDetail = () => {
+  const handleAddBankDetail = (event) => {
+    event.stopPropagation();
+    console.log('Opening BankDetailModal in create mode');
     setBankDetailModalMode('create');
     setBankDetailModalData(null);
     setBankDetailModalOpen(true);
   };
 
-  const handleEditBankDetail = (bankDetail) => {
+  const handleEditBankDetail = (bankDetail, event) => {
+    event.stopPropagation();
+    console.log('Opening BankDetailModal in edit mode with:', bankDetail);
     setBankDetailModalMode('edit');
     setBankDetailModalData({
       id: bankDetail._id,
@@ -476,30 +480,26 @@ export const OtherSettings = () => {
 
   const handleBankDetailSubmit = async (bankDetail) => {
     try {
+      console.log('Submitting bank detail:', bankDetail);
       if (bankDetail.id) {
         const updatedBankDetail = { ...bankDetail, _id: bankDetail.id };
-        updateBankDetail(updatedBankDetail);
+        setBankDetails((prevBankDetails) =>
+          prevBankDetails.map((b) => (b._id === updatedBankDetail._id ? updatedBankDetail : b))
+        );
       } else {
         const newBankDetail = { ...bankDetail, _id: `bank${Math.random().toString(36).substring(2, 9)}` };
-        addBankDetail(newBankDetail);
+        setBankDetails((prevBankDetails) => [...prevBankDetails, newBankDetail]);
       }
+      setBankDetailModalOpen(false);
     } catch (error) {
       console.error('Error submitting bank detail:', error);
+      alert('Failed to submit bank detail. Please try again.');
     }
-  };
-
-  const addBankDetail = (bankDetail) => {
-    setBankDetails((prevBankDetails) => [...prevBankDetails, bankDetail]);
-  };
-
-  const updateBankDetail = (updatedBankDetail) => {
-    setBankDetails((prevBankDetails) =>
-      prevBankDetails.map((bankDetail) => (bankDetail._id === updatedBankDetail._id ? updatedBankDetail : bankDetail))
-    );
   };
 
   const deleteBankDetail = async (bankDetailId) => {
     try {
+      console.log('Deleting bank detail:', bankDetailId);
       setBankDetails((prevBankDetails) =>
         prevBankDetails.filter((bankDetail) => bankDetail._id !== bankDetailId)
       );
@@ -509,45 +509,54 @@ export const OtherSettings = () => {
   };
 
   const handleYearChange = (year) => {
+    console.log('Changing financial year to:', year);
     setSelectedYear(year);
   };
 
-  const handleAddUpcomingYear = () => {
+  const handleAddUpcomingYear = (event) => {
+    event.stopPropagation();
+    console.log('Opening ConfirmationModal for adding financial year');
     setRandomCode(Math.random().toString(36).substring(2, 8));
     setModalOpen(true);
   };
 
   const confirmAddUpcomingYear = async () => {
     try {
+      console.log('Adding new financial year');
       const newYear = (parseInt(financialYears[0]) + 1).toString();
       setFinancialYears((prevYears) => [newYear, ...prevYears]);
       setSelectedYear(newYear);
     } catch (error) {
       console.error('Error adding financial year:', error);
+      alert('Failed to add financial year. Please try again.');
     }
     setModalOpen(false);
   };
 
   const backupDatabase = async () => {
     try {
+      console.log('Backing up database');
       // Simulate backup
     } catch (error) {
       console.error('Unexpected error during database backup:', error);
+      alert('Failed to backup database. Please try again.');
     }
   };
 
   const restoreDatabase = async () => {
     try {
+      console.log('Restoring database');
       // Simulate restore
     } catch (error) {
       console.error('Unexpected error during database restore:', error);
+      alert('Failed to restore database. Please try again.');
     }
   };
 
   const handleShowMoreYears = (event) => {
     event.stopPropagation();
+    console.log('Showing more financial years');
     setPage((prevPage) => prevPage + 1);
-    // Simulate adding more years
     setFinancialYears((prevYears) => {
       const newYears = [...prevYears, `202${3 - prevYears.length}`];
       setShowMoreAvailable(newYears.length < dummyData.financialYears.total);
@@ -562,9 +571,11 @@ export const OtherSettings = () => {
 
   return (
     <div className="flex flex-col items-center p-5">
+      {/* Debugging: Log modal open state */}
+      {console.log('RoleModal open state:', roleModalOpen)}
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-xl  font-semibold">Financial Year</h2>
+          <h2 className="text-xl font-semibold">Financial Year</h2>
           <div className="flex gap-2.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -600,7 +611,7 @@ export const OtherSettings = () => {
 
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-xl  font-semibold">Backup and Restore</h2>
+          <h2 className="text-xl font-semibold">Backup and Restore</h2>
           <div className="flex gap-2.5">
             <Button onClick={backupDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Backup Database
@@ -615,12 +626,15 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Employee Levels</h2>
-            <Button onClick={handleAddEmployeeLevel} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Employee Levels</h2>
+            <Button
+              onClick={handleAddEmployeeLevel}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Level
             </Button>
           </div>
-          {employeeLevels.length > 0 && (
+          {employeeLevels.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -642,7 +656,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditEmployeeLevel(level)}
+                        onClick={(event) => handleEditEmployeeLevel(level, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -658,17 +672,22 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No levels available.</p>
           )}
         </div>
 
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Employee Roles</h2>
-            <Button onClick={handleAddEmployeeRole} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Employee Roles</h2>
+            <Button
+              onClick={handleAddEmployeeRole}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Role
             </Button>
           </div>
-          {employeeRoles.length > 0 && (
+          {employeeRoles.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -690,7 +709,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditEmployeeRole(role)}
+                        onClick={(event) => handleEditEmployeeRole(role, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -706,6 +725,8 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No roles available.</p>
           )}
         </div>
       </div>
@@ -713,12 +734,15 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Organisations</h2>
-            <Button onClick={handleAddOrganisation} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Organisations</h2>
+            <Button
+              onClick={handleAddOrganisation}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Organisation
             </Button>
           </div>
-          {organisations.length > 0 && (
+          {organisations.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -748,7 +772,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditOrganisation(org)}
+                        onClick={(event) => handleEditOrganisation(org, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -764,19 +788,24 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No organisations available.</p>
           )}
         </div>
       </div>
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shellow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Bank Details</h2>
-            <Button onClick={handleAddBankDetail} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Bank Details</h2>
+            <Button
+              onClick={handleAddBankDetail}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Bank Detail
             </Button>
           </div>
-          {bankDetails.length > 0 && (
+          {bankDetails.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -810,7 +839,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditBankDetail(detail)}
+                        onClick={(event) => handleEditBankDetail(detail, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -826,6 +855,8 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No bank details available.</p>
           )}
         </div>
       </div>
@@ -833,12 +864,15 @@ export const OtherSettings = () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Currencies</h2>
-            <Button onClick={handleAddCurrency} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Currencies</h2>
+            <Button
+              onClick={handleAddCurrency}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Currency
             </Button>
           </div>
-          {currencies.length > 0 && (
+          {currencies.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -864,7 +898,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditCurrency(currency)}
+                        onClick={(event) => handleEditCurrency(currency, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -880,16 +914,21 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No currencies available.</p>
           )}
         </div>
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl  font-semibold">Currency Exchange Rate</h2>
-            <Button onClick={handleAddExchangeRate} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <h2 className="text-xl font-semibold">Currency Exchange Rate</h2>
+            <Button
+              onClick={handleAddExchangeRate}
+              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+            >
               Add New Exchange Rate
             </Button>
           </div>
-          {exchangeRates.length > 0 && (
+          {exchangeRates.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -919,7 +958,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-1"
                         title="Edit"
-                        onClick={() => handleEditExchangeRate(rate)}
+                        onClick={(event) => handleEditExchangeRate(rate, event)}
                       >
                         <Edit size={20} />
                       </button>
@@ -935,34 +974,48 @@ export const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <p className="text-center text-sm text-gray-500">No exchange rates available.</p>
           )}
         </div>
       </div>
 
       <RoleModal
         open={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
+        onClose={() => {
+          console.log('Closing RoleModal');
+          setRoleModalOpen(false);
+        }}
         mode={roleModalMode}
         initialData={roleModalData}
         onSubmit={handleRoleSubmit}
       />
       <OrganisationModal
         open={organisationModalOpen}
-        onClose={() => setOrganisationModalOpen(false)}
+        onClose={() => {
+          console.log('Closing OrganisationModal');
+          setOrganisationModalOpen(false);
+        }}
         mode={organisationModalMode}
         initialData={organisationModalData}
         onSubmit={handleOrganisationSubmit}
       />
       <LevelModal
         open={levelModalOpen}
-        onClose={() => setLevelModalOpen(false)}
+        onClose={() => {
+          console.log('Closing LevelModal');
+          setLevelModalOpen(false);
+        }}
         mode={levelModalMode}
         initialData={levelModalData}
         onSubmit={handleLevelSubmit}
       />
       <CurrencyExchangeModal
         open={currencyExchangeModalOpen}
-        onClose={() => setCurrencyExchangeModalOpen(false)}
+        onClose={() => {
+          console.log('Closing CurrencyExchangeModal');
+          setCurrencyExchangeModalOpen(false);
+        }}
         mode={currencyExchangeModalMode}
         initialData={currencyExchangeModalData}
         onSubmit={handleExchangeRateSubmit}
@@ -970,21 +1023,30 @@ export const OtherSettings = () => {
       />
       <CurrencyModal
         open={currencyModalOpen}
-        onClose={() => setCurrencyModalOpen(false)}
+        onClose={() => {
+          console.log('Closing CurrencyModal');
+          setCurrencyModalOpen(false);
+        }}
         mode={currencyModalMode}
         initialData={currencyModalData}
         onSubmit={handleCurrencySubmit}
       />
       <BankDetailModal
         open={bankDetailModalOpen}
-        onClose={() => setBankDetailModalOpen(false)}
+        onClose={() => {
+          console.log('Closing BankDetailModal');
+          setBankDetailModalOpen(false);
+        }}
         mode={bankDetailModalMode}
         initialData={bankDetailModalData}
         onSubmit={handleBankDetailSubmit}
       />
       <ConfirmationModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          console.log('Closing ConfirmationModal');
+          setModalOpen(false);
+        }}
         onConfirm={confirmAddUpcomingYear}
         randomCode={randomCode}
       />

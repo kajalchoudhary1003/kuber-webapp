@@ -19,7 +19,7 @@ const dummyEmployees = [
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [employeeOptions, setEmployeeOptions] = useState(dummyEmployees);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState({
     empCode: '',
     role: '',
@@ -29,12 +29,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     billingMonthly: '',
     endDate: '',
     status: 'Active',
-    EmployeeID: null
+    EmployeeID: null,
   });
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = dummyEmployees.filter(emp =>
+      const filtered = dummyEmployees.filter((emp) =>
         `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setEmployeeOptions(filtered);
@@ -60,9 +60,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         billingMonthly: initialData.MonthlyBilling || '',
         endDate: formatDate(initialData.EndDate),
         status: initialData.Status || 'Active',
-        EmployeeID: initialData.EmployeeID || null
+        EmployeeID: initialData.EmployeeID || null,
       });
       setSelectedEmployee(`${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`);
+    } else {
+      // Reset form when adding a new resource
+      resetForm();
     }
   }, [initialData]);
 
@@ -76,51 +79,75 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       billingMonthly: '',
       endDate: '',
       status: 'Active',
-      EmployeeID: null
+      EmployeeID: null,
     });
-    setSelectedEmployee(null);
+    setSelectedEmployee('');
     setSearchTerm('');
   };
 
-  const handleEmployeeChange = (value) => {
+  const handleEmployeeChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
     setSelectedEmployee(value);
-    const employee = employeeOptions.find(emp => `${emp.FirstName} ${emp.LastName}` === value);
+
+    const employee = employeeOptions.find((emp) => `${emp.FirstName} ${emp.LastName}` === value);
     if (employee) {
-      setEmployeeDetails(prev => ({
+      setEmployeeDetails((prev) => ({
         ...prev,
         empCode: employee.EmpCode,
         role: employee.Role?.RoleName || '',
         level: employee.Level?.LevelName || '',
         organization: employee.Organisation?.Abbreviation || '',
-        EmployeeID: employee.id
+        EmployeeID: employee.id,
+      }));
+    } else {
+      // Clear employee-related fields if no valid employee is selected
+      setEmployeeDetails((prev) => ({
+        ...prev,
+        empCode: '',
+        role: '',
+        level: '',
+        organization: '',
+        EmployeeID: null,
       }));
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEmployeeDetails(prev => ({ ...prev, [name]: value }));
+    setEmployeeDetails((prev) => ({ ...prev, [name]: value }));
 
     if (name === 'status') {
       if (value === 'Inactive') {
-        setEmployeeDetails(prev => ({ ...prev, endDate: new Date().toISOString().split('T')[0] }));
+        setEmployeeDetails((prev) => ({
+          ...prev,
+          endDate: new Date().toISOString().split('T')[0],
+        }));
       } else {
-        setEmployeeDetails(prev => ({ ...prev, endDate: '' }));
+        setEmployeeDetails((prev) => ({ ...prev, endDate: '' }));
       }
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!employeeDetails.EmployeeID) return console.error('No employee selected');
+    if (!employeeDetails.EmployeeID) {
+      alert('Please select a valid employee.');
+      return;
+    }
+
+    if (!employeeDetails.startDate || !employeeDetails.billingMonthly) {
+      alert('Please fill in all required fields (Start Date and Monthly Billing).');
+      return;
+    }
 
     const payload = {
       EmployeeID: employeeDetails.EmployeeID,
       ClientID: initialData?.ClientID || null,
       StartDate: employeeDetails.startDate,
-      EndDate: employeeDetails.endDate,
-      MonthlyBilling: employeeDetails.billingMonthly,
-      Status: employeeDetails.status
+      EndDate: employeeDetails.endDate || null,
+      MonthlyBilling: Number(employeeDetails.billingMonthly),
+      Status: employeeDetails.status,
     };
 
     onSubmit(payload);
@@ -136,7 +163,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
     const payload = {
       EmployeeID: employeeDetails.EmployeeID,
-      delete: true
+      delete: true,
     };
 
     onSubmit(payload);
@@ -159,11 +186,8 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             <div className="w-full">
               <Label>Name</Label>
               <Input
-                value={selectedEmployee || ''}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setSelectedEmployee(e.target.value);
-                }}
+                value={searchTerm}
+                onChange={handleEmployeeChange}
                 list="employee-options"
                 placeholder="Search employee"
               />
@@ -205,6 +229,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
                 name="startDate"
                 value={employeeDetails.startDate}
                 onChange={handleChange}
+                required
               />
             </div>
             <div className="w-full">
@@ -214,6 +239,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
                 name="billingMonthly"
                 value={employeeDetails.billingMonthly}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -221,7 +247,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Status</Label>
-              <Select value={employeeDetails.status} onValueChange={(val) => handleChange({ target: { name: 'status', value: val } })}>
+              <Select
+                value={employeeDetails.status}
+                onValueChange={(val) =>
+                  handleChange({ target: { name: 'status', value: val } })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -247,11 +278,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
           <div className="flex justify-end gap-2 pt-2">
             {initialData && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-              >
+              <Button type="button" variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
             )}

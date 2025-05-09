@@ -5,17 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 
 const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [roleName, setRoleName] = useState('');
 
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    console.log('RoleModal useEffect:', { mode, initialData }); // Debugging
+    if (mode === 'edit' && initialData?.RoleName) {
       setRoleName(initialData.RoleName);
     } else {
       setRoleName('');
@@ -28,7 +27,12 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!roleName.trim()) {
+      console.error('Role name is required');
+      return;
+    }
     try {
+      console.log('Submitting role:', { ...initialData, RoleName: roleName }); // Debugging
       await onSubmit({ ...initialData, RoleName: roleName });
       onClose();
     } catch (error) {
@@ -40,11 +44,10 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white border-none rounded-2xl px-8 py-6">
         <form onSubmit={handleSubmit} className="space-y-2">
-          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b border-gray-200">
+          <DialogHeader className="pb-6 border-b border-gray-200">
             <DialogTitle className="text-xl font-normal">
               {mode === 'edit' ? 'Edit Role' : 'Create Role'}
             </DialogTitle>
-            
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
@@ -56,11 +59,23 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
               onChange={handleChange}
               required
               placeholder="Enter role name"
+              className="border-gray-300"
             />
           </div>
 
           <DialogFooter className="flex justify-end pt-4">
-            <Button type="submit" className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="mr-2 rounded-3xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+            >
               {mode === 'edit' ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>
