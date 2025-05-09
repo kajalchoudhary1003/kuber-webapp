@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -16,7 +16,10 @@ const OrderHeader = () => {
   };
 
   const handleTabChange = (value) => {
-    navigate(`/admin/${value}`);
+    // Force a hard navigation to ensure complete re-render
+    window.location.href = `/admin/${value}`;
+    // Alternative approach:
+    // navigate(`/admin/${value}`, { replace: true });
   };
 
   return (

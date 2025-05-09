@@ -1,5 +1,5 @@
-import React from 'react';
-import { useLocation, Outlet, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import OrderHeader from '../../OrderHeader/OrderHeader';
 import EmployeeMaster from '../components/EmployeeMaster';
 import EmployeeCost from '../components/EmployeeCost';
@@ -7,16 +7,24 @@ import ClientMaster from '../components/ClientMaster';
 import BillingSetup from '../components/BillingSetup';
 import OtherSettings from '../components/OtherSettings';
 
-
-
 export const AdminPage = () => {
   const location = useLocation();
+  const [currentPath, setCurrentPath] = useState(location.pathname);
   const isOtherSettings = location.pathname.includes('other-settings');
+
+  // Update currentPath when location changes
+  useEffect(() => {
+    setCurrentPath(location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="p-4">
       <OrderHeader />
-      <div className={!isOtherSettings ? 'mx-auto p-7' : ''}>
+      {/* Use key to force re-render when path changes */}
+      <div 
+        className={!isOtherSettings ? 'mx-auto p-7' : ''} 
+        key={currentPath}
+      >
         <Routes>
           <Route path="/" element={<Navigate to="employee-master" replace />} />
           <Route path="employee-master" element={<EmployeeMaster />} />
