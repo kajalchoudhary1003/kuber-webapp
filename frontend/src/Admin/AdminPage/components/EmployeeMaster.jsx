@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 // import axios from 'axios';
-import SearchBar from '../SearchBar/SearchBar';
-import EmployeeTable from '../EmployeeTable/EmployeeTable';
-import EmployeeModal from '../../Modal/EmployeeModal/EmployeeModal';
+import SearchBar from '@/Admin/SearchBar/SearchBar';
+import EmployeeTable from '@/Admin/EmployeeTable/EmployeeTable';
+import EmployeeModal from '@/Modal/EmployeeModal/EmployeeModal';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 

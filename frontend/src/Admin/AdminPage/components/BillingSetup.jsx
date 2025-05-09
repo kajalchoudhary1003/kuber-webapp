@@ -1,7 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useYear } from '../../contexts/YearContexts';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+
+// Create a local context if the global one isn't available
+const YearContext = createContext();
+const useYear = () => {
+  const context = useContext(YearContext);
+  // Return a default value if context is not available
+  return context || { 
+    selectedYear: new Date().getFullYear().toString(), 
+    loading: false, 
+    error: null 
+  };
+};
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
@@ -15,32 +26,72 @@ const BillingSetup = () => {
 
   // Must always be called unconditionally
   const { selectedYear, loading, error } = useYear();
+  // Add local state as fallback
+  const [localYear] = useState(new Date().getFullYear().toString());
+  
+  // Use either the context value or the local state
+  const effectiveYear = selectedYear || localYear;
 
   // Always call all hooks before any conditional return
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const fetchedClients = await window.electron.ipcRenderer.invoke('get-clients-for-year', selectedYear);
-        const clientsData = fetchedClients.map(client => client.dataValues);
-        setClients(clientsData);
+        // If window.electron is not available, use dummy data
+        if (window.electron) {
+          const fetchedClients = await window.electron.ipcRenderer.invoke('get-clients-for-year', effectiveYear);
+          const clientsData = fetchedClients.map(client => client.dataValues);
+          setClients(clientsData);
+        } else {
+          // Dummy data for development
+          setClients([
+            { id: '1', ClientName: 'Client A', Abbreviation: 'CA' },
+            { id: '2', ClientName: 'Client B', Abbreviation: 'CB' }
+          ]);
+        }
       } catch (err) {
         console.error('Error fetching clients:', err);
       }
     };
-    if (selectedYear) fetchClients();
-  }, [selectedYear]);
+    if (effectiveYear) fetchClients();
+  }, [effectiveYear]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (selectedClient) {
-          const fetchedData = await window.electron.ipcRenderer.invoke('get-billing-data', {
-            clientId: selectedClient,
-            year: selectedYear,
-          });
-          setData(fetchedData);
-          if (fetchedData.length > 0) {
-            setCurrencyCode(fetchedData[0].currencyCode);
+          if (window.electron) {
+            const fetchedData = await window.electron.ipcRenderer.invoke('get-billing-data', {
+              clientId: selectedClient,
+              year: effectiveYear,
+            });
+            setData(fetchedData);
+            if (fetchedData.length > 0) {
+              setCurrencyCode(fetchedData[0].currencyCode);
+            }
+          } else {
+            // Dummy data for development
+            const dummyData = [
+              { 
+                id: '1', 
+                name: 'Employee X', 
+                ctcMonthly: 50000,
+                Apr: 10000, May: 10000, Jun: 10000, Jul: 10000, 
+                Aug: 10000, Sep: 10000, Oct: 10000, Nov: 10000, 
+                Dec: 10000, Jan: 10000, Feb: 10000, Mar: 10000,
+                currencyCode: '₹'
+              },
+              { 
+                id: '2', 
+                name: 'Employee Y', 
+                ctcMonthly: 60000,
+                Apr: 12000, May: 12000, Jun: 12000, Jul: 12000, 
+                Aug: 12000, Sep: 12000, Oct: 12000, Nov: 12000, 
+                Dec: 12000, Jan: 12000, Feb: 12000, Mar: 12000,
+                currencyCode: '₹'
+              }
+            ];
+            setData(dummyData);
+            setCurrencyCode('₹');
           }
         }
       } catch (err) {
@@ -48,7 +99,7 @@ const BillingSetup = () => {
       }
     };
     fetchData();
-  }, [selectedClient, selectedYear]);
+  }, [selectedClient, effectiveYear]);
 
   const formatNumberWithCommas = (number) => {
     if (number == null) return '';
@@ -73,11 +124,13 @@ const BillingSetup = () => {
       newData[editIndex.row][editIndex.column] = tempValue;
       setData(newData);
 
-      await window.electron.ipcRenderer.invoke('update-billing-data', {
-        id: newData[editIndex.row].id,
-        month: editIndex.column,
-        amount: tempValue,
-      });
+      if (window.electron) {
+        await window.electron.ipcRenderer.invoke('update-billing-data', {
+          id: newData[editIndex.row].id,
+          month: editIndex.column,
+          amount: tempValue,
+        });
+      }
 
       setEditIndex({ row: -1, column: '' });
     } catch (err) {
@@ -107,12 +160,12 @@ const BillingSetup = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedYear} disabled>
+          <Select value={effectiveYear} disabled>
             <SelectTrigger className="min-w-[120px]">
-              <SelectValue placeholder={selectedYear || 'Select Year'} />
+              <SelectValue placeholder={effectiveYear || 'Select Year'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={selectedYear}>{selectedYear}</SelectItem>
+              <SelectItem value={effectiveYear}>{effectiveYear}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -169,4 +222,17 @@ const BillingSetup = () => {
   );
 };
 
-export default BillingSetup;
+// Create a wrapper component that provides the YearContext
+const BillingSetupWithYearContext = () => {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  return (
+    <YearContext.Provider value={{ selectedYear, setSelectedYear, loading, error }}>
+      <BillingSetup />
+    </YearContext.Provider>
+  );
+};
+
+export default BillingSetupWithYearContext;

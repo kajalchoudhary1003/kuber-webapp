@@ -12,7 +12,7 @@ const OrderHeader = () => {
     if (location.pathname.includes('/admin/client-master')) return 'client-master';
     if (location.pathname.includes('/admin/billing-setup')) return 'billing-setup';
     if (location.pathname.includes('/admin/other-settings')) return 'other-settings';
-    return 'employee-master';
+    return 'employee-master'; // Default tab
   };
 
   const handleTabChange = (value) => {
@@ -20,7 +20,7 @@ const OrderHeader = () => {
   };
 
   return (
-    <header className="  px-8 py-4 flex items-center justify-between">
+    <header className="px-8 py-4 flex items-center justify-between">
       <h1 className="text-2xl font-normal text-black">Admin</h1>
       <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
         <TabsList className="gap-4">

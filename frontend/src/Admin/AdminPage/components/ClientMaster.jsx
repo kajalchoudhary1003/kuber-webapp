@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ClientTable from '../ClientTable/ClientTable';
-import ClientModal from '../../Modal/EmployeeModal/ClientModel';
+import ClientTable from '@/Admin/ClientTable/ClientTable';
+import ClientModal from '@/Modal/EmployeeModal/ClientModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -126,7 +126,7 @@ const ClientMaster = () => {
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-sm"
               />
             </div>
-            <Button className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
+            <Button className="bg-blue-500 text-white  cursor-pointer hover:bg-blue-500/85 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
           </div>
         </div>
 

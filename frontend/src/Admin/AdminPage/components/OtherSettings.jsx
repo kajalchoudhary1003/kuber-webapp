@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
-import RoleModal from '../../Modal/EmployeeModal/RoleModal';
-import OrganisationModal from '../../Modal/EmployeeModal/OrganisationModal';
-import LevelModal from '../../Modal/EmployeeModal/LevelModal';
-import CurrencyExchangeModal from '../../Modal/EmployeeModal/CurrencyExchangeModal';
-import CurrencyModal from '../../Modal/EmployeeModal/CurrencyModal';
-import BankDetailModal from '../../Modal/EmployeeModal/BankDetailModal';
-import ConfirmationModal from '../../Modal/EmployeeModal/ConfirmationModal';
+import RoleModal from '../../../Modal/EmployeeModal/RoleModal';
+import OrganisationModal from '../../../Modal/EmployeeModal/OrganisationModal';
+import LevelModal from '../../../Modal/EmployeeModal/LevelModal';
+import CurrencyExchangeModal from '../../../Modal/EmployeeModal/CurrencyExchangeModal';
+import CurrencyModal from '../../../Modal/EmployeeModal/CurrencyModal';
+import BankDetailModal from '../../../Modal/EmployeeModal/BankDetailModal';
+import ConfirmationModal from '../../../Modal/EmployeeModal/ConfirmationModal';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useYear } from '../../contexts/YearContexts';
+import { useYear } from '../../../contexts/YearContexts';
+
+
+// Fallback for useYear if context is not available
+const useYearWithFallback = () => {
+  try {
+    return useYear() || { selectedYear: null, setSelectedYear: () => {} };
+  } catch (e) {
+    return { selectedYear: null, setSelectedYear: () => {} };
+  }
+};
+
+
 
 // Dummy data to simulate backend responses
 const dummyData = {
@@ -123,7 +135,8 @@ export const OtherSettings = () => {
   const [bankDetailModalData, setBankDetailModalData] = useState(null);
 
   const [financialYears, setFinancialYears] = useState([]);
-  const { selectedYear, setSelectedYear } = useYear();
+  const { selectedYear, setSelectedYear } = useYearWithFallback();
+
   const [page, setPage] = useState(1);
   const limit = 2;
   const [totalYears, setTotalYears] = useState(0);

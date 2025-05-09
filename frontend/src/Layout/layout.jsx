@@ -4,13 +4,13 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "../slidebar/slidebar"
 import { Header } from "../header/header"
 import PaymentTracker from "../Payments/PaymentsTracker"
-import Ledger from "../Ledger/Ledger" // Import the actual Ledger component
+import Ledger from "../Ledger/Ledger"
+import InvoiceGeneratorPage from "../InvoiceGenerator/InvoiceGenerator"
+import AdminPage from "../Admin/AdminPage/page/admin" // Import the actual AdminPage component
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>
-const Admin = () => <div className="p-6 text-lg font-medium">Admin Page</div>
-const Invoice = () => <div className="p-6 text-lg font-medium">Invoice Generator Page</div>
-// Remove the placeholder Ledger component since we're importing the real one
+// Remove the dummy Admin component since we're importing the real one
 
 const Layout = () => {
   const [collapsed, setCollapsed] = useState(false)
@@ -25,8 +25,8 @@ const Layout = () => {
             <div className="flex-1 overflow-auto p-6">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/invoice" element={<Invoice />} />
+                <Route path="/admin/*" element={<AdminPage />} />
+                <Route path="/invoice" element={<InvoiceGeneratorPage />} />
                 <Route path="/payment" element={<PaymentTracker />} />
                 <Route path="/ledger" element={<Ledger />} />
               </Routes>
