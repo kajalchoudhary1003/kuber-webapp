@@ -1,26 +1,38 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize');
+const Client = require('./clientModel');
 
-const ledgerSchema = new mongoose.Schema({
-  client: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
-    required: true,
+const Ledger = sequelize.define('Ledger', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  date: {
-    type: Date,
-    required: true,
+  ClientID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Client,
+      key: 'id',
+    },
   },
-  amount: {
-    type: mongoose.Schema.Types.Decimal128,
-    required: true,
+  Date: {
+    type: DataTypes.DATE,
+    allowNull: false,
   },
-  balance: {
-    type: mongoose.Schema.Types.Decimal128,
-    required: true,
-  }
+  Amount: {
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: false,
+  },
+  Balance: {
+    type: DataTypes.DECIMAL(18, 2),
+    allowNull: false,
+  },
 }, {
-  timestamps: true // adds createdAt and updatedAt fields
+  timestamps: true,
 });
 
-const Ledger = mongoose.model('Ledger', ledgerSchema);
+// Define associations
+Ledger.belongsTo(Client, { foreignKey: 'ClientID' });
+
 module.exports = Ledger;

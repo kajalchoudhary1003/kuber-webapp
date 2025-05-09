@@ -13,7 +13,7 @@ const createCurrency = async (currencyData) => {
 
 const getAllCurrencies = async () => {
   try {
-    const currencies = await Currency.find();
+    const currencies = await Currency.findAll();
     return currencies;
   } catch (error) {
     logger.error(`Error fetching currencies: ${error.message}`);
@@ -23,12 +23,12 @@ const getAllCurrencies = async () => {
 
 const updateCurrency = async (currencyId, updates) => {
   try {
-    const currency = await Currency.findById(currencyId);
+    const currency = await Currency.findByPk(currencyId);
     if (!currency) {
       throw new Error(`Currency with id ${currencyId} not found`);
     }
-    Object.assign(currency, updates);
-    return await currency.save();
+    await currency.update(updates);
+    return currency;
   } catch (error) {
     logger.error(`Error updating currency: ${error.message}`);
     throw new Error(`Error updating currency: ${error.message}`);
@@ -37,11 +37,11 @@ const updateCurrency = async (currencyId, updates) => {
 
 const deleteCurrency = async (currencyId) => {
   try {
-    const currency = await Currency.findById(currencyId);
+    const currency = await Currency.findByPk(currencyId);
     if (!currency) {
       throw new Error(`Currency with id ${currencyId} not found`);
     }
-    await currency.remove();
+    await currency.destroy();
     return { message: 'Currency deleted successfully' };
   } catch (error) {
     logger.error(`Error deleting currency: ${error.message}`);

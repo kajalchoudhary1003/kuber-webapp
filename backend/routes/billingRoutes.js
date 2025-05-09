@@ -3,13 +3,13 @@ const express = require('express');
 const router = express.Router();
 const billingController = require('../controllers/billingController');
 
-// Route to get billing data for a specific client and year
-router.get('/get-billing-data', billingController.getBillingData);
+// Get clients for a year
+router.get('/clients/:year', billingController.getClientsForYear);
 
-// Route to update billing data for a specific billing record
-router.put('/update-billing-data', billingController.updateBillingData);
+// Get billing data for a client and year
+router.get('/data/:clientId/:year', billingController.getBillingData);
 
-// Route to get clients for a specific year
-router.get('/get-clients-for-year', billingController.getClientsForYear);
+// Update billing data
+router.put('/data/:id', billingController.updateBillingData);
 
 module.exports = router;

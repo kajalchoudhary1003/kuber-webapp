@@ -1,74 +1,151 @@
+const { Op } = require('sequelize');
 const Client = require('../models/clientModel');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Currency = require('../models/currencyModel');
 const Organisation = require('../models/organisationModel');
 const BankDetail = require('../models/bankDetailModel');
 
-const createClient = async (data) => {
-  const existing = await Client.findOne({ ClientName: data.ClientName, deletedAt: { $exists: false } });
-  if (existing) throw new Error('Client with the same name already exists');
+const clientService = {
+  async getAllClients() {
+    try {
+      const clients = await Client.findAll({
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'Currency' }
+        ]
+      });
+      return clients;
+    } catch (error) {
+      throw new Error(`Error fetching clients: ${error.message}`);
+    }
+  },
 
-  const client = await Client.create(data);
-  return client;
-};
+  async getClientById(id) {
+    try {
+      const client = await Client.findByPk(id, {
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'Currency' }
+        ]
+      });
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      return client;
+    } catch (error) {
+      throw new Error(`Error fetching client: ${error.message}`);
+    }
+  },
 
-const getAllClients = async () => {
-  return await Client.find()
-    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
-};
+  async createClient(clientData) {
+    try {
+      const client = await Client.create(clientData);
+      return client;
+    } catch (error) {
+      throw new Error(`Error creating client: ${error.message}`);
+    }
+  },
 
-const getAllActiveClients = async () => {
-  const clientIds = await ClientEmployee.find({ Status: 'Active' }).distinct('ClientID');
-  return await Client.find({ _id: { $in: clientIds } })
-    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
-};
+  async updateClient(id, clientData) {
+    try {
+      const client = await Client.findByPk(id);
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      await client.update(clientData);
+      return client;
+    } catch (error) {
+      throw new Error(`Error updating client: ${error.message}`);
+    }
+  },
 
-const getAllInactiveClients = async () => {
-  const clientIds = await ClientEmployee.find({ Status: 'Inactive' }).distinct('ClientID');
-  return await Client.find({ _id: { $in: clientIds } })
-    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode');
-};
+  async deleteClient(id) {
+    try {
+      const client = await Client.findByPk(id);
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      await client.destroy();
+      return { message: 'Client deleted successfully' };
+    } catch (error) {
+      throw new Error(`Error deleting client: ${error.message}`);
+    }
+  },
 
-const updateClient = async (clientId, updates) => {
-  const existing = await Client.findOne({ ClientName: updates.ClientName, _id: { $ne: clientId }, deletedAt: { $exists: false } });
-  if (existing) throw new Error('Client with the same name already exists');
+  async searchClients(query) {
+    try {
+      const clients = await Client.findAll({
+        where: {
+          [Op.or]: [
+            { ClientName: { [Op.like]: `%${query}%` } },
+            { Abbreviation: { [Op.like]: `%${query}%` } },
+            { ContactPerson: { [Op.like]: `%${query}%` } },
+            { Email: { [Op.like]: `%${query}%` } }
+          ]
+        },
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'Currency' }
+        ]
+      });
+      return clients;
+    } catch (error) {
+      throw new Error(`Error searching clients: ${error.message}`);
+    }
+  },
 
-  const updated = await Client.findByIdAndUpdate(clientId, updates, { new: true });
-  if (!updated) throw new Error('Client not found');
-  return updated;
-};
+  async getAllActiveClients() {
+    try {
+      const activeClientIds = await ClientEmployee.findAll({
+        where: { Status: 'Active' },
+        attributes: ['ClientID'],
+        group: ['ClientID']
+      });
 
-const deleteClient = async (clientId) => {
-  const client = await Client.findById(clientId);
-  if (!client) throw new Error('Client not found');
+      const clientIds = activeClientIds.map(ce => ce.ClientID);
+      
+      const clients = await Client.findAll({
+        where: { id: clientIds },
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'Currency' }
+        ]
+      });
+      
+      return clients;
+    } catch (error) {
+      throw new Error(`Error fetching active clients: ${error.message}`);
+    }
+  },
 
-  const activeEmployees = await ClientEmployee.find({ ClientID: clientId, Status: 'Active' });
-  if (activeEmployees.length > 0) {
-    throw new Error('Cannot delete client with active employee associations');
+  async getAllInactiveClients() {
+    try {
+      const inactiveClientIds = await ClientEmployee.findAll({
+        where: { Status: 'Inactive' },
+        attributes: ['ClientID'],
+        group: ['ClientID']
+      });
+
+      const clientIds = inactiveClientIds.map(ce => ce.ClientID);
+      
+      const clients = await Client.findAll({
+        where: { id: clientIds },
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'Currency' }
+        ]
+      });
+      
+      return clients;
+    } catch (error) {
+      throw new Error(`Error fetching inactive clients: ${error.message}`);
+    }
   }
-
-  await ClientEmployee.deleteMany({ ClientID: clientId });
-  await Client.findByIdAndDelete(clientId);
-
-  return { message: 'Client and associated employees deleted successfully' };
 };
 
-const getClientById = async (clientId) => {
-  const client = await Client.findById(clientId)
-    .populate('BillingCurrencyID', 'CurrencyName CurrencyCode')
-    .populate('OrganisationID', 'OrganisationName')
-    .populate('BankDetailID', 'BankName');
-
-  if (!client) throw new Error('Client not found');
-  return client;
-};
-
-module.exports = {
-  createClient,
-  getAllClients,
-  getAllActiveClients,
-  getAllInactiveClients,
-  updateClient,
-  deleteClient,
-  getClientById,
-};
+module.exports = clientService;

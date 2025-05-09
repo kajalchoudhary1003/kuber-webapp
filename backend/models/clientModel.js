@@ -1,18 +1,56 @@
 // models/clientModel.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize');
 
-const clientSchema = new Schema({
-  ClientName: { type: String, required: true },
-  Abbreviation: { type: String, required: true },
-  ContactPerson: { type: String, required: true },
-  Email: { type: String, required: true },
-  RegisteredAddress: { type: String, required: true },
-  BillingCurrencyID: { type: Schema.Types.ObjectId, ref: 'Currency', required: true }, 
-  OrganisationID: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true }, 
-  BankDetailID: { type: Schema.Types.ObjectId, ref: 'BankDetail', required: true },
-  paymentLastUpdated: { type: Date },
-}, { timestamps: true });
+const Client = sequelize.define('Client', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  ClientName: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  Abbreviation: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+  },
+  ContactPerson: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  Email: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  RegisteredAddress: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  BillingCurrencyID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  OrganisationID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  BankDetailID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  paymentLastUpdated: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  paranoid: true, 
+});
 
-
-module.exports = mongoose.model('Client', clientSchema);
+module.exports = Client;

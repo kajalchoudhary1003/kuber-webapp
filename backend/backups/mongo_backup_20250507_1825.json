@@ -1,0 +1,280 @@
+{
+  "clientemployees": [],
+  "organisations": [
+    {
+      "_id": "681b310545617ddf7076a6e1",
+      "OrganisationName": "rdftjgh",
+      "Abbreviation": "dhrtfgvhm",
+      "RegNumber": "rdytfjgyh",
+      "__v": 0
+    },
+    {
+      "_id": "681b315b45617ddf7076a701",
+      "OrganisationName": "cgvm",
+      "Abbreviation": "gvhmbn",
+      "RegNumber": "ghbj",
+      "__v": 0
+    }
+  ],
+  "reconciliationnotes": [],
+  "roles": [
+    {
+      "_id": "681b313945617ddf7076a6f3",
+      "RoleName": "rdgfcb",
+      "__v": 0
+    },
+    {
+      "_id": "681b320c45617ddf7076a717",
+      "RoleName": "gjyhbn",
+      "__v": 0
+    }
+  ],
+  "bankdetails": [
+    {
+      "_id": "681b30f545617ddf7076a6df",
+      "BankName": "fdfgcv",
+      "AccountNumber": "fhgvh",
+      "SwiftCode": "drhfghdrfhgh",
+      "IfscCode": "tfyg",
+      "createdAt": "2025-05-07T10:07:49.313Z",
+      "updatedAt": "2025-05-07T10:07:49.313Z",
+      "__v": 0
+    },
+    {
+      "_id": "681b316345617ddf7076a703",
+      "BankName": "cgvhm",
+      "AccountNumber": "gvhb",
+      "SwiftCode": "gvh",
+      "IfscCode": "tgh",
+      "createdAt": "2025-05-07T10:09:39.161Z",
+      "updatedAt": "2025-05-07T10:09:39.161Z",
+      "__v": 0
+    }
+  ],
+  "currencies": [
+    {
+      "_id": "681b2fcf45617ddf7076a693",
+      "CurrencyCode": "rs",
+      "CurrencyName": "rupees",
+      "__v": 0
+    },
+    {
+      "_id": "681b2ffb45617ddf7076a6a5",
+      "CurrencyCode": "$",
+      "CurrencyName": "usd",
+      "__v": 0
+    },
+    {
+      "_id": "681b310c45617ddf7076a6e3",
+      "CurrencyCode": "drhtfgjh",
+      "CurrencyName": "fhgv",
+      "__v": 0
+    }
+  ],
+  "invoices": [],
+  "paymenttrackers": [],
+  "billingdetails": [],
+  "financialyears": [],
+  "ledgers": [],
+  "employeecosts": [
+    {
+      "_id": "681ad71d9c40a4411ff1e52f",
+      "EmployeeID": "681ad71c9c40a4411ff1e52d",
+      "Year": 2025,
+      "Apr": {
+        "$numberDecimal": "0"
+      },
+      "May": {
+        "$numberDecimal": "150000"
+      },
+      "Jun": {
+        "$numberDecimal": "100000"
+      },
+      "Jul": {
+        "$numberDecimal": "100000"
+      },
+      "Aug": {
+        "$numberDecimal": "100000"
+      },
+      "Sep": {
+        "$numberDecimal": "100000"
+      },
+      "Oct": {
+        "$numberDecimal": "100000"
+      },
+      "Nov": {
+        "$numberDecimal": "100000"
+      },
+      "Dec": {
+        "$numberDecimal": "100000"
+      },
+      "Jan": {
+        "$numberDecimal": "100000"
+      },
+      "Feb": {
+        "$numberDecimal": "100000"
+      },
+      "Mar": {
+        "$numberDecimal": "100000"
+      },
+      "createdAt": "2025-05-07T03:44:29.110Z",
+      "updatedAt": "2025-05-07T08:07:35.951Z",
+      "__v": 0
+    },
+    {
+      "_id": "681b162cfd482f669c65358b",
+      "EmployeeID": "681b162cfd482f669c653589",
+      "Year": 2025,
+      "Apr": {
+        "$numberDecimal": "0"
+      },
+      "May": {
+        "$numberDecimal": "50000"
+      },
+      "Jun": {
+        "$numberDecimal": "50000"
+      },
+      "Jul": {
+        "$numberDecimal": "50000"
+      },
+      "Aug": {
+        "$numberDecimal": "50000"
+      },
+      "Sep": {
+        "$numberDecimal": "50000"
+      },
+      "Oct": {
+        "$numberDecimal": "50000"
+      },
+      "Nov": {
+        "$numberDecimal": "50000"
+      },
+      "Dec": {
+        "$numberDecimal": "50000"
+      },
+      "Jan": {
+        "$numberDecimal": "50000"
+      },
+      "Feb": {
+        "$numberDecimal": "50000"
+      },
+      "Mar": {
+        "$numberDecimal": "50000"
+      },
+      "createdAt": "2025-05-07T08:13:32.119Z",
+      "updatedAt": "2025-05-07T08:13:32.119Z",
+      "__v": 0
+    },
+    {
+      "_id": "681b25b9f8e6633b809047ad",
+      "EmployeeID": "681b25b9f8e6633b809047ab",
+      "Year": 2025,
+      "Apr": {
+        "$numberDecimal": "0"
+      },
+      "May": {
+        "$numberDecimal": "100000"
+      },
+      "Jun": {
+        "$numberDecimal": "100000"
+      },
+      "Jul": {
+        "$numberDecimal": "100000"
+      },
+      "Aug": {
+        "$numberDecimal": "100000"
+      },
+      "Sep": {
+        "$numberDecimal": "100000"
+      },
+      "Oct": {
+        "$numberDecimal": "100000"
+      },
+      "Nov": {
+        "$numberDecimal": "100000"
+      },
+      "Dec": {
+        "$numberDecimal": "100000"
+      },
+      "Jan": {
+        "$numberDecimal": "100000"
+      },
+      "Feb": {
+        "$numberDecimal": "100000"
+      },
+      "Mar": {
+        "$numberDecimal": "100000"
+      },
+      "createdAt": "2025-05-07T09:19:53.986Z",
+      "updatedAt": "2025-05-07T09:19:53.986Z",
+      "__v": 0
+    }
+  ],
+  "clients": [],
+  "levels": [
+    {
+      "_id": "681b314445617ddf7076a6f6",
+      "LevelName": "segrfhgvm",
+      "__v": 0
+    },
+    {
+      "_id": "681b325e45617ddf7076a721",
+      "LevelName": "adsfdgfgh",
+      "__v": 0
+    }
+  ],
+  "currencyexchangerates": [],
+  "employees": [
+    {
+      "_id": "681ad71c9c40a4411ff1e52d",
+      "FirstName": "John",
+      "LastName": "Doe",
+      "EmpCode": "EMP1001",
+      "RoleID": 1,
+      "LevelID": 2,
+      "OrganisationID": 101,
+      "CTCAnnual": 1200000,
+      "CTCMonthly": 100000,
+      "ContactNumber": "9876543210",
+      "Email": "john.doe@example.com",
+      "Status": "Active",
+      "createdAt": "2025-05-07T03:44:29.000Z",
+      "updatedAt": "2025-05-07T03:44:29.000Z",
+      "__v": 0
+    },
+    {
+      "_id": "681b162cfd482f669c653589",
+      "FirstName": "Rohan",
+      "LastName": "Don",
+      "EmpCode": "EMP123456",
+      "RoleID": 1,
+      "LevelID": 2,
+      "OrganisationID": 101,
+      "CTCAnnual": 600000,
+      "CTCMonthly": 50000,
+      "ContactNumber": "1234567890",
+      "Email": "john.doe@example.com",
+      "Status": "Active",
+      "createdAt": "2025-05-07T08:13:32.007Z",
+      "updatedAt": "2025-05-07T08:16:07.915Z",
+      "__v": 0
+    },
+    {
+      "_id": "681b25b9f8e6633b809047ab",
+      "FirstName": "Mohn",
+      "LastName": "Roy",
+      "EmpCode": "EMP123465",
+      "RoleID": 4,
+      "LevelID": 3,
+      "OrganisationID": 102,
+      "CTCAnnual": 1200000,
+      "CTCMonthly": 100000,
+      "ContactNumber": "1234567777",
+      "Email": "mohan.roy@example.com",
+      "Status": "Active",
+      "createdAt": "2025-05-07T09:19:53.882Z",
+      "updatedAt": "2025-05-07T09:19:53.882Z",
+      "__v": 0
+    }
+  ]
+}

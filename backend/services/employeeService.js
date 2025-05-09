@@ -1,35 +1,22 @@
+const { Op } = require('sequelize');
 const Employee = require('../models/employeeModel');
-const EmployeeCost = require('../models/employeeCostModel');
+const Organisation = require('../models/organisationModel');
+const ClientEmployee = require('../models/clientEmployeeModel');
+const Client = require('../models/clientModel');
 const logger = require('../utils/logger');
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
 const createEmployee = async (employeeData) => {
   try {
-    const employee = new Employee(employeeData);
-    await employee.save();
-
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    const ctcMonthly = parseFloat(employee.CTCMonthly);
-    const fiscalYear = currentMonth >= 4 ? currentYear : currentYear - 1;
-
-    const employeeCostData = {
-      EmployeeID: employee._id,
-      Year: fiscalYear,
-    };
-
-    fiscalMonths.forEach((month, index) => {
-      const fiscalMonthIndex = (index + 4) % 12 || 12;
-      if (fiscalMonthIndex >= currentMonth || fiscalMonthIndex <= 3) {
-        employeeCostData[month] = ctcMonthly;
-      }
+    const existingEmployee = await Employee.findOne({
+      where: { EmpCode: employeeData.EmpCode }
     });
-
-    const employeeCost = new EmployeeCost(employeeCostData);
-    await employeeCost.save();
-
-    return employee.toObject();
+    if (existingEmployee) {
+      throw new Error('Employee with this code already exists');
+    }
+    const employee = await Employee.create(employeeData);
+    return employee;
   } catch (error) {
     throw new Error(`Error creating employee: ${error.message}`);
   }
@@ -37,42 +24,23 @@ const createEmployee = async (employeeData) => {
 
 const updateEmployee = async (employeeId, updates) => {
   try {
-    const employee = await Employee.findById(employeeId);
+    const employee = await Employee.findByPk(employeeId);
     if (!employee) {
-      throw new Error(`Employee with id ${employeeId} not found`);
+      throw new Error('Employee not found');
     }
 
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    const fiscalYear = currentMonth >= 4 ? currentYear : currentYear - 1;
-
-    if (updates.CTCMonthly && parseFloat(updates.CTCMonthly) !== parseFloat(employee.CTCMonthly)) {
-      logger.info('CTC has changed, updating EmployeeCost document...');
-      let employeeCost = await EmployeeCost.findOne({ EmployeeID: employee._id, Year: fiscalYear });
-
-      if (!employeeCost) {
-        employeeCost = new EmployeeCost({
-          EmployeeID: employee._id,
-          Year: fiscalYear,
-        });
-      }
-
-      fiscalMonths.forEach((month, index) => {
-        const fiscalMonthIndex = (index + 4) % 12 || 12;
-        if (fiscalMonthIndex >= currentMonth || fiscalMonthIndex <= 3) {
-          employeeCost[month] = parseFloat(updates.CTCMonthly);
-        }
+    if (updates.EmpCode && updates.EmpCode !== employee.EmpCode) {
+      const existingEmployee = await Employee.findOne({
+        where: { EmpCode: updates.EmpCode }
       });
-
-      await employeeCost.save();
+      if (existingEmployee) {
+        throw new Error('Employee with this code already exists');
+      }
     }
 
-    Object.assign(employee, updates);
-    await employee.save();
-
-    return employee.toObject();
+    await employee.update(updates);
+    return employee;
   } catch (error) {
-    logger.error(`Error updating employee: ${error.message}`);
     throw new Error(`Error updating employee: ${error.message}`);
   }
 };
@@ -80,21 +48,25 @@ const updateEmployee = async (employeeId, updates) => {
 const getAllEmployees = async (page = 1, limit = 10, query = '') => {
   try {
     const offset = (page - 1) * limit;
-    const searchCondition = query
+    const whereClause = query
       ? {
-          $or: [
-            { FirstName: { $regex: query, $options: 'i' } },
-            { LastName: { $regex: query, $options: 'i' } },
+          [Op.or]: [
+            { FirstName: { [Op.like]: `%${query}%` } },
+            { LastName: { [Op.like]: `%${query}%` } },
           ],
         }
       : {};
 
-    const employees = await Employee.find(searchCondition)
-      .skip(offset)
-      .limit(limit)
-      .lean();
+    const employees = await Employee.findAll({
+      where: whereClause,
+      include: [
+        { model: Organisation, as: 'Organisation' }
+      ],
+      offset,
+      limit
+    });
 
-    const total = await Employee.countDocuments(searchCondition);
+    const total = await Employee.count({ where: whereClause });
 
     return {
       employees,
@@ -107,64 +79,82 @@ const getAllEmployees = async (page = 1, limit = 10, query = '') => {
 
 const getEmployeeById = async (employeeId) => {
   try {
-    const employee = await Employee.findById(employeeId).lean();
+    const employee = await Employee.findByPk(employeeId, {
+      include: [
+        { model: Organisation, as: 'Organisation' }
+      ]
+    });
     if (!employee) {
-      throw new Error(`Employee with id ${employeeId} not found`);
+      throw new Error('Employee not found');
     }
     return employee;
   } catch (error) {
-    logger.error(`Error fetching employee: ${error.message}`);
     throw new Error(`Error fetching employee: ${error.message}`);
   }
 };
 
 const deleteEmployee = async (employeeId) => {
   try {
-    const employee = await Employee.findOne({ _id: employeeId }, 'Status');
-
+    const employee = await Employee.findByPk(employeeId);
     if (!employee) {
       throw new Error('Employee not found');
     }
 
-    if (employee.Status === 'Active') {
-      throw new Error('Active employee cannot be deleted');
+    const activeAssignments = await ClientEmployee.findOne({
+      where: { EmployeeID: employeeId, Status: 'Active' }
+    });
+
+    if (activeAssignments) {
+      throw new Error('Cannot delete employee with active client assignments');
     }
 
-    await Employee.deleteOne({ _id: employeeId });
+    await employee.destroy();
     return { message: 'Employee deleted successfully' };
   } catch (error) {
-    logger.error(`Error deleting employee: ${error.message}`);
     throw new Error(`Error deleting employee: ${error.message}`);
   }
 };
 
-
 const searchEmployees = async (query) => {
   try {
-    if (!query || !query.trim()) {
-      logger.warn('Search query is empty');
-      return [];
-    }
-
-    logger.info(`Searching employees with query: "${query}"`);
-    
-    const employees = await Employee.find(
-      {
-        $or: [
-          { FirstName: new RegExp(query, 'i') },
-          { LastName: new RegExp(query, 'i') }
+    const employees = await Employee.findAll({
+      where: {
+        [Op.or]: [
+          { FirstName: { [Op.like]: `%${query}%` } },
+          { LastName: { [Op.like]: `%${query}%` } },
+          { EmpCode: { [Op.like]: `%${query}%` } },
+          { Email: { [Op.like]: `%${query}%` } }
         ]
       },
-      'FirstName LastName EmpCode Email Status' // only return selected fields
-    ).lean();
-
+      include: [
+        { model: Organisation, as: 'Organisation' }
+      ]
+    });
     return employees;
   } catch (error) {
-    logger.error(`Error searching employees: ${error.message}`);
     throw new Error(`Error searching employees: ${error.message}`);
   }
 };
 
+const getEmployeeClients = async (id) => {
+  try {
+    const employee = await Employee.findByPk(id);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const clientAssignments = await ClientEmployee.findAll({
+      where: { EmployeeID: id },
+      include: [
+        { model: Client, as: 'Client' }
+      ]
+    });
+
+    return clientAssignments;
+  } catch (error) {
+    throw new Error(`Error fetching employee clients: ${error.message}`);
+  }
+};
 
 module.exports = {
   createEmployee,
@@ -173,4 +163,5 @@ module.exports = {
   updateEmployee,
   deleteEmployee,
   searchEmployees,
+  getEmployeeClients,
 };

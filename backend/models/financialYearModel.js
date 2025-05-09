@@ -1,18 +1,15 @@
 // models/financialYearModel.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize');
 
-// Define the schema for FinancialYear
-const financialYearSchema = new mongoose.Schema({
+const FinancialYear = sequelize.define('FinancialYear', {
   year: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
     unique: true,
   },
 }, {
-  timestamps: false, // Disable automatic creation of timestamps
+  timestamps: false,
 });
-
-// Create the model from the schema
-const FinancialYear = mongoose.model('FinancialYear', financialYearSchema);
 
 module.exports = FinancialYear;

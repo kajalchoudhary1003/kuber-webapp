@@ -1,26 +1,40 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../db/connectDB');
+const Currency = require('./currencyModel');
 
-const currencyExchangeRateSchema = new mongoose.Schema({
+const CurrencyExchangeRate = sequelize.define('CurrencyExchangeRate', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   CurrencyFromID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Currency',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Currency,
+      key: 'id',
+    },
   },
   CurrencyToID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Currency',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Currency,
+      key: 'id',
+    },
   },
-  ExchangeRate: {
-    type: mongoose.Schema.Types.Decimal128,
-    required: true,
+  Rate: {
+    type: DataTypes.DECIMAL(18, 6),
+    allowNull: false,
   },
-  Year: {
-    type: Number,
-    required: true,
+  Date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
   },
-}, { timestamps: true });
+}, {
+  timestamps: true,
+});
 
-currencyExchangeRateSchema.index({ CurrencyFromID: 1, CurrencyToID: 1, Year: 1 }, { unique: true });
-
-module.exports = mongoose.model('CurrencyExchangeRate', currencyExchangeRateSchema);
+module.exports = CurrencyExchangeRate;

@@ -1,75 +1,159 @@
+const { Op } = require('sequelize');
 const EmployeeCost = require('../models/employeeCostModel');
 const Employee = require('../models/employeeModel');
-const mongoose = require('mongoose');
 
-const getEmployeeCostData = async (year) => {
-  try {
-    const costs = await EmployeeCost.find({ Year: year }).populate({
-      path: 'EmployeeID', // Corrected field name 
-      select: 'FirstName LastName',
-      options: { withDeleted: true } // Optional, if using mongoose-delete for soft deletes
-    });
+const employeeCostService = {
+  async getAllEmployeeCosts() {
+    try {
+      const costs = await EmployeeCost.findAll({
+        include: [{ model: Employee, as: 'Employee' }],
+        order: [['Year', 'DESC'], ['Month', 'DESC']]
+      });
+      return costs;
+    } catch (error) {
+      throw new Error('Error fetching employee costs: ' + error.message);
+    }
+  },
 
-    return costs.map(cost => ({
-      id: cost._id,
-      name: `${cost.EmployeeID?.FirstName || ''} ${cost.EmployeeID?.LastName || ''}`,
-      Apr: cost.Apr,
-      May: cost.May,
-      Jun: cost.Jun,
-      Jul: cost.Jul,
-      Aug: cost.Aug,
-      Sep: cost.Sep,
-      Oct: cost.Oct,
-      Nov: cost.Nov,
-      Dec: cost.Dec,
-      Jan: cost.Jan,
-      Feb: cost.Feb,
-      Mar: cost.Mar,
-    }));
-  } catch (error) {
-    throw new Error(`Error fetching employee cost data: ${error.message}`);
+  async getEmployeeCostById(id) {
+    try {
+      const cost = await EmployeeCost.findByPk(id, {
+        include: [{ model: Employee, as: 'Employee' }]
+      });
+      if (!cost) {
+        throw new Error('Employee cost not found');
+      }
+      return cost;
+    } catch (error) {
+      throw new Error('Error fetching employee cost: ' + error.message);
+    }
+  },
+
+  async createEmployeeCost(costData) {
+    try {
+      // Validate employee exists
+      const employee = await Employee.findByPk(costData.EmployeeID);
+      if (!employee) {
+        throw new Error('Employee not found');
+      }
+
+      // Check for existing cost record
+      const existingCost = await EmployeeCost.findOne({
+        where: {
+          EmployeeID: costData.EmployeeID,
+          Year: costData.Year,
+          Month: costData.Month
+        }
+      });
+
+      if (existingCost) {
+        throw new Error('Cost record already exists for this employee and period');
+      }
+
+      const cost = await EmployeeCost.create(costData);
+      return cost;
+    } catch (error) {
+      throw new Error('Error creating employee cost: ' + error.message);
+    }
+  },
+
+  async updateEmployeeCost(id, costData) {
+    try {
+      const cost = await EmployeeCost.findByPk(id);
+      if (!cost) {
+        throw new Error('Employee cost not found');
+      }
+
+      // If employee is being changed, validate it exists
+      if (costData.EmployeeID && costData.EmployeeID !== cost.EmployeeID) {
+        const employee = await Employee.findByPk(costData.EmployeeID);
+        if (!employee) {
+          throw new Error('Employee not found');
+        }
+      }
+
+      // Check for duplicate if period or employee is being changed
+      if (costData.Year || costData.Month || costData.EmployeeID) {
+        const existingCost = await EmployeeCost.findOne({
+          where: {
+            EmployeeID: costData.EmployeeID || cost.EmployeeID,
+            Year: costData.Year || cost.Year,
+            Month: costData.Month || cost.Month,
+            id: { [Op.ne]: id }
+          }
+        });
+
+        if (existingCost) {
+          throw new Error('Cost record already exists for this employee and period');
+        }
+      }
+
+      await cost.update(costData);
+      return cost;
+    } catch (error) {
+      throw new Error('Error updating employee cost: ' + error.message);
+    }
+  },
+
+  async deleteEmployeeCost(id) {
+    try {
+      const cost = await EmployeeCost.findByPk(id);
+      if (!cost) {
+        throw new Error('Employee cost not found');
+      }
+      await cost.destroy();
+      return { message: 'Employee cost deleted successfully' };
+    } catch (error) {
+      throw new Error('Error deleting employee cost: ' + error.message);
+    }
+  },
+
+  async searchEmployeeCosts(query) {
+    try {
+      const costs = await EmployeeCost.findAll({
+        where: {
+          [Op.or]: [
+            { Year: { [Op.like]: `%${query}%` } },
+            { Month: { [Op.like]: `%${query}%` } }
+          ]
+        },
+        include: [{ model: Employee, as: 'Employee' }],
+        order: [['Year', 'DESC'], ['Month', 'DESC']]
+      });
+      return costs;
+    } catch (error) {
+      throw new Error('Error searching employee costs: ' + error.message);
+    }
+  },
+
+  async getEmployeeCostsByEmployee(employeeId) {
+    try {
+      const costs = await EmployeeCost.findAll({
+        where: { EmployeeID: employeeId },
+        include: [{ model: Employee, as: 'Employee' }],
+        order: [['Year', 'DESC'], ['Month', 'DESC']]
+      });
+      return costs;
+    } catch (error) {
+      throw new Error('Error fetching employee costs: ' + error.message);
+    }
+  },
+
+  async getEmployeeCostsByPeriod(year, month) {
+    try {
+      const costs = await EmployeeCost.findAll({
+        where: {
+          Year: year,
+          Month: month
+        },
+        include: [{ model: Employee, as: 'Employee' }],
+        order: [['EmployeeID', 'ASC']]
+      });
+      return costs;
+    } catch (error) {
+      throw new Error('Error fetching employee costs: ' + error.message);
+    }
   }
 };
 
-const updateEmployeeCostData = async (id, month, amount) => {
-
-  const validMonths = [
-    'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
-  ];
-
-  try {
-    // Check if the ID is valid
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new Error(`Invalid ObjectId: ${id}`);
-    }
-
-    if (!validMonths.includes(month)) {
-      throw new Error(`Invalid month: ${month}. Valid months are ${validMonths.join(', ')}`);
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount)) {
-      throw new Error(`Invalid amount: ${amount}. Please provide a valid number.`);
-    }
-
-    const updatedEmployeeCost = await EmployeeCost.findOneAndUpdate(
-      { _id: id },
-      { $set: { [month]: parsedAmount } }, 
-      { new: true, runValidators: true }    // `new: true` ensures we get the updated document back
-    );
-
-    if (!updatedEmployeeCost) {
-      throw new Error(`EmployeeCost with id ${id} not found`);
-    }
-
-    return updatedEmployeeCost;
-  } catch (error) {
-    throw new Error(`Error updating employee cost data: ${error.message}`);
-  }
-};
-
-
-module.exports = {
-  getEmployeeCostData,
-  updateEmployeeCostData,
-};
+module.exports = employeeCostService;

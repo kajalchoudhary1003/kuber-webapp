@@ -1,158 +1,190 @@
-const mongoose = require('mongoose');
+const { Op } = require('sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
-const BillingDetail = require('../models/billingDetailModel');
-const Employee = require('../models/employeeModel');
 const Client = require('../models/clientModel');
-const Role = require('../models/roleModel');
-const Level = require('../models/levelModel');
-const Organisation = require('../models/organisationModel');
+const Employee = require('../models/employeeModel');
 
-// Fiscal months array
-const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-const STATUS = { ACTIVE: 'Active', INACTIVE: 'Inactive' };
-const FISCAL_YEAR_START_MONTH = 4;  // April is the start of the fiscal year
-
-// Assigns an employee to a client and updates billing details.
-const assignEmployeeToClient = async (data) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    await validateData(data);
-
-    const existingRecord = await ClientEmployee.findOne({
-      EmployeeID: data.EmployeeID,
-      ClientID: data.ClientID,
-      Status: { $ne: STATUS.INACTIVE },
-    }).session(session);
-
-    if (existingRecord) {
-      throw new Error('Resource already exists');
+const clientEmployeeService = {
+  async getAllClientEmployees() {
+    try {
+      const clientEmployees = await ClientEmployee.findAll({
+        include: [
+          {
+            model: Client,
+            attributes: ['ClientName', 'ClientCode']
+          },
+          {
+            model: Employee,
+            attributes: ['EmployeeName', 'EmployeeCode']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+      return clientEmployees;
+    } catch (error) {
+      throw new Error('Error fetching client employees: ' + error.message);
     }
+  },
 
-    const clientEmployee = await ClientEmployee.create([data], { session });
-
-    await updateBillingDetail(data, session);
-
-    await session.commitTransaction();
-    session.endSession();
-    return clientEmployee[0];
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new Error(`Error assigning employee to client: ${error.message}`);
-  }
-};
-
-// Updates billing details based on the start and inactive dates.
-const updateBillingDetail = async (data, session, inactiveDate = null, yearOverride = null) => {
-  const fiscalYear = yearOverride || getFiscalYear(data.MonthIndex);
-
-  // Update billing details with the monthly billing value
-  await BillingDetail.updateOne(
-    { EmployeeID: data.EmployeeID, ClientID: data.ClientID, Year: fiscalYear },
-    { 
-      $set: { 
-        [fiscalMonths[data.MonthIndex]]: data.MonthlyBilling,
-        Status: inactiveDate ? STATUS.INACTIVE : STATUS.ACTIVE,
-        InactiveDate: inactiveDate || null,
+  async getClientEmployeeById(id) {
+    try {
+      const clientEmployee = await ClientEmployee.findByPk(id, {
+        include: [
+          {
+            model: Client,
+            attributes: ['ClientName', 'ClientCode']
+          },
+          {
+            model: Employee,
+            attributes: ['EmployeeName', 'EmployeeCode']
+          }
+        ]
+      });
+      if (!clientEmployee) {
+        throw new Error('Client employee not found');
       }
-    },
-    { session }
-  );
-};
-
-// Helper function to get the fiscal year based on the month index
-const getFiscalYear = (monthIndex) => {
-  const currentYear = new Date().getFullYear();
-  if (monthIndex < FISCAL_YEAR_START_MONTH) {
-    // If month is before April, it's the previous fiscal year
-    return currentYear - 1;
-  }
-  return currentYear;
-};
-
-// Helper function to validate data before creating or updating a client employee record
-const validateData = async (data) => {
-  const employee = await Employee.findById(data.EmployeeID);
-  if (!employee) {
-    throw new Error(`Employee with ID ${data.EmployeeID} does not exist`);
-  }
-
-  const client = await Client.findById(data.ClientID);
-  if (!client) {
-    throw new Error(`Client with ID ${data.ClientID} does not exist`);
-  }
-
-  if (data.MonthlyBilling && data.MonthlyBilling < 0) {
-    throw new Error('Monthly billing value must be a positive number');
-  }
-};
-
-// Retrieves all employees assigned to a client
-const getClientEmployees = async (clientId) => {
-  return ClientEmployee.find({ ClientID: clientId });
-};
-
-// Retrieves a single client employee by ID
-const getClientEmployeeById = async (id) => {
-  return ClientEmployee.findById(id);
-};
-
-// Updates an existing client employee record
-const updateClientEmployee = async (id, data) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    await validateData(data);
-
-    const updatedClientEmployee = await ClientEmployee.findByIdAndUpdate(id, data, { new: true, session });
-    await updateBillingDetail(data, session);
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return updatedClientEmployee;
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new Error(`Error updating client employee: ${error.message}`);
-  }
-};
-
-// Deletes a client employee record
-const deleteClientEmployee = async (id) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const clientEmployee = await ClientEmployee.findById(id).session(session);
-    if (!clientEmployee) {
-      throw new Error('Client employee not found');
+      return clientEmployee;
+    } catch (error) {
+      throw new Error('Error fetching client employee: ' + error.message);
     }
+  },
 
-    // Marking as inactive instead of actual deletion
-    clientEmployee.Status = STATUS.INACTIVE;
-    await clientEmployee.save({ session });
+  async createClientEmployee(clientEmployeeData) {
+    try {
+      const clientEmployee = await ClientEmployee.create(clientEmployeeData);
+      return clientEmployee;
+    } catch (error) {
+      throw new Error('Error creating client employee: ' + error.message);
+    }
+  },
 
-    await updateBillingDetail(clientEmployee, session, new Date(), clientEmployee.Year);
+  async updateClientEmployee(id, clientEmployeeData) {
+    try {
+      const clientEmployee = await ClientEmployee.findByPk(id);
+      if (!clientEmployee) {
+        throw new Error('Client employee not found');
+      }
 
-    await session.commitTransaction();
-    session.endSession();
+      await clientEmployee.update(clientEmployeeData);
+      return clientEmployee;
+    } catch (error) {
+      throw new Error('Error updating client employee: ' + error.message);
+    }
+  },
 
-    return clientEmployee;
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new Error(`Error deleting client employee: ${error.message}`);
+  async deleteClientEmployee(id) {
+    try {
+      const clientEmployee = await ClientEmployee.findByPk(id);
+      if (!clientEmployee) {
+        throw new Error('Client employee not found');
+      }
+      await clientEmployee.destroy();
+      return { message: 'Client employee deleted successfully' };
+    } catch (error) {
+      throw new Error('Error deleting client employee: ' + error.message);
+    }
+  },
+
+  async searchClientEmployees(query) {
+    try {
+      const clientEmployees = await ClientEmployee.findAll({
+        where: {
+          [Op.or]: [
+            { '$Client.ClientName$': { [Op.like]: `%${query}%` } },
+            { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
+            { '$Employee.EmployeeName$': { [Op.like]: `%${query}%` } },
+            { '$Employee.EmployeeCode$': { [Op.like]: `%${query}%` } }
+          ]
+        },
+        include: [
+          {
+            model: Client,
+            attributes: ['ClientName', 'ClientCode']
+          },
+          {
+            model: Employee,
+            attributes: ['EmployeeName', 'EmployeeCode']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+      return clientEmployees;
+    } catch (error) {
+      throw new Error('Error searching client employees: ' + error.message);
+    }
+  },
+
+  async getClientEmployeesByClient(clientId) {
+    try {
+      const clientEmployees = await ClientEmployee.findAll({
+        where: { ClientID: clientId },
+        include: [
+          {
+            model: Employee,
+            attributes: ['EmployeeName', 'EmployeeCode']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+      return clientEmployees;
+    } catch (error) {
+      throw new Error('Error fetching client employees: ' + error.message);
+    }
+  },
+
+  async getClientEmployeesByEmployee(employeeId) {
+    try {
+      const clientEmployees = await ClientEmployee.findAll({
+        where: { EmployeeID: employeeId },
+        include: [
+          {
+            model: Client,
+            attributes: ['ClientName', 'ClientCode']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+      return clientEmployees;
+    } catch (error) {
+      throw new Error('Error fetching client employees: ' + error.message);
+    }
+  },
+
+  async getClientEmployeesByStatus(status) {
+    try {
+      const clientEmployees = await ClientEmployee.findAll({
+        where: { Status: status },
+        include: [
+          {
+            model: Client,
+            attributes: ['ClientName', 'ClientCode']
+          },
+          {
+            model: Employee,
+            attributes: ['EmployeeName', 'EmployeeCode']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+      return clientEmployees;
+    } catch (error) {
+      throw new Error('Error fetching client employees by status: ' + error.message);
+    }
+  },
+
+  async getClientEmployeeSummary() {
+    try {
+      const summary = await ClientEmployee.findAll({
+        attributes: [
+          'Status',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: ['Status']
+      });
+      return summary;
+    } catch (error) {
+      throw new Error('Error fetching client employee summary: ' + error.message);
+    }
   }
 };
 
-module.exports = {
-  assignEmployeeToClient,
-  getClientEmployees,
-  getClientEmployeeById,
-  updateClientEmployee,
-  deleteClientEmployee,
-};
+module.exports = clientEmployeeService;

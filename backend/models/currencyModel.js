@@ -1,10 +1,32 @@
 // models/currencyModel.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize');
 
-const currencySchema = new Schema({
-  CurrencyCode: { type: String, unique: true, required: true },
-  CurrencyName: { type: String, required: true },
+const Currency = sequelize.define('Currency', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  Code: {
+    type: DataTypes.STRING(3),
+    allowNull: false,
+    unique: true
+  },
+  Name: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  Symbol: {
+    type: DataTypes.STRING(5),
+    allowNull: false
+  },
+  IsActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Currency', currencySchema);
+module.exports = Currency;

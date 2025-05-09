@@ -1,24 +1,34 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize');
 
-const bankDetailSchema = new mongoose.Schema({
+const BankDetail = sequelize.define('BankDetail', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   BankName: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING(100),
+    allowNull: false,
   },
   AccountNumber: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING(50),
+    allowNull: false,
   },
-  SwiftCode: {
-    type: String,
-    required: true,
+  IFSC: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
   },
-  IfscCode: {
-    type: String,
-    required: true,
+  BranchName: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
   },
-}, { timestamps: true });
-
-const BankDetail = mongoose.model('BankDetail', bankDetailSchema);
+  AccountHolderName: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+}, {
+  timestamps: true,
+});
 
 module.exports = BankDetail;

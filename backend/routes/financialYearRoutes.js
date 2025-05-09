@@ -2,10 +2,25 @@ const express = require('express');
 const router = express.Router();
 const financialYearController = require('../controllers/financialYearController');
 
-// GET paginated financial years
-router.get('/', financialYearController.getFinancialYears);
+// Get all financial years
+router.get('/', financialYearController.getAllFinancialYears);
 
-// POST new financial year
-router.post('/', financialYearController.addFinancialYear);
+// Get financial year by ID
+router.get('/:id', financialYearController.getFinancialYearById);
+
+// Create new financial year
+router.post('/', financialYearController.createFinancialYear);
+
+// Update financial year
+router.put('/:id', financialYearController.updateFinancialYear);
+
+// Delete financial year
+router.delete('/:id', financialYearController.deleteFinancialYear);
+
+// Search financial years
+router.get('/search', financialYearController.searchFinancialYears);
+
+// Get current financial year
+router.get('/current', financialYearController.getCurrentFinancialYear);
 
 module.exports = router;

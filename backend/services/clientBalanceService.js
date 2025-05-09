@@ -1,31 +1,231 @@
-const Ledger = require('../models/ledgerModel');
-const PaymentTracker = require('../models/paymentTrackerModel');
+const { Op } = require('sequelize');
+const sequelize = require('../db/connectDB').sequelize;
 const Client = require('../models/clientModel');
+const Invoice = require('../models/invoiceModel');
+const PaymentTracker = require('../models/paymentTrackerModel');
+const Currency = require('../models/currencyModel');
 
-const getClientBalanceReport = async () => {
-  try {
-    const clients = await Client.findAll();
-    
-    const report = await Promise.all(clients.map(async (client) => {
-      const totalBill = await Ledger.sum('Amount', { where: { ClientID: client.id } }) || 0;
-      const totalPaid = await PaymentTracker.sum('Amount', { where: { ClientID: client.id } }) || 0;
-      const balance = totalBill - totalPaid;
+const clientBalanceService = {
+  async getClientBalance(clientId) {
+    const transaction = await sequelize.transaction();
+    try {
+      const client = await Client.findByPk(clientId, {
+        include: [
+          {
+            model: Currency,
+            attributes: ['CurrencyName', 'CurrencyCode']
+          }
+        ],
+        transaction
+      });
 
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
+      // Get all invoices for the client
+      const invoices = await Invoice.findAll({
+        where: { ClientID: clientId },
+        attributes: [
+          'CurrencyID',
+          [sequelize.fn('SUM', sequelize.col('Amount')), 'totalInvoiced']
+        ],
+        group: ['CurrencyID'],
+        transaction
+      });
+
+      // Get all payments for the client
+      const payments = await PaymentTracker.findAll({
+        where: { ClientID: clientId },
+        attributes: [
+          'CurrencyID',
+          [sequelize.fn('SUM', sequelize.col('Amount')), 'totalPaid']
+        ],
+        group: ['CurrencyID'],
+        transaction
+      });
+
+      // Calculate balance for each currency
+      const balances = {};
+      const currencies = {};
+
+      // Process invoices
+      for (const invoice of invoices) {
+        const currencyId = invoice.CurrencyID;
+        const amount = parseFloat(invoice.getDataValue('totalInvoiced'));
+        
+        if (!balances[currencyId]) {
+          balances[currencyId] = 0;
+        }
+        balances[currencyId] += amount;
+      }
+
+      // Process payments
+      for (const payment of payments) {
+        const currencyId = payment.CurrencyID;
+        const amount = parseFloat(payment.getDataValue('totalPaid'));
+        
+        if (!balances[currencyId]) {
+          balances[currencyId] = 0;
+        }
+        balances[currencyId] -= amount;
+      }
+
+      // Get currency details
+      const currencyIds = [...new Set([...Object.keys(balances)])];
+      const currencyDetails = await Currency.findAll({
+        where: { id: { [Op.in]: currencyIds } },
+        attributes: ['id', 'CurrencyName', 'CurrencyCode'],
+        transaction
+      });
+
+      // Format the response
+      const formattedBalances = currencyDetails.map(currency => ({
+        currencyId: currency.id,
+        currencyName: currency.CurrencyName,
+        currencyCode: currency.CurrencyCode,
+        balance: balances[currency.id] || 0
+      }));
+
+      await transaction.commit();
       return {
+        clientId: client.id,
         clientName: client.ClientName,
-        totalBill,
-        totalPaid,
-        balance,
+        clientCode: client.ClientCode,
+        balances: formattedBalances
       };
-    }));
+    } catch (error) {
+      await transaction.rollback();
+      throw new Error('Error calculating client balance: ' + error.message);
+    }
+  },
 
-    return report;
-  } catch (error) {
-    console.error('Error fetching client balance report:', error);
-    throw new Error('Error fetching client balance report');
+  async getClientBalanceHistory(clientId, startDate, endDate) {
+    const transaction = await sequelize.transaction();
+    try {
+      const client = await Client.findByPk(clientId, {
+        include: [
+          {
+            model: Currency,
+            attributes: ['CurrencyName', 'CurrencyCode']
+          }
+        ],
+        transaction
+      });
+
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
+      // Get all invoices within date range
+      const invoices = await Invoice.findAll({
+        where: {
+          ClientID: clientId,
+          InvoiceDate: {
+            [Op.between]: [startDate, endDate]
+          }
+        },
+        attributes: [
+          'InvoiceDate',
+          'CurrencyID',
+          'Amount'
+        ],
+        order: [['InvoiceDate', 'ASC']],
+        transaction
+      });
+
+      // Get all payments within date range
+      const payments = await PaymentTracker.findAll({
+        where: {
+          ClientID: clientId,
+          ReceivedDate: {
+            [Op.between]: [startDate, endDate]
+          }
+        },
+        attributes: [
+          'ReceivedDate',
+          'CurrencyID',
+          'Amount'
+        ],
+        order: [['ReceivedDate', 'ASC']],
+        transaction
+      });
+
+      // Combine and sort transactions
+      const transactions = [
+        ...invoices.map(inv => ({
+          date: inv.InvoiceDate,
+          type: 'invoice',
+          currencyId: inv.CurrencyID,
+          amount: parseFloat(inv.Amount)
+        })),
+        ...payments.map(pay => ({
+          date: pay.ReceivedDate,
+          type: 'payment',
+          currencyId: pay.CurrencyID,
+          amount: -parseFloat(pay.Amount)
+        }))
+      ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // Calculate running balance
+      const balances = {};
+      const history = [];
+
+      for (const transaction of transactions) {
+        const { date, type, currencyId, amount } = transaction;
+        
+        if (!balances[currencyId]) {
+          balances[currencyId] = 0;
+        }
+        balances[currencyId] += amount;
+
+        history.push({
+          date,
+          type,
+          currencyId,
+          amount,
+          balance: balances[currencyId]
+        });
+      }
+
+      await transaction.commit();
+      return {
+        clientId: client.id,
+        clientName: client.ClientName,
+        clientCode: client.ClientCode,
+        history
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw new Error('Error calculating client balance history: ' + error.message);
+    }
+  },
+
+  async getClientBalanceSummary() {
+    const transaction = await sequelize.transaction();
+    try {
+      const clients = await Client.findAll({
+        include: [
+          {
+            model: Currency,
+            attributes: ['CurrencyName', 'CurrencyCode']
+          }
+        ],
+        transaction
+      });
+
+      const summary = await Promise.all(clients.map(async client => {
+        const balance = await this.getClientBalance(client.id);
+        return balance;
+      }));
+
+      await transaction.commit();
+      return summary;
+    } catch (error) {
+      await transaction.rollback();
+      throw new Error('Error calculating client balance summary: ' + error.message);
+    }
   }
 };
 
-module.exports = {
-  getClientBalanceReport,
-};
+module.exports = clientBalanceService;
