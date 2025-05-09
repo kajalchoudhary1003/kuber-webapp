@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
+import axios from 'axios';
 import RoleModal from '../../../Modal/EmployeeModal/RoleModal';
 import OrganisationModal from '../../../Modal/EmployeeModal/OrganisationModal';
 import LevelModal from '../../../Modal/EmployeeModal/LevelModal';
@@ -17,6 +18,12 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useYear } from '../../../contexts/YearContexts';
 
+// API base URLs
+const API_BASE_URL = 'http://localhost:5001/api/levels';
+const ORGANISATION_API_BASE_URL = 'http://localhost:5001/api/organisations';
+const ROLES_API_BASE_URL = 'http://localhost:5001/api/roles';
+const CURRENCY_API_BASE_URL = 'http://localhost:5001/api/currencies';
+
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
   try {
@@ -26,10 +33,12 @@ const useYearWithFallback = () => {
   }
 };
 
-// Dummy data to simulate backend responses
+// Dummy data for non-currency sections (to be replaced later if needed)
 const dummyData = {
   financialYears: {
     financialYears: [
+      {year:"2025"},
+      {year:"2024"},
       { year: "2023" },
       { year: "2022" },
       { year: "2021" },
@@ -52,35 +61,6 @@ const dummyData = {
       Year: "2023",
     },
   ],
-  roles: [
-    { _id: "role1", RoleName: "Developer" },
-    { _id: "role2", RoleName: "Manager" },
-    { _id: "role3", RoleName: "Designer" },
-  ],
-  levels: [
-    { _id: "level1", LevelName: "Junior" },
-    { _id: "level2", LevelName: "Senior" },
-    { _id: "level3", LevelName: "Lead" },
-  ],
-  organisations: [
-    {
-      _id: "org1",
-      OrganisationName: "Tech Corp",
-      Abbreviation: "TC",
-      RegNumber: "123456",
-    },
-    {
-      _id: "org2",
-      OrganisationName: "Innovate Ltd",
-      Abbreviation: "IL",
-      RegNumber: "789012",
-    },
-  ],
-  currencies: [
-    { _id: "curr1", CurrencyCode: "USD", CurrencyName: "United States Dollar" },
-    { _id: "curr2", CurrencyCode: "EUR", CurrencyName: "Euro" },
-    { _id: "curr3", CurrencyCode: "GBP", CurrencyName: "British Pound" },
-  ],
   bankDetails: [
     {
       _id: "bank1",
@@ -99,7 +79,7 @@ const dummyData = {
   ],
 };
 
-export const OtherSettings = () => {
+const OtherSettings = () => {
   const [exchangeRates, setExchangeRates] = useState([]);
   const [employeeRoles, setEmployeeRoles] = useState([]);
   const [employeeLevels, setEmployeeLevels] = useState([]);
@@ -142,16 +122,107 @@ export const OtherSettings = () => {
   const [randomCode, setRandomCode] = useState('');
   const buttonRef = useRef(null);
 
+  // Fetch levels from backend
+  const fetchLevels = async () => {
+    try {
+      const response = await axios.get(API_BASE_URL);
+      setEmployeeLevels(response.data);
+    } catch (error) {
+      console.error('Error fetching levels:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to fetch levels. Please check if the backend server is running.'
+      );
+    }
+  };
+
+  // Fetch organisations from backend
+  const fetchOrganisations = async () => {
+    try {
+      const response = await axios.get(ORGANISATION_API_BASE_URL);
+      setOrganisations(response.data);
+    } catch (error) {
+      console.error('Error fetching organisations:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to fetch organisations. Please check if the backend server is running.'
+      );
+    }
+  };
+
+  // Fetch roles from backend
+  const fetchRoles = async () => {
+    try {
+      const response = await axios.get(ROLES_API_BASE_URL);
+      setEmployeeRoles(response.data);
+    } catch (error) {
+      console.error('Error fetching roles:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to fetch roles. Please check if the backend server is running.'
+      );
+    }
+  };
+
+  // Fetch currencies from backend
+  const fetchCurrencies = async () => {
+    try {
+      const response = await axios.get(CURRENCY_API_BASE_URL);
+      // Map backend data to frontend format
+      const formattedCurrencies = response.data.map(currency => ({
+        _id: currency.id,
+        CurrencyCode: currency.Code,
+        CurrencyName: currency.Name,
+        Symbol: currency.Symbol,
+        IsActive: currency.IsActive
+      }));
+      setCurrencies(formattedCurrencies);
+    } catch (error) {
+      console.error('Error fetching currencies:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to fetch currencies. Please check if the backend server is running.'
+      );
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch levels, organisations, roles, and currencies from backend
+        await fetchLevels();
+        await fetchOrganisations();
+        await fetchRoles();
+        await fetchCurrencies();
+
+        // Non-currency dummy data (to be replaced later if needed)
         setExchangeRates(dummyData.exchangeRates);
-        setEmployeeRoles(dummyData.roles);
-        setEmployeeLevels(dummyData.levels);
-        setOrganisations(dummyData.organisations);
-        setCurrencies(dummyData.currencies);
         setBankDetails(dummyData.bankDetails);
-        
+
         const newYears = dummyData.financialYears.financialYears.map((year) => year.year);
         const uniqueYears = [...new Set([...financialYears, ...newYears])];
         setFinancialYears(uniqueYears);
@@ -162,7 +233,7 @@ export const OtherSettings = () => {
           setSelectedYear(dummyData.financialYears.financialYears[0].year);
         }
       } catch (error) {
-        console.error('Error setting dummy data:', error);
+        console.error('Error setting data:', error);
       }
     };
 
@@ -227,8 +298,8 @@ export const OtherSettings = () => {
         CurrencyToID: exchangeRate.CurrencyToID,
         ExchangeRate: parseFloat(exchangeRate.ExchangeRate),
         Year: selectedYear,
-        CurrencyFrom: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyFromID),
-        CurrencyTo: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyToID),
+        CurrencyFrom: currencies.find((c) => c._id === exchangeRate.CurrencyFromID),
+        CurrencyTo: currencies.find((c) => c._id === exchangeRate.CurrencyToID),
       };
 
       if (exchangeRate.id) {
@@ -270,7 +341,7 @@ export const OtherSettings = () => {
     event.stopPropagation();
     console.log('Opening RoleModal in edit mode with:', role);
     setRoleModalMode('edit');
-    setRoleModalData({ id: role._id, RoleName: role.RoleName });
+    setRoleModalData({ id: role.id, RoleName: role.RoleName });
     setRoleModalOpen(true);
   };
 
@@ -281,27 +352,57 @@ export const OtherSettings = () => {
         throw new Error('Role name is required');
       }
       if (role.id) {
-        const updatedRole = { ...role, _id: role.id };
+        // Update existing role
+        const response = await axios.put(`${ROLES_API_BASE_URL}/${role.id}`, {
+          RoleName: role.RoleName,
+        });
         setEmployeeRoles((prevRoles) =>
-          prevRoles.map((r) => (r._id === updatedRole._id ? updatedRole : r))
+          prevRoles.map((r) => (r.id === role.id ? response.data : r))
         );
       } else {
-        const newRole = { ...role, _id: `role${Math.random().toString(36).substring(2, 9)}` };
-        setEmployeeRoles((prevRoles) => [...prevRoles, newRole]);
+        // Create new role
+        const response = await axios.post(ROLES_API_BASE_URL, {
+          RoleName: role.RoleName,
+        });
+        setEmployeeRoles((prevRoles) => [...prevRoles, response.data]);
       }
       setRoleModalOpen(false);
     } catch (error) {
-      console.error('Error submitting role:', error);
-      alert('Failed to submit role. Please try again.');
+      console.error('Error submitting role:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMessage =
+        error.response?.status === 404
+          ? 'Role not found'
+          : error.response?.status === 400
+            ? error.response?.data?.error || 'Invalid role data'
+            : 'Failed to submit role. ';
+      alert(errorMessage);
     }
   };
 
   const deleteRole = async (roleId) => {
     console.log('Deleting role:', roleId);
     try {
-      setEmployeeRoles((prevRoles) => prevRoles.filter((role) => role._id !== roleId));
+      await axios.delete(`${ROLES_API_BASE_URL}/${roleId}`);
+      setEmployeeRoles((prevRoles) => prevRoles.filter((role) => role.id !== roleId));
     } catch (error) {
-      console.error('Error deleting role:', error);
+      console.error('Error deleting role:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMessage =
+        error.response?.status === 404
+          ? 'Role not found'
+          : error.response?.status === 400
+            ? error.response?.data?.error || 'Cannot delete role'
+            : 'Failed to delete role.';
+      alert(errorMessage);
     }
   };
 
@@ -318,7 +419,7 @@ export const OtherSettings = () => {
     console.log('Opening OrganisationModal in edit mode with:', organisation);
     setOrganisationModalMode('edit');
     setOrganisationModalData({
-      id: organisation._id,
+      id: organisation.id,
       OrganisationName: organisation.OrganisationName,
       Abbreviation: organisation.Abbreviation,
       RegNumber: organisation.RegNumber,
@@ -330,37 +431,64 @@ export const OtherSettings = () => {
     try {
       console.log('Submitting organisation:', organisation);
       if (organisation.id) {
-        const updatedOrganisation = { ...organisation, _id: organisation.id };
+        // Update existing organisation
+        const response = await axios.put(`${ORGANISATION_API_BASE_URL}/${organisation.id}`, {
+          OrganisationName: organisation.OrganisationName,
+          Abbreviation: organisation.Abbreviation,
+          RegNumber: organisation.RegNumber,
+        });
         setOrganisations((prevOrganisations) =>
           prevOrganisations.map((org) =>
-            org._id === updatedOrganisation._id ? updatedOrganisation : org
+            org.id === organisation.id ? response.data : org
           )
         );
       } else {
-        const newOrganisation = {
-          ...organisation,
-          _id: `org${Math.random().toString(36).substring(2, 9)}`,
-        };
+        // Create new organisation
+        const response = await axios.post(ORGANISATION_API_BASE_URL, {
+          OrganisationName: organisation.OrganisationName,
+          Abbreviation: organisation.Abbreviation,
+          RegNumber: organisation.RegNumber,
+        });
         setOrganisations((prevOrganisations) => [
           ...prevOrganisations,
-          newOrganisation,
+          response.data,
         ]);
       }
       setOrganisationModalOpen(false);
     } catch (error) {
-      console.error('Error submitting organisation:', error);
-      alert('Failed to submit organisation. Please try again.');
+      console.error('Error submitting organisation:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to submit organisation. Please check if the backend server is running.'
+      );
     }
   };
 
   const deleteOrganisation = async (organisationId) => {
     try {
       console.log('Deleting organisation:', organisationId);
+      await axios.delete(`${ORGANISATION_API_BASE_URL}/${organisationId}`);
       setOrganisations((prevOrganisations) =>
-        prevOrganisations.filter((org) => org._id !== organisationId)
+        prevOrganisations.filter((org) => org.id !== organisationId)
       );
     } catch (error) {
-      console.error('Error deleting organisation:', error);
+      console.error('Error deleting organisation:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to delete organisation. Please check if the backend server is running.'
+      );
     }
   };
 
@@ -376,35 +504,57 @@ export const OtherSettings = () => {
     event.stopPropagation();
     console.log('Opening LevelModal in edit mode with:', level);
     setLevelModalMode('edit');
-    setLevelModalData({ id: level._id, LevelName: level.LevelName });
+    setLevelModalData({ id: level.id, LevelName: level.LevelName });
     setLevelModalOpen(true);
   };
 
   const handleLevelSubmit = async (level) => {
     try {
       console.log('Handling level submit:', level);
-      if (level.id) {
-        const updatedLevel = { ...level, _id: level.id };
-        setEmployeeLevels((prevLevels) =>
-          prevLevels.map((l) => (l._id === updatedLevel._id ? updatedLevel : l))
-        );
-      } else {
-        const newLevel = { ...level, _id: `level${Math.random().toString(36).substring(2, 9)}` };
-        setEmployeeLevels((prevLevels) => [...prevLevels, newLevel]);
+      if (!level.LevelName) {
+        throw new Error('Level name is required');
       }
+      if (level.id) {
+        await axios.put(`${API_BASE_URL}/${level.id}`, { LevelName: level.LevelName });
+        console.log('Level updated:', level);
+      } else {
+        await axios.post(API_BASE_URL, { LevelName: level.LevelName });
+        console.log('Level created:', level);
+      }
+      await fetchLevels();
       setLevelModalOpen(false);
     } catch (error) {
-      console.error('Error submitting level:', error);
-      alert('Failed to submit level. Please try again.');
+      console.error('Error submitting level:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to submit level. Please check if the backend server is running.'
+      );
     }
   };
 
   const deleteLevel = async (levelId) => {
     try {
       console.log('Deleting level:', levelId);
-      setEmployeeLevels((prevLevels) => prevLevels.filter((level) => level._id !== levelId));
+      await axios.delete(`${API_BASE_URL}/${levelId}`);
+      await fetchLevels();
     } catch (error) {
-      console.error('Error deleting level:', error);
+      console.error('Error deleting level:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to delete level. Please check if the backend server is running.'
+      );
     }
   };
 
@@ -424,6 +574,7 @@ export const OtherSettings = () => {
       id: currency._id,
       CurrencyCode: currency.CurrencyCode,
       CurrencyName: currency.CurrencyName,
+      Symbol: currency.Symbol,
     });
     setCurrencyModalOpen(true);
   };
@@ -431,28 +582,78 @@ export const OtherSettings = () => {
   const handleCurrencySubmit = async (currency) => {
     try {
       console.log('Submitting currency:', currency);
+      // Map frontend data to backend format
+      const currencyData = {
+        Code: currency.CurrencyCode,
+        Name: currency.CurrencyName,
+        Symbol: currency.Symbol || '$', // Default symbol if not provided
+      };
+
+      let response;
       if (currency.id) {
-        const updatedCurrency = { ...currency, _id: currency.id };
+        // Update existing currency
+        response = await axios.put(`${CURRENCY_API_BASE_URL}/${currency.id}`, currencyData);
+      } else {
+        // Create new currency
+        response = await axios.post(CURRENCY_API_BASE_URL, currencyData);
+      }
+
+      // Map response data to frontend format
+      const updatedCurrency = {
+        _id: response.data.id,
+        CurrencyCode: response.data.Code,
+        CurrencyName: response.data.Name,
+        Symbol: response.data.Symbol,
+        IsActive: response.data.IsActive,
+      };
+
+      if (currency.id) {
         setCurrencies((prevCurrencies) =>
           prevCurrencies.map((c) => (c._id === updatedCurrency._id ? updatedCurrency : c))
         );
       } else {
-        const newCurrency = { ...currency, _id: `curr${Math.random().toString(36).substring(2, 9)}` };
-        setCurrencies((prevCurrencies) => [...prevCurrencies, newCurrency]);
+        setCurrencies((prevCurrencies) => [...prevCurrencies, updatedCurrency]);
       }
+
       setCurrencyModalOpen(false);
     } catch (error) {
-      console.error('Error submitting currency:', error);
-      alert('Failed to submit currency. Please try again.');
+      console.error('Error submitting currency:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMessage =
+        error.response?.status === 404
+          ? 'Currency not found'
+          : error.response?.status === 409
+            ? 'Currency code already exists'
+            : error.response?.status === 400
+              ? error.response?.data?.error || 'Invalid currency data'
+              : 'Failed to submit currency. Please check if the backend server is running.';
+      alert(errorMessage);
     }
   };
 
   const deleteCurrency = async (currencyId) => {
     try {
       console.log('Deleting currency:', currencyId);
+      await axios.delete(`${CURRENCY_API_BASE_URL}/${currencyId}`);
       setCurrencies((prevCurrencies) => prevCurrencies.filter((currency) => currency._id !== currencyId));
     } catch (error) {
-      console.error('Error deleting currency:', error);
+      console.error('Error deleting currency:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMessage =
+        error.response?.status === 404
+          ? 'Currency not found'
+          : error.response?.status === 400
+            ? error.response?.data?.error || 'Cannot delete currency'
+            : 'Failed to delete currency. Please check if the backend server is running.';
+      alert(errorMessage);
     }
   };
 
@@ -571,8 +772,6 @@ export const OtherSettings = () => {
 
   return (
     <div className="flex flex-col items-center p-5">
-      {/* Debugging: Log modal open state */}
-      {console.log('RoleModal open state:', roleModalOpen)}
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
           <h2 className="text-xl font-semibold">Financial Year</h2>
@@ -638,17 +837,13 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employeeLevels.map((level) => (
-                  <TableRow key={level._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {level._id}
-                    </TableCell>
+                  <TableRow key={level.id}>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {level.LevelName}
                     </TableCell>
@@ -663,7 +858,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-red-500 mx-1"
                         title="Delete"
-                        onClick={() => deleteLevel(level._id)}
+                        onClick={() => deleteLevel(level.id)}
                       >
                         <Trash size={20} />
                       </button>
@@ -691,17 +886,13 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employeeRoles.map((role) => (
-                  <TableRow key={role._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {role._id}
-                    </TableCell>
+                  <TableRow key={role.id}>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {role.RoleName}
                     </TableCell>
@@ -716,7 +907,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-red-500 mx-1"
                         title="Delete"
-                        onClick={() => deleteRole(role._id)}
+                        onClick={() => deleteRole(role.id)}
                       >
                         <Trash size={20} />
                       </button>
@@ -746,7 +937,6 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Abbreviation</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Reg. Number</TableHead>
@@ -755,10 +945,7 @@ export const OtherSettings = () => {
               </TableHeader>
               <TableBody>
                 {organisations.map((org) => (
-                  <TableRow key={org._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {org._id}
-                    </TableCell>
+                  <TableRow key={org.id}>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {org.OrganisationName}
                     </TableCell>
@@ -779,7 +966,7 @@ export const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-red-500 mx-1"
                         title="Delete"
-                        onClick={() => deleteOrganisation(org._id)}
+                        onClick={() => deleteOrganisation(org.id)}
                       >
                         <Trash size={20} />
                       </button>
@@ -795,7 +982,7 @@ export const OtherSettings = () => {
       </div>
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shellow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Bank Details</h2>
             <Button
@@ -809,7 +996,6 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Bank Name</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Account Number</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Swift Code</TableHead>
@@ -820,9 +1006,6 @@ export const OtherSettings = () => {
               <TableBody>
                 {bankDetails.map((detail) => (
                   <TableRow key={detail._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {detail._id}
-                    </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {detail.BankName}
                     </TableCell>
@@ -876,7 +1059,6 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Code</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
@@ -885,9 +1067,6 @@ export const OtherSettings = () => {
               <TableBody>
                 {currencies.map((currency) => (
                   <TableRow key={currency._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {currency._id}
-                    </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {currency.CurrencyCode}
                     </TableCell>
@@ -932,7 +1111,6 @@ export const OtherSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">ID</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Currency From</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Currency To</TableHead>
                   <TableHead className="text-center text-sm font-semibold text-black">Exchange Rate</TableHead>
@@ -942,9 +1120,6 @@ export const OtherSettings = () => {
               <TableBody>
                 {exchangeRates.map((rate) => (
                   <TableRow key={rate._id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {rate._id}
-                    </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {rate.CurrencyFrom?.CurrencyName || 'N/A'}
                     </TableCell>

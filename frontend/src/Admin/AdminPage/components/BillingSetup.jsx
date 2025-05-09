@@ -143,9 +143,9 @@ const BillingSetup = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="flex flex-col items-center px-4">
-      <div className="flex justify-between items-center w-full mb-0">
-        <h2 className="text-xl font-semibold text-primary-federal-blue m-0">Billing Setup</h2>
+    <div className="flex flex-col rounded-3xl shadow-lg bg-white items-center p-8 px-4">
+      <div className="flex justify-between  items-center w-full mb-0">
+        <h2 className="text-[24px] text-[#272727] m-0">Billing Setup</h2>
         <div className="flex gap-2">
           <Select onValueChange={setSelectedClient} value={selectedClient}>
             <SelectTrigger className=" cursor-pointer min-w-[180px]">

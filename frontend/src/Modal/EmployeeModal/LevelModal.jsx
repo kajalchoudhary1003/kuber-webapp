@@ -7,7 +7,7 @@ const LevelModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [levelName, setLevelName] = useState('');
 
   useEffect(() => {
-    console.log('LevelModal props:', { open, mode, initialData }); // Debug
+    console.log('LevelModal props:', { open, mode, initialData });
     if (open) {
       if (mode === 'edit' && initialData && initialData.LevelName) {
         setLevelName(initialData.LevelName);
@@ -28,9 +28,9 @@ const LevelModal = ({ open, onClose, mode, initialData, onSubmit }) => {
       return;
     }
     try {
-      console.log('Submitting level:', { id: initialData?.id, LevelName: levelName }); // Debug
+      console.log('Submitting level:', { id: initialData?.id, LevelName: levelName });
       await onSubmit({ id: initialData?.id, LevelName: levelName });
-      setLevelName(''); // Reset form
+      setLevelName('');
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);

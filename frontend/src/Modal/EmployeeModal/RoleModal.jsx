@@ -13,7 +13,7 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [roleName, setRoleName] = useState('');
 
   useEffect(() => {
-    console.log('RoleModal useEffect:', { mode, initialData }); // Debugging
+    console.log('RoleModal useEffect:', { mode, initialData });
     if (mode === 'edit' && initialData?.RoleName) {
       setRoleName(initialData.RoleName);
     } else {
@@ -29,14 +29,16 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     e.preventDefault();
     if (!roleName.trim()) {
       console.error('Role name is required');
+      alert('Role name is required');
       return;
     }
     try {
-      console.log('Submitting role:', { ...initialData, RoleName: roleName }); // Debugging
-      await onSubmit({ ...initialData, RoleName: roleName });
+      console.log('Submitting role:', { id: initialData?.id, RoleName: roleName });
+      await onSubmit({ id: initialData?.id, RoleName: roleName });
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Failed to submit role. Please try again.');
     }
   };
 
