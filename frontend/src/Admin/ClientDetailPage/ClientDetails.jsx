@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ResourceModal from "../../Modal/EmployeeModal/ResourceModal"; // Adjust path if needed
+import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
+
 // Dummy data for client
 const dummyClient = {
   _id: "1",
@@ -80,7 +81,7 @@ const initialResources = [
   },
 ];
 
-// Dummy employee data (to sync with ResourceModal)
+// Dummy employee data
 const dummyEmployees = [
   { id: "1", FirstName: "John", LastName: "Doe", EmpCode: "EMP001", Role: { RoleName: "Manager" }, Level: { LevelName: "Senior" }, Organisation: { Abbreviation: "XYZ" } },
   { id: "2", FirstName: "Jane", LastName: "Smith", EmpCode: "EMP002", Role: { RoleName: "Developer" }, Level: { LevelName: "Mid" }, Organisation: { Abbreviation: "ABC" } },
@@ -98,28 +99,22 @@ const ClientDetails = () => {
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : "N/A");
 
-  // Handle adding a new resource (opens ResourceModal without initialData)
+  // ✅ Fixed: Open modal in "Add" mode
   const handleAddResource = () => {
-    setSelectedResource({ ClientID: dummyClient._id }); // Pass ClientID for new resource
+    setSelectedResource(null); // Must be null to show "Add" UI in modal
     setIsResourceModalOpen(true);
   };
 
-  // Handle editing a resource (opens ResourceModal with initialData)
   const handleEditResource = (resource) => {
-    setSelectedResource({ ...resource, ClientID: dummyClient._id }); // Include ClientID
+    setSelectedResource({ ...resource, ClientID: dummyClient._id });
     setIsResourceModalOpen(true);
   };
 
-  // Handle submitting resource updates or additions
   const handleResourceSubmit = (payload) => {
     if (payload.delete) {
-      // Handle resource deletion
       setResources((prev) => prev.filter((r) => r.EmployeeID !== payload.EmployeeID));
       console.log(`Resource ${payload.EmployeeID} deleted`);
-      // TODO: Implement API call to delete resource
-      // e.g., fetch(`http://localhost:5000/api/resources/${payload.EmployeeID}`, { method: "DELETE" })
     } else {
-      // Find employee data from dummyEmployees
       const employee = dummyEmployees.find((emp) => emp.id === payload.EmployeeID) || {
         FirstName: "Unknown",
         LastName: "",
@@ -140,68 +135,49 @@ const ClientDetails = () => {
       };
 
       if (selectedResource && selectedResource.id) {
-        // Update existing resource
         setResources((prev) =>
           prev.map((r) => (r.id === selectedResource.id ? newResource : r))
         );
         console.log("Resource updated:", newResource);
-        // TODO: Implement API call to update resource
-        // e.g., fetch(`http://localhost:5000/api/resources/${selectedResource.id}`, { method: "PUT", body: JSON.stringify(newResource) })
       } else {
-        // Add new resource
         setResources((prev) => [...prev, newResource]);
         console.log("Resource added:", newResource);
-        // TODO: Implement API call to add resource
-        // e.g., fetch(`http://localhost:5000/api/resources`, { method: "POST", body: JSON.stringify(newResource) })
       }
     }
 
-    // Close modal and clear selected resource
     setIsResourceModalOpen(false);
     setSelectedResource(null);
   };
 
-  // Handle closing ResourceModal
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
     setSelectedResource(null);
   };
 
-  // Handle editing client (opens ClientModal)
   const handleEditClient = () => {
     setIsClientModalOpen(true);
   };
 
-  // Handle submitting client updates
   const handleClientSubmit = (updatedClientData) => {
     console.log("Client updated:", updatedClientData);
-    // TODO: Implement API call to update client
-    // e.g., fetch(`http://localhost:5000/api/clients/${dummyClient._id}`, { method: "PUT", body: JSON.stringify(updatedClientData) })
     setIsClientModalOpen(false);
   };
 
-  // Handle closing ClientModal
   const handleCloseClientModal = () => {
     setIsClientModalOpen(false);
   };
 
-  // Handle deleting a resource
   const handleDeleteResource = (resourceId) => {
     if (window.confirm("Are you sure you want to delete this resource?")) {
       setResources((prev) => prev.filter((r) => r.id !== resourceId));
       console.log(`Resource ${resourceId} deleted`);
-      // TODO: Implement API call to delete resource
-      // e.g., fetch(`http://localhost:5000/api/resources/${resourceId}`, { method: "DELETE" })
     }
   };
 
-  // Handle deleting the client
   const handleDeleteClient = () => {
     if (window.confirm("Are you sure you want to delete this client and all associated resources?")) {
       console.log("Client deleted:", dummyClient.ClientName);
       navigate("/admin");
-      // TODO: Implement API call to delete client
-      // e.g., fetch(`http://localhost:5000/api/clients/${dummyClient._id}`, { method: "DELETE" })
     }
   };
 
@@ -221,28 +197,20 @@ const ClientDetails = () => {
         </div>
       </div>
 
-      {/* Client Details Section */}
+      {/* Client Details */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
         <div className="flex justify-between items-center border-b border-[#9DA4B3] pb-4">
           <h3 className="text-[24px] text-[#272727]">Client Details</h3>
           <div className="space-x-2">
-            <Button
-              onClick={handleEditClient}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-            >
+            <Button onClick={handleEditClient} className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-              onClick={handleDeleteClient}
-            >
+            <Button variant="destructive" className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleDeleteClient}>
               Delete
             </Button>
           </div>
         </div>
 
-        {/* First Row */}
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Company name</p>
@@ -262,10 +230,8 @@ const ClientDetails = () => {
           </div>
         </div>
 
-        {/* Divider Line */}
         <div className="border-b border-[#9DA4B3] my-2"></div>
 
-        {/* Second Row */}
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Registered address</p>
@@ -286,37 +252,23 @@ const ClientDetails = () => {
         </div>
       </div>
 
-      {/* Resources Assigned Section */}
+      {/* Resources Assigned */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
         <div className="flex justify-between items-center pb-4">
           <h3 className="text-[24px] text-[#272727]">Resources Assigned</h3>
           <div className="flex gap-2">
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setActiveTab("Active")}
-                variant={activeTab === "Active"}
-                className={activeTab === "Active" ? "border-none text-black" : ""}
-              >
-                Active Resources
-              </Button>
-              <Button
-                onClick={() => setActiveTab("Inactive")}
-                variant={activeTab === "Inactive"}
-                className={activeTab === "Inactive" ? "text-black" : ""}
-              >
-                Inactive Resources
-              </Button>
-            </div>
-            <Button
-              onClick={handleAddResource}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-            >
+            <Button onClick={() => setActiveTab("Active")} className={activeTab === "Active" ? "border-none text-black" : ""}>
+              Active Resources
+            </Button>
+            <Button onClick={() => setActiveTab("Inactive")} className={activeTab === "Inactive" ? "text-black" : ""}>
+              Inactive Resources
+            </Button>
+            <Button onClick={handleAddResource} className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Add Resource
             </Button>
           </div>
         </div>
 
-        {/* Divider Line Between Tabs and Table */}
         <div className="border-b border-[#9DA4B3] my-2"></div>
 
         <Table>
@@ -362,7 +314,6 @@ const ClientDetails = () => {
         </Table>
       </div>
 
-      {/* Resource Modal for adding/editing resources */}
       <ResourceModal
         open={isResourceModalOpen}
         onClose={handleCloseResourceModal}
@@ -370,7 +321,6 @@ const ClientDetails = () => {
         onSubmit={handleResourceSubmit}
       />
 
-      {/* Client Modal for editing client details */}
       <ClientModal
         open={isClientModalOpen}
         onClose={handleCloseClientModal}
