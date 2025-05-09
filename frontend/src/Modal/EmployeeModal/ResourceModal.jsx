@@ -6,14 +6,19 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/library/ui/calendar';
-import { format } from 'date-fns';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Dummy employee data from EmployeeMaster.jsx
+const dummyEmployees = [
+  { id: '1', FirstName: 'John', LastName: 'Doe', EmpCode: 'EMP001', Role: { RoleName: 'Manager' }, Level: { LevelName: 'Senior' }, Organisation: { Abbreviation: 'XYZ' } },
+  { id: '2', FirstName: 'Jane', LastName: 'Smith', EmpCode: 'EMP002', Role: { RoleName: 'Developer' }, Level: { LevelName: 'Mid' }, Organisation: { Abbreviation: 'ABC' } },
+  { id: '3', FirstName: 'Samuel', LastName: 'Lee', EmpCode: 'EMP003', Role: { RoleName: 'Designer' }, Level: { LevelName: 'Junior' }, Organisation: { Abbreviation: 'TS' } },
+];
+
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [employeeOptions, setEmployeeOptions] = useState([]);
+  const [employeeOptions, setEmployeeOptions] = useState(dummyEmployees);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeDetails, setEmployeeDetails] = useState({
     empCode: '',
@@ -29,17 +34,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   useEffect(() => {
     if (searchTerm) {
-      const fetchEmployees = async () => {
-        try {
-          const employees = await window.electron.ipcRenderer.invoke('search-employees', searchTerm);
-          setEmployeeOptions(employees);
-        } catch (error) {
-          console.error('Error fetching employees:', error);
-        }
-      };
-      fetchEmployees();
+      const filtered = dummyEmployees.filter(emp =>
+        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setEmployeeOptions(filtered);
     } else {
-      setEmployeeOptions([]);
+      setEmployeeOptions(dummyEmployees);
     }
   }, [searchTerm]);
 
@@ -121,6 +121,22 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       EndDate: employeeDetails.endDate,
       MonthlyBilling: employeeDetails.billingMonthly,
       Status: employeeDetails.status
+    };
+
+    onSubmit(payload);
+    resetForm();
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (employeeDetails.status === 'Active') {
+      alert('Employee cannot be deleted in active state.');
+      return;
+    }
+
+    const payload = {
+      EmployeeID: employeeDetails.EmployeeID,
+      delete: true
     };
 
     onSubmit(payload);
@@ -229,7 +245,16 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end gap-2 pt-2">
+            {initialData && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+              >
+                Delete
+              </Button>
+            )}
             <Button type="submit">{initialData ? 'Update' : 'Add'}</Button>
           </div>
         </form>
