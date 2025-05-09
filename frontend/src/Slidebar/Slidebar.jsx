@@ -15,6 +15,12 @@ export function AppSidebar() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
 
+   // Add this navigation handler
+   const handleNavigation = (path) => {
+    // Force a complete page reload when navigating
+    window.location.href = path;
+  }
+
   const navItems = [
     {
       title: "Dashboard",
@@ -148,7 +154,7 @@ export function AppSidebar() {
                 className="hover:bg-[#E6F2FF] transition-colors"
               >
                 <Link
-                  to={item.path}
+                  onClick={() => handleNavigation(item.path)}
                   className={clsx(
                     "flex items-center py-2 px-4 gap-3",
                     collapsed ? "justify-center" : "justify-start"
