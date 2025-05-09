@@ -13,7 +13,7 @@ const levelController = {
 
   async getLevelById(req, res) {
     try {
-      const level = await levelService.getLevelById(req.params.id);
+      const level = await levelService.getLevelById(req.params.levelId);
       res.json(level);
     } catch (error) {
       if (error.message === 'Level not found') {
@@ -29,7 +29,7 @@ const levelController = {
       const level = await levelService.createLevel(req.body);
       res.status(201).json(level);
     } catch (error) {
-      if (error.message === 'Level number already exists') {
+      if (error.message === 'Level name already exists') {
         res.status(409).json({ error: error.message });
       } else {
         res.status(400).json({ error: error.message });
@@ -39,12 +39,12 @@ const levelController = {
 
   async updateLevel(req, res) {
     try {
-      const level = await levelService.updateLevel(req.params.id, req.body);
+      const level = await levelService.updateLevel(req.params.levelId, req.body);
       res.json(level);
     } catch (error) {
       if (error.message === 'Level not found') {
         res.status(404).json({ error: error.message });
-      } else if (error.message === 'Level number already exists') {
+      } else if (error.message === 'Level name already exists') {
         res.status(409).json({ error: error.message });
       } else {
         res.status(400).json({ error: error.message });
@@ -54,7 +54,7 @@ const levelController = {
 
   async deleteLevel(req, res) {
     try {
-      const result = await levelService.deleteLevel(req.params.id);
+      const result = await levelService.deleteLevel(req.params.levelId);
       res.json(result);
     } catch (error) {
       if (error.message === 'Level not found') {
@@ -82,11 +82,11 @@ const levelController = {
 
   async getLevelEmployees(req, res) {
     try {
-      const { id } = req.params;
-      if (!id) {
+      const { levelId } = req.params;
+      if (!levelId) {
         return res.status(400).json({ error: 'Level ID is required' });
       }
-      const employees = await levelService.getLevelEmployees(id);
+      const employees = await levelService.getLevelEmployees(levelId);
       res.json(employees);
     } catch (error) {
       if (error.message === 'Level not found') {
