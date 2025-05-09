@@ -10,9 +10,11 @@ const fs = require('fs');
 const invoiceService = {
   async generateInvoices(year, month) {
     try {
-      // Get all active clients
+      // Get all active clients (not soft deleted)
       const clients = await Client.findAll({
-        where: { IsActive: true }
+        where: {
+          deletedAt: null
+        }
       });
 
       const generatedInvoices = [];
@@ -20,12 +22,14 @@ const invoiceService = {
         // Create invoice record
         const invoice = await Invoice.create({
           ClientID: client.id,
-          InvoiceNumber: `INV-${year}-${month}-${client.id}`,
-          InvoiceDate: new Date(year, month - 1, 1),
-          DueDate: new Date(year, month, 1),
-          Status: 'Generated',
+          BillingCurrencyID: client.BillingCurrencyID,
           Year: year,
-          Month: month
+          Month: month,
+          TotalAmount: 0, // Required field, set to 0 initially
+          OrganisationID: client.OrganisationID,
+          BankDetailID: client.BankDetailID,
+          Status: 'Generated',
+          GeneratedOn: new Date()
         });
 
         // Generate PDF
@@ -34,14 +38,19 @@ const invoiceService = {
           fs.mkdirSync(invoiceDir, { recursive: true });
         }
 
-        const invoiceFilePath = path.join(invoiceDir, `${invoice.InvoiceNumber}.pdf`);
+        const invoiceFilePath = path.join(invoiceDir, `${invoice.id}.pdf`);
         await createInvoicePdf({
           clientId: client.id,
           year,
           month,
-          totalAmount: 0, // This should be calculated based on billing details
+          totalAmount: 0,
           logoBase64: loadLogo()
         }, [], invoiceFilePath);
+
+        // Update PDF path after generation
+        await invoice.update({
+          PdfPath: `${invoice.id}.pdf`
+        });
 
         generatedInvoices.push(invoice);
       }
@@ -63,11 +72,12 @@ const invoiceService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName', 'Abbreviation']
           },
           {
             model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
+            as: 'Currency',
+            attributes: ['Name', 'Code', 'Symbol']
           }
         ]
       });
@@ -83,11 +93,12 @@ const invoiceService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName', 'Abbreviation']
           },
           {
             model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
+            as: 'Currency',
+            attributes: ['Name', 'Code', 'Symbol']
           }
         ]
       });
@@ -108,9 +119,11 @@ const invoiceService = {
       }
 
       // Delete PDF file if it exists
-      const filePath = path.join(__dirname, '../invoices', `${invoice.InvoiceNumber}.pdf`);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      if (invoice.PdfPath) {
+        const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
 
       await invoice.destroy();
@@ -127,7 +140,10 @@ const invoiceService = {
         throw new Error('Invoice not found');
       }
 
-      await invoice.update({ Status: 'Sent' });
+      await invoice.update({ 
+        Status: 'Sent',
+        InvoicedOn: new Date()
+      });
       return invoice;
     } catch (error) {
       throw new Error('Error marking invoice as sent: ' + error.message);
@@ -140,7 +156,7 @@ const invoiceService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName', 'Abbreviation']
           }
         ]
       });
@@ -150,12 +166,12 @@ const invoiceService = {
 
       // Regenerate PDF
       const invoiceDir = path.join(__dirname, '../invoices');
-      const invoiceFilePath = path.join(invoiceDir, `${invoice.InvoiceNumber}.pdf`);
+      const invoiceFilePath = path.join(invoiceDir, `${invoice.id}.pdf`);
       await createInvoicePdf({
         clientId: invoice.ClientID,
         year: invoice.Year,
         month: invoice.Month,
-        totalAmount: 0, // This should be calculated based on billing details
+        totalAmount: invoice.TotalAmount,
         logoBase64: loadLogo()
       }, [], invoiceFilePath);
 

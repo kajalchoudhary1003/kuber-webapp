@@ -2,6 +2,7 @@ const invoiceService = require('../services/invoiceService');
 const { createInvoicePdf, loadLogo } = require('../utils/pdfUtils');
 const path = require('path');
 const fs = require('fs');
+const logger = require('../utils/logger');
 
 const invoiceController = {
   async getAllInvoices(req, res) {
@@ -15,12 +16,13 @@ const invoiceController = {
 
   async getInvoiceById(req, res) {
     try {
-      const invoice = await invoiceService.getInvoiceById(req.params.id);
+      const invoice = await invoiceService.getInvoiceById(req.params.invoiceId);
       res.json(invoice);
     } catch (error) {
       if (error.message === 'Invoice not found') {
         res.status(404).json({ error: error.message });
       } else {
+        logger.error('Error fetching invoice:', error);
         res.status(500).json({ error: error.message });
       }
     }
@@ -31,11 +33,8 @@ const invoiceController = {
       const invoice = await invoiceService.createInvoice(req.body);
       res.status(201).json(invoice);
     } catch (error) {
-      if (error.message.includes('already exists')) {
-        res.status(409).json({ error: error.message });
-      } else {
-        res.status(400).json({ error: error.message });
-      }
+      logger.error('Error creating invoice:', error);
+      res.status(400).json({ error: error.message });
     }
   },
 
@@ -46,9 +45,8 @@ const invoiceController = {
     } catch (error) {
       if (error.message === 'Invoice not found') {
         res.status(404).json({ error: error.message });
-      } else if (error.message.includes('already exists')) {
-        res.status(409).json({ error: error.message });
       } else {
+        logger.error('Error updating invoice:', error);
         res.status(400).json({ error: error.message });
       }
     }
@@ -56,13 +54,13 @@ const invoiceController = {
 
   async deleteInvoice(req, res) {
     try {
-      const { invoiceId } = req.params;
-      const result = await invoiceService.deleteInvoice(invoiceId);
+      const result = await invoiceService.deleteInvoice(req.params.invoiceId);
       res.json(result);
     } catch (error) {
       if (error.message === 'Invoice not found') {
         res.status(404).json({ error: error.message });
       } else {
+        logger.error('Error deleting invoice:', error);
         res.status(500).json({ error: error.message });
       }
     }
@@ -173,6 +171,7 @@ const invoiceController = {
       const invoices = await invoiceService.generateInvoices(year, month);
       res.json(invoices);
     } catch (error) {
+      logger.error('Error generating invoices:', error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -183,6 +182,7 @@ const invoiceController = {
       const invoices = await invoiceService.getGeneratedInvoices(year, month);
       res.json(invoices);
     } catch (error) {
+      logger.error('Error fetching generated invoices:', error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -208,13 +208,13 @@ const invoiceController = {
 
   async markInvoiceAsSent(req, res) {
     try {
-      const { invoiceId } = req.params;
-      const invoice = await invoiceService.markInvoiceAsSent(invoiceId);
+      const invoice = await invoiceService.markInvoiceAsSent(req.params.invoiceId);
       res.json(invoice);
     } catch (error) {
       if (error.message === 'Invoice not found') {
         res.status(404).json({ error: error.message });
       } else {
+        logger.error('Error marking invoice as sent:', error);
         res.status(500).json({ error: error.message });
       }
     }
@@ -222,13 +222,13 @@ const invoiceController = {
 
   async regenerateInvoice(req, res) {
     try {
-      const { invoiceId } = req.params;
-      const invoice = await invoiceService.regenerateInvoice(invoiceId);
+      const invoice = await invoiceService.regenerateInvoice(req.params.invoiceId);
       res.json(invoice);
     } catch (error) {
       if (error.message === 'Invoice not found') {
         res.status(404).json({ error: error.message });
       } else {
+        logger.error('Error regenerating invoice:', error);
         res.status(500).json({ error: error.message });
       }
     }

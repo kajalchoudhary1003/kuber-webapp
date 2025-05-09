@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 
 const Client = require('./clientModel');
+const Currency = require('./currencyModel');
 
 const Invoice = sequelize.define('Invoice', {
   id: {
@@ -14,6 +15,14 @@ const Invoice = sequelize.define('Invoice', {
     allowNull: false,
     references: {
       model: Client,
+      key: 'id',
+    },
+  },
+  BillingCurrencyID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Currency,
       key: 'id',
     },
   },
@@ -56,10 +65,12 @@ const Invoice = sequelize.define('Invoice', {
   },
 }, {
   timestamps: true,
-  paranoid: true
+  paranoid: true,
+  tableName: 'Invoices' // Explicitly set the table name
 });
 
 // Define associations
 Invoice.belongsTo(Client, { foreignKey: 'ClientID' });
+Invoice.belongsTo(Currency, { foreignKey: 'BillingCurrencyID', as: 'Currency' });
 
 module.exports = Invoice;
