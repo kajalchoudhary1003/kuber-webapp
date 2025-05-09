@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-// Dummy employee data from EmployeeMaster.jsx
 const dummyEmployees = [
   { id: '1', FirstName: 'John', LastName: 'Doe', EmpCode: 'EMP001', Role: { RoleName: 'Manager' }, Level: { LevelName: 'Senior' }, Organisation: { Abbreviation: 'XYZ' } },
   { id: '2', FirstName: 'Jane', LastName: 'Smith', EmpCode: 'EMP002', Role: { RoleName: 'Developer' }, Level: { LevelName: 'Mid' }, Organisation: { Abbreviation: 'ABC' } },
@@ -63,8 +61,8 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         EmployeeID: initialData.EmployeeID || null,
       });
       setSelectedEmployee(`${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`);
+      setSearchTerm(`${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`);
     } else {
-      // Reset form when adding a new resource
       resetForm();
     }
   }, [initialData]);
@@ -91,6 +89,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     setSelectedEmployee(value);
 
     const employee = employeeOptions.find((emp) => `${emp.FirstName} ${emp.LastName}` === value);
+    
     if (employee) {
       setEmployeeDetails((prev) => ({
         ...prev,
@@ -101,13 +100,9 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         EmployeeID: employee.id,
       }));
     } else {
-      // Clear employee-related fields if no valid employee is selected
+      // Just clear EmployeeID but keep other fields editable
       setEmployeeDetails((prev) => ({
         ...prev,
-        empCode: '',
-        role: '',
-        level: '',
-        organization: '',
         EmployeeID: null,
       }));
     }
@@ -121,10 +116,15 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       if (value === 'Inactive') {
         setEmployeeDetails((prev) => ({
           ...prev,
+          status: value,
           endDate: new Date().toISOString().split('T')[0],
         }));
       } else {
-        setEmployeeDetails((prev) => ({ ...prev, endDate: '' }));
+        setEmployeeDetails((prev) => ({ 
+          ...prev, 
+          status: value,
+          endDate: '' 
+        }));
       }
     }
   };
@@ -201,24 +201,40 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
             <div className="w-full">
               <Label>Emp. Code</Label>
-              <Input value={employeeDetails.empCode} readOnly className="bg-gray-100" />
+              <Input
+                name="empCode"
+                value={employeeDetails.empCode}
+                onChange={handleChange}
+              />
             </div>
           </div>
 
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Role</Label>
-              <Input value={employeeDetails.role} readOnly className="bg-gray-100" />
+              <Input
+                name="role"
+                value={employeeDetails.role}
+                onChange={handleChange}
+              />
             </div>
             <div className="w-full">
               <Label>Level</Label>
-              <Input value={employeeDetails.level} readOnly className="bg-gray-100" />
+              <Input
+                name="level"
+                value={employeeDetails.level}
+                onChange={handleChange}
+              />
             </div>
           </div>
 
           <div>
             <Label>Organization</Label>
-            <Input value={employeeDetails.organization} readOnly className="bg-gray-100" />
+            <Input
+              name="organization"
+              value={employeeDetails.organization}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="flex gap-4">
