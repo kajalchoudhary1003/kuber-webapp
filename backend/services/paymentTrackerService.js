@@ -2,253 +2,147 @@ const { Op } = require('sequelize');
 const PaymentTracker = require('../models/paymentTrackerModel');
 const Client = require('../models/clientModel');
 const Currency = require('../models/currencyModel');
-const Invoice = require('../models/invoiceModel');
-const sequelize = require('sequelize');
+const sequelize = require('../db/sequelize');
+const Ledger = require('../models/ledgerModel');
+const ReconciliationNote = require('../models/reconciliationModel');
 
-const paymentTrackerService = {
-  async getAllPayments() {
-    try {
-      const payments = await PaymentTracker.findAll({
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
-          },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error fetching payments: ' + error.message);
+// Helper: Recalculate the balance for a client
+const recalculateBalanceFromStart = async (ClientID, transaction) => {
+  const ledgerEntries = await Ledger.findAll({
+    where: { ClientID },
+    order: [['Date', 'ASC']],
+    transaction,
+  });
+
+  const paymentEntries = await PaymentTracker.findAll({
+    where: { ClientID },
+    order: [['ReceivedDate', 'ASC']],
+    transaction,
+  });
+
+  const combinedEntries = [
+    ...ledgerEntries.map(entry => ({
+      type: 'Invoice',
+      date: entry.Date,
+      amount: entry.Amount,
+    })),
+    ...paymentEntries.map(entry => ({
+      type: 'Payment',
+      date: entry.ReceivedDate,
+      amount: entry.Amount,
+    })),
+  ];
+
+  combinedEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  let balance = 0;
+  for (const entry of combinedEntries) {
+    if (entry.type === 'Invoice') {
+      balance += parseFloat(entry.amount);
+    } else if (entry.type === 'Payment') {
+      balance -= parseFloat(entry.amount);
     }
-  },
 
-  async getPaymentById(id) {
-    try {
-      const payment = await PaymentTracker.findByPk(id, {
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
+    if (entry.type === 'Invoice') {
+      await Ledger.update(
+        { Balance: balance },
+        {
+          where: {
+            ClientID,
+            Date: entry.date,
           },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ]
-      });
-      if (!payment) {
-        throw new Error('Payment not found');
-      }
-      return payment;
-    } catch (error) {
-      throw new Error('Error fetching payment: ' + error.message);
-    }
-  },
-
-  async createPayment(paymentData) {
-    try {
-      const payment = await PaymentTracker.create(paymentData);
-      return payment;
-    } catch (error) {
-      throw new Error('Error creating payment: ' + error.message);
-    }
-  },
-
-  async updatePayment(id, paymentData) {
-    try {
-      const payment = await PaymentTracker.findByPk(id);
-      if (!payment) {
-        throw new Error('Payment not found');
-      }
-
-      await payment.update(paymentData);
-      return payment;
-    } catch (error) {
-      throw new Error('Error updating payment: ' + error.message);
-    }
-  },
-
-  async deletePayment(id) {
-    try {
-      const payment = await PaymentTracker.findByPk(id);
-      if (!payment) {
-        throw new Error('Payment not found');
-      }
-      await payment.destroy();
-      return { message: 'Payment deleted successfully' };
-    } catch (error) {
-      throw new Error('Error deleting payment: ' + error.message);
-    }
-  },
-
-  async searchPayments(query) {
-    try {
-      const payments = await PaymentTracker.findAll({
-        where: {
-          [Op.or]: [
-            { ReferenceNumber: { [Op.like]: `%${query}%` } },
-            { '$Client.ClientName$': { [Op.like]: `%${query}%` } },
-            { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
-            { '$Invoice.InvoiceNumber$': { [Op.like]: `%${query}%` } }
-          ]
-        },
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
-          },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error searching payments: ' + error.message);
-    }
-  },
-
-  async getClientPayments(clientId) {
-    try {
-      const payments = await PaymentTracker.findAll({
-        where: { ClientID: clientId },
-        include: [
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error fetching client payments: ' + error.message);
-    }
-  },
-
-  async getPaymentsByDateRange(startDate, endDate) {
-    try {
-      const payments = await PaymentTracker.findAll({
-        where: {
-          ReceivedDate: {
-            [Op.between]: [startDate, endDate]
-          }
-        },
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
-          },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error fetching payments by date range: ' + error.message);
-    }
-  },
-
-  async getPaymentsByStatus(status) {
-    try {
-      const payments = await PaymentTracker.findAll({
-        where: { Status: status },
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
-          },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          },
-          {
-            model: Invoice,
-            attributes: ['InvoiceNumber', 'InvoiceDate']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error fetching payments by status: ' + error.message);
-    }
-  },
-
-  async getPaymentsSummary() {
-    try {
-      const summary = await PaymentTracker.findAll({
-        attributes: [
-          'Status',
-          'CurrencyID',
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-          [sequelize.fn('SUM', sequelize.col('Amount')), 'totalAmount']
-        ],
-        group: ['Status', 'CurrencyID'],
-        include: [
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          }
-        ]
-      });
-      return summary;
-    } catch (error) {
-      throw new Error('Error fetching payments summary: ' + error.message);
-    }
-  },
-
-  async getPaymentsByInvoice(invoiceId) {
-    try {
-      const payments = await PaymentTracker.findAll({
-        where: { InvoiceID: invoiceId },
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'ClientCode']
-          },
-          {
-            model: Currency,
-            attributes: ['CurrencyName', 'CurrencyCode']
-          }
-        ],
-        order: [['ReceivedDate', 'DESC']]
-      });
-      return payments;
-    } catch (error) {
-      throw new Error('Error fetching payments by invoice: ' + error.message);
+          transaction,
+        }
+      );
     }
   }
 };
 
-module.exports = paymentTrackerService;
+// Create a new payment entry
+const createPayment = async (ClientID, ReceivedDate, Amount, Remark) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const payment = await PaymentTracker.create(
+      {
+        ClientID,
+        ReceivedDate,
+        Amount,
+        Remark,
+      },
+      { transaction }
+    );
+
+    await Client.update(
+      { paymentLastUpdated: new Date() },
+      { where: { id: ClientID }, transaction }
+    );
+
+    await recalculateBalanceFromStart(ClientID, transaction);
+
+    await transaction.commit();
+    return payment.toJSON();
+  } catch (error) {
+    await transaction.rollback();
+    throw new Error(`Error creating payment: ${error.message}`);
+  }
+};
+
+// Fetch last 3 payments for a client
+const getLastThreePaymentsByClient = async (ClientID) => {
+  const payments = await PaymentTracker.findAll({
+    where: { ClientID },
+    include: [
+      {
+        model: Client,
+        attributes: ['ClientName', 'paymentLastUpdated'],
+        include: [
+          {
+            model: Currency,
+            as: 'BillingCurrency',
+            attributes: ['CurrencyCode'],
+          },
+        ],
+      },
+    ],
+    order: [['ReceivedDate', 'DESC'], ['createdAt', 'DESC']],
+    limit: 3,
+  });
+
+  const currency = payments.length > 0 ? payments[0].Client.BillingCurrency : null;
+
+  return {
+    paymentLastUpdated: payments.length > 0 ? payments[0].Client.paymentLastUpdated : null,
+    currency: currency ? currency.CurrencyCode : null,
+    payments: payments.map(p => p.toJSON()),
+  };
+};
+
+// Get the latest reconciliation note
+const getReconciliationNote = async () => {
+  const note = await ReconciliationNote.findOne({
+    order: [['createdAt', 'DESC']],
+  });
+
+  return note ? note.toJSON() : null;
+};
+
+// Create or update reconciliation note
+const createOrUpdateReconciliationNote = async (noteContent) => {
+  const existingNote = await ReconciliationNote.findOne();
+
+  if (existingNote) {
+    existingNote.note = noteContent;
+    await existingNote.save();
+    return existingNote.toJSON();
+  } else {
+    const newNote = await ReconciliationNote.create({ note: noteContent });
+    return newNote.toJSON();
+  }
+};
+
+module.exports = {
+  createPayment,
+  getLastThreePaymentsByClient,
+  getReconciliationNote,
+  createOrUpdateReconciliationNote,
+};

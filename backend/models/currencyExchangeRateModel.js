@@ -33,8 +33,13 @@ const CurrencyExchangeRate = sequelize.define('CurrencyExchangeRate', {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  Year: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  }
 }, {
   timestamps: true,
+  tableName: 'CurrencyExchangeRate'
 });
 
 module.exports = CurrencyExchangeRate;
