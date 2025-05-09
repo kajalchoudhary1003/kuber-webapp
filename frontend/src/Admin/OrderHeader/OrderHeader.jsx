@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -16,22 +16,54 @@ const OrderHeader = () => {
   };
 
   const handleTabChange = (value) => {
-    // Force a hard navigation to ensure complete re-render
-    window.location.href = `/admin/${value}`;
-    // Alternative approach:
-    // navigate(`/admin/${value}`, { replace: true });
+    // Check if we're navigating from other-settings
+    if (location.pathname.includes('/admin/other-settings') && value !== 'other-settings') {
+      // Force a hard navigation
+      window.location.href = `/admin/${value}`;
+    } else {
+      // Normal navigation for other cases
+      navigate(`/admin/${value}`);
+    }
   };
+
+  // Get the current active tab
+  const activeTab = getActiveTab();
 
   return (
     <header className="px-8 py-4 flex items-center justify-between">
       <h1 className="text-2xl font-normal text-black">Admin</h1>
-      <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="gap-4">
-          <TabsTrigger value="employee-master">Employee Master</TabsTrigger>
-          <TabsTrigger value="employee-cost">Employee Cost</TabsTrigger>
-          <TabsTrigger value="client-master">Client Master</TabsTrigger>
-          <TabsTrigger value="billing-setup">Billing Setup</TabsTrigger>
-          <TabsTrigger value="other-settings">Other Settings</TabsTrigger>
+          <TabsTrigger 
+            value="employee-master" 
+            className={`cursor-pointer ${activeTab === 'employee-master' ? 'shadow-lg text-blue-500' : ''}`}
+          >
+            Employee Master
+          </TabsTrigger>
+          <TabsTrigger 
+            value="employee-cost" 
+            className={`cursor-pointer ${activeTab === 'employee-cost' ? 'shadow-lg text-blue-500' : ''}`}
+          >
+            Employee Cost
+          </TabsTrigger>
+          <TabsTrigger 
+            value="client-master" 
+            className={`cursor-pointer ${activeTab === 'client-master' ? 'shadow-lg text-blue-500' : ''}`}
+          >
+            Client Master
+          </TabsTrigger>
+          <TabsTrigger 
+            value="billing-setup" 
+            className={`cursor-pointer ${activeTab === 'billing-setup' ? 'shadow-lg text-blue-500' : ''}`}
+          >
+            Billing Setup
+          </TabsTrigger>
+          <TabsTrigger 
+            value="other-settings" 
+            className={`cursor-pointer ${activeTab === 'other-settings' ? 'shadow-lg text-blue-500' : ''}`}
+          >
+            Other Settings
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </header>

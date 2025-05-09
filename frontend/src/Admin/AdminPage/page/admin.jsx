@@ -7,6 +7,23 @@ import ClientMaster from '../components/ClientMaster';
 import BillingSetup from '../components/BillingSetup';
 import OtherSettings from '../components/OtherSettings';
 
+// Wrap OtherSettings in a component that handles unmounting properly
+const OtherSettingsWrapper = () => {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      // Force reload when unmounting OtherSettings
+      if (mounted) {
+        window.location.reload();
+      }
+    };
+  }, [mounted]);
+  
+  return <OtherSettings />;
+};
+
 export const AdminPage = () => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState(location.pathname);
@@ -31,7 +48,7 @@ export const AdminPage = () => {
           <Route path="employee-cost" element={<EmployeeCost />} />
           <Route path="client-master" element={<ClientMaster />} />
           <Route path="billing-setup" element={<BillingSetup />} />
-          <Route path="other-settings" element={<OtherSettings />} />
+          <Route path="other-settings" element={<OtherSettingsWrapper />} />
         </Routes>
       </div>
     </div>
