@@ -22,23 +22,20 @@ import { useYear } from '../../../contexts/YearContexts';
 const API_BASE_URL = 'http://localhost:5001/api/levels';
 const ORGANISATION_API_BASE_URL = 'http://localhost:5001/api/organisations';
 const ROLES_API_BASE_URL = 'http://localhost:5001/api/roles';
-const CURRENCY_API_BASE_URL = 'http://localhost:5001/api/currencies';
 
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
   try {
-    return useYear() || { selectedYear: null, setSelectedYear: () => {} };
+    return useYear() || { selectedYear: null, setSelectedYear: () => { } };
   } catch (e) {
-    return { selectedYear: null, setSelectedYear: () => {} };
+    return { selectedYear: null, setSelectedYear: () => { } };
   }
 };
 
-// Dummy data for non-currency sections (to be replaced later if needed)
+// Dummy data for non-role sections
 const dummyData = {
   financialYears: {
     financialYears: [
-      {year:"2025"},
-      {year:"2024"},
       { year: "2023" },
       { year: "2022" },
       { year: "2021" },
@@ -49,7 +46,7 @@ const dummyData = {
     {
       _id: "rate1",
       CurrencyFrom: { _id: "curr1", CurrencyName: "USD" },
-      CurrencyTo: { _id: "curr2", CurrencyName: "EUR" },
+      CurrencyTo: { _id: "curr2", CurrencyName: "EURrr" },
       ExchangeRate: 0.85,
       Year: "2023",
     },
@@ -60,6 +57,11 @@ const dummyData = {
       ExchangeRate: 0.88,
       Year: "2023",
     },
+  ],
+  currencies: [
+    { _id: "curr1", CurrencyCode: "USDdd", CurrencyName: "United States Dollar" },
+    { _id: "curr2", CurrencyCode: "EUR", CurrencyName: "Euro" },
+    { _id: "curr3", CurrencyCode: "GBP", CurrencyName: "British Pound" },
   ],
   bankDetails: [
     {
@@ -182,45 +184,17 @@ const OtherSettings = () => {
     }
   };
 
-  // Fetch currencies from backend
-  const fetchCurrencies = async () => {
-    try {
-      const response = await axios.get(CURRENCY_API_BASE_URL);
-      // Map backend data to frontend format
-      const formattedCurrencies = response.data.map(currency => ({
-        _id: currency.id,
-        CurrencyCode: currency.Code,
-        CurrencyName: currency.Name,
-        Symbol: currency.Symbol,
-        IsActive: currency.IsActive
-      }));
-      setCurrencies(formattedCurrencies);
-    } catch (error) {
-      console.error('Error fetching currencies:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to fetch currencies. Please check if the backend server is running.'
-      );
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch levels, organisations, roles, and currencies from backend
+        // Fetch levels, organisations, and roles from backend
         await fetchLevels();
         await fetchOrganisations();
         await fetchRoles();
-        await fetchCurrencies();
 
-        // Non-currency dummy data (to be replaced later if needed)
+        // Non-role dummy data
         setExchangeRates(dummyData.exchangeRates);
+        setCurrencies(dummyData.currencies);
         setBankDetails(dummyData.bankDetails);
 
         const newYears = dummyData.financialYears.financialYears.map((year) => year.year);
@@ -298,8 +272,8 @@ const OtherSettings = () => {
         CurrencyToID: exchangeRate.CurrencyToID,
         ExchangeRate: parseFloat(exchangeRate.ExchangeRate),
         Year: selectedYear,
-        CurrencyFrom: currencies.find((c) => c._id === exchangeRate.CurrencyFromID),
-        CurrencyTo: currencies.find((c) => c._id === exchangeRate.CurrencyToID),
+        CurrencyFrom: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyFromID),
+        CurrencyTo: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyToID),
       };
 
       if (exchangeRate.id) {
@@ -574,7 +548,6 @@ const OtherSettings = () => {
       id: currency._id,
       CurrencyCode: currency.CurrencyCode,
       CurrencyName: currency.CurrencyName,
-      Symbol: currency.Symbol,
     });
     setCurrencyModalOpen(true);
   };
@@ -582,78 +555,28 @@ const OtherSettings = () => {
   const handleCurrencySubmit = async (currency) => {
     try {
       console.log('Submitting currency:', currency);
-      // Map frontend data to backend format
-      const currencyData = {
-        Code: currency.CurrencyCode,
-        Name: currency.CurrencyName,
-        Symbol: currency.Symbol || '$', // Default symbol if not provided
-      };
-
-      let response;
       if (currency.id) {
-        // Update existing currency
-        response = await axios.put(`${CURRENCY_API_BASE_URL}/${currency.id}`, currencyData);
-      } else {
-        // Create new currency
-        response = await axios.post(CURRENCY_API_BASE_URL, currencyData);
-      }
-
-      // Map response data to frontend format
-      const updatedCurrency = {
-        _id: response.data.id,
-        CurrencyCode: response.data.Code,
-        CurrencyName: response.data.Name,
-        Symbol: response.data.Symbol,
-        IsActive: response.data.IsActive,
-      };
-
-      if (currency.id) {
+        const updatedCurrency = { ...currency, _id: currency.id };
         setCurrencies((prevCurrencies) =>
           prevCurrencies.map((c) => (c._id === updatedCurrency._id ? updatedCurrency : c))
         );
       } else {
-        setCurrencies((prevCurrencies) => [...prevCurrencies, updatedCurrency]);
+        const newCurrency = { ...currency, _id: `curr${Math.random().toString(36).substring(2, 9)}` };
+        setCurrencies((prevCurrencies) => [...prevCurrencies, newCurrency]);
       }
-
       setCurrencyModalOpen(false);
     } catch (error) {
-      console.error('Error submitting currency:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const errorMessage =
-        error.response?.status === 404
-          ? 'Currency not found'
-          : error.response?.status === 409
-            ? 'Currency code already exists'
-            : error.response?.status === 400
-              ? error.response?.data?.error || 'Invalid currency data'
-              : 'Failed to submit currency. Please check if the backend server is running.';
-      alert(errorMessage);
+      console.error('Error submitting currency:', error);
+      alert('Failed to submit currency. Please try again.');
     }
   };
 
   const deleteCurrency = async (currencyId) => {
     try {
       console.log('Deleting currency:', currencyId);
-      await axios.delete(`${CURRENCY_API_BASE_URL}/${currencyId}`);
       setCurrencies((prevCurrencies) => prevCurrencies.filter((currency) => currency._id !== currencyId));
     } catch (error) {
-      console.error('Error deleting currency:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const errorMessage =
-        error.response?.status === 404
-          ? 'Currency not found'
-          : error.response?.status === 400
-            ? error.response?.data?.error || 'Cannot delete currency'
-            : 'Failed to delete currency. Please check if the backend server is running.';
-      alert(errorMessage);
+      console.error('Error deleting currency:', error);
     }
   };
 
