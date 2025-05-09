@@ -327,7 +327,7 @@ const GenerateInvoicePage = () => {
       </Card>
 
       {/* Rest of your component JSX remains the same */}
-      <Card className="w-full bg-white rounded-3xl shadow-sm">
+      <Card className="w-full bg-white border-white rounded-3xl shadow-sm">
         <CardContent className="p-7">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-[24px] font-normal  text-[#272727]">Generated Invoices</h2>

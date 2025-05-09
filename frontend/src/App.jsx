@@ -7,6 +7,8 @@ import PaymentTracker from './Payments/PaymentsTracker';
 import Ledger from './Ledger/Ledger';
 import InvoiceGeneratorPage from './InvoiceGenerator/InvoiceGenerator';
 import AdminPage from './Admin/AdminPage/page/admin';
+import EmployeeDetail from './Admin/EmployeeDetailPage/EmployeeDetail';
+import ClientDetail from './Admin/ClientDetailPage/ClientDetails'; // Adjust path as per your project structure
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>;
@@ -36,6 +38,8 @@ const AppContent = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/admin/*" element={<AdminPage />} />
+                <Route path="/employee-detail/:id" element={<EmployeeDetail />} />
+                <Route path="/client-detail/:id" element={<ClientDetail />} />
                 <Route path="/invoice" element={<InvoiceGeneratorPage />} />
                 <Route path="/payment" element={<PaymentTracker />} />
                 <Route path="/ledger" element={<Ledger />} />

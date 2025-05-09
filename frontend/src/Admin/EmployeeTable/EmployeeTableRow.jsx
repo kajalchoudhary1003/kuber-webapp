@@ -20,34 +20,21 @@ const EmployeeTableRow = ({ data, onEdit, onDelete, roles, levels, organisations
     }).format(value);
   };
 
-  // Log the data for debugging
-  console.log('Employee Data:', data);
-  console.log('Roles:', roles);
-  console.log('Levels:', levels);
-  console.log('Organisations:', organisations);
-
-  // Map IDs to names using the correct field names from the backend
- const roleName = roles.find((role) => role._id === data.role)?.RoleName || 'N/A';
-  const levelName = levels.find((level) => level._id === data.level)?.LevelName || 'N/A';
-  const organisationName = organisations.find((org) => org._id === data.organisation)?.OrganisationName || 'N/A';
-
-  // Log the mapped values for debugging
-  console.log('Role ID:', data.role, 'Mapped Role Name:', roleName);
-  console.log('Level ID:', data.level, 'Mapped Level Name:', levelName);
-  console.log('Organisation ID:', data.organisation, 'Mapped Organisation Name:', organisationName);
+  // Splitting name into first and last name
+  const [FirstName, LastName] = data.name ? data.name.split(' ') : ['', ''];
 
   return (
     <TableRow className="hover:bg-blue-50">
       <TableCell className="py-3 px-1">{data._id}</TableCell>
-      <TableCell className="py-3 px-1">{`${data.FirstName} ${data.LastName}`}</TableCell>
-      <TableCell className="py-3 px-1">{data.EmpCode}</TableCell>
-      <TableCell className="py-3 px-1">{roleName}</TableCell>
-      <TableCell className="py-3 px-1">{levelName}</TableCell>
-      <TableCell className="py-3 px-1">{organisationName}</TableCell>
-      <TableCell className="py-3 px-1">{data.Projects}</TableCell>
+      <TableCell className="py-3 px-1">{`${FirstName} ${LastName}`}</TableCell>
+      <TableCell className="py-3 px-1">{data.EmpCode || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1">{data.role || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1">{data.level || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1">{data.organisation || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1">{data.Projects || 'N/A'}</TableCell>
       <TableCell className="py-3 px-1">{formatCurrency(data.CTCAnnual)}</TableCell>
       <TableCell className="py-3 px-1">{formatCurrency(data.CTCMonthly)}</TableCell>
-      <TableCell className="py-3 px-1">{data.Status}</TableCell>
+      <TableCell className="py-3 px-1">{data.Status || 'N/A'}</TableCell>
       <TableCell className="py-3 px-1">
         <Button
           variant="ghost"
@@ -80,5 +67,6 @@ const EmployeeTableRow = ({ data, onEdit, onDelete, roles, levels, organisations
     </TableRow>
   );
 };
+
 
 export default EmployeeTableRow;

@@ -26,14 +26,41 @@ const EmployeeMaster = () => {
     fetchDummyRolesLevelsOrgs();
   }, [page]);
 
-  // Fetching dummy employees data
+  // Fetching dummy employees data with CTC and Status fields
   const fetchDummyEmployees = async () => {
     setLoading(true);
     try {
       const dummyEmployees = [
-        { _id: '1', name: 'John Doe', role: 'Manager', level: 'Senior', organisation: 'XYZ Corp' },
-        { _id: '2', name: 'Jane Smith', role: 'Developer', level: 'Mid', organisation: 'ABC Inc.' },
-        { _id: '3', name: 'Samuel Lee', role: 'Designer', level: 'Junior', organisation: 'Tech Solutions' },
+        { 
+          _id: '1', 
+          name: 'John Doe', 
+          role: 'Manager', 
+          level: 'Senior', 
+          organisation: 'XYZ Corp',
+          CTCAnnual: 1200000,  // Added CTCAnnual
+          CTCMonthly: 100000,  // Added CTCMonthly
+          Status: 'Active'  // Added Status
+        },
+        { 
+          _id: '2', 
+          name: 'Jane Smith', 
+          role: 'Developer', 
+          level: 'Mid', 
+          organisation: 'ABC Inc.',
+          CTCAnnual: 800000,
+          CTCMonthly: 66667,
+          Status: 'Inactive'
+        },
+        { 
+          _id: '3', 
+          name: 'Samuel Lee', 
+          role: 'Designer', 
+          level: 'Junior', 
+          organisation: 'Tech Solutions',
+          CTCAnnual: 600000,
+          CTCMonthly: 50000,
+          Status: 'Active'
+        },
       ];
       setEmployees(dummyEmployees);
       setTotalEmployees(dummyEmployees.length);  // Total employees count for pagination
