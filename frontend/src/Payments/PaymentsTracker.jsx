@@ -23,26 +23,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 
-// Dummy data for payments
-const clientPayments = {
-  1: [
-    { id: 1, date: "05/05/2025", amount: "£20", remark: "hello" },
-    { id: 2, date: "03/04/2025", amount: "£100", remark: "hi" },
-  ],
-  2: [
-    { id: 3, date: "12/03/2025", amount: "£500", remark: "Monthly retainer" },
-    { id: 4, date: "15/02/2025", amount: "£750", remark: "Project milestone" },
-  ],
-  3: [
-    { id: 5, date: "22/04/2025", amount: "£1,200", remark: "Consulting fee" },
-    { id: 6, date: "18/03/2025", amount: "£950", remark: "Service payment" },
-  ],
-  4: [
-    { id: 7, date: "10/05/2025", amount: "£3,000", remark: "Product development" },
-    { id: 8, date: "05/04/2025", amount: "£2,500", remark: "Research grant" },
-  ],
-}
-
 export default function PaymentTracker() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -52,6 +32,10 @@ export default function PaymentTracker() {
   const [amount, setAmount] = useState("")
   const [remark, setRemark] = useState("")
   const [reconciliationNote, setReconciliationNote] = useState("")
+  const [clientPayments, setClientPayments] = useState([])
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState(null)
+  const [submitLoading, setSubmitLoading] = useState(false)
   const currentDate = new Date()
 
   // Fetch clients when component mounts
@@ -73,17 +57,81 @@ export default function PaymentTracker() {
     fetchClients()
   }, [])
 
-  const handleRecordPayment = () => {
-    // This would normally send data to a backend
-    alert(`Payment recorded for ${selectedClient}: ${amount} on ${date?.toLocaleDateString()}`)
-    // Reset form
-    setDate(undefined)
-    setAmount("")
-    setRemark("")
+  // Fetch payments for selected client
+  useEffect(() => {
+    const fetchClientPayments = async () => {
+      if (!selectedClient) {
+        setClientPayments([])
+        return
+      }
+
+      try {
+        setPaymentLoading(true)
+        const response = await axios.get(`http://localhost:5001/api/payment-tracker/payment/last-three/${selectedClient}`)
+        setClientPayments(response.data.payments || [])
+        setPaymentError(null)
+      } catch (err) {
+        setPaymentError("Failed to fetch payments for this client")
+        console.error("Error fetching client payments:", err)
+        setClientPayments([])
+      } finally {
+        setPaymentLoading(false)
+      }
+    }
+
+    fetchClientPayments()
+  }, [selectedClient])
+
+  const handleRecordPayment = async () => {
+    if (!selectedClient || !date || !amount) {
+      alert("Please select a client, date, and enter an amount")
+      return
+    }
+
+    try {
+      setSubmitLoading(true)
+      
+      // Format the date to ISO string for the backend
+      const formattedDate = date.toISOString()
+      
+      // Send payment data to backend
+      await axios.post('http://localhost:5001/api/payment-tracker/payment', {
+        ClientID: parseInt(selectedClient),
+        ReceivedDate: formattedDate,
+        Amount: parseFloat(amount),
+        Remark: remark
+      })
+
+      // Refresh the payments list
+      const response = await axios.get(`http://localhost:5001/api/payment-tracker/payment/last-three/${selectedClient}`)
+      setClientPayments(response.data.payments || [])
+      
+      // Reset form
+      setDate(undefined)
+      setAmount("")
+      setRemark("")
+      
+      alert("Payment recorded successfully")
+    } catch (err) {
+      console.error("Error recording payment:", err)
+      alert(`Failed to record payment: ${err.response?.data?.error || err.message}`)
+    } finally {
+      setSubmitLoading(false)
+    }
+  }
+
+  // Format date for display
+  const formatDisplayDate = (dateString) => {
+    try {
+      const date = new Date(dateString)
+      return format(date, "dd/MM/yyyy")
+    } catch (error) {
+      return dateString
+    }
   }
 
   return (
-    <div className="p-6  min-h-screen">
+    <div className="p-6 min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Payment Tracker</h1>
 
       <Card className="mb-6 bg-white border-0 shadow-md">
@@ -169,7 +217,14 @@ export default function PaymentTracker() {
               <Label htmlFor="amount">Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
-                <Input id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="pl-7" />
+                <Input 
+                  id="amount" 
+                  value={amount} 
+                  onChange={(e) => setAmount(e.target.value)} 
+                  className="pl-7"
+                  type="number"
+                  step="0.01" 
+                />
               </div>
             </div>
 
@@ -178,8 +233,12 @@ export default function PaymentTracker() {
               <Input id="remark" placeholder="Remark" value={remark} onChange={(e) => setRemark(e.target.value)} />
             </div>
 
-            <Button className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer" onClick={handleRecordPayment}>
-              Record Payment
+            <Button 
+              className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer" 
+              onClick={handleRecordPayment}
+              disabled={!selectedClient || !date || !amount || submitLoading}
+            >
+              {submitLoading ? "Recording..." : "Record Payment"}
             </Button>
           </div>
         </CardContent>
@@ -198,14 +257,27 @@ export default function PaymentTracker() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedClient &&
-                    clientPayments[Number.parseInt(selectedClient)]?.map((payment) => (
+                  {paymentLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4">Loading payments...</TableCell>
+                    </TableRow>
+                  ) : paymentError ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4 text-red-500">{paymentError}</TableCell>
+                    </TableRow>
+                  ) : clientPayments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4">No payment records found for this client</TableCell>
+                    </TableRow>
+                  ) : (
+                    clientPayments.map((payment) => (
                       <TableRow key={payment.id}>
-                        <TableCell className="text-center">{payment.date}</TableCell>
-                        <TableCell className="text-center">{payment.amount}</TableCell>
-                        <TableCell className="text-center">{payment.remark}</TableCell>
+                        <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
+                        <TableCell className="text-center">£{parseFloat(payment.Amount).toFixed(2)}</TableCell>
+                        <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
                       </TableRow>
-                    ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
