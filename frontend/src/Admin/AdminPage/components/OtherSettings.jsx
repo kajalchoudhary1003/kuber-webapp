@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
 import axios from 'axios';
@@ -32,9 +33,9 @@ const BACKUP_API_BASE_URL = 'http://localhost:5001/api/backup';
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
   try {
-    return useYear() || { selectedYear: null, setSelectedYear: () => { } };
+    return useYear() || { selectedYear: null, setSelectedYear: () => {} };
   } catch (e) {
-    return { selectedYear: null, setSelectedYear: () => { } };
+    return { selectedYear: null, setSelectedYear: () => {} };
   }
 };
 
@@ -50,8 +51,10 @@ const OtherSettings = () => {
   const [showMoreAvailable, setShowMoreAvailable] = useState(true);
   const [randomCode, setRandomCode] = useState('');
   const { selectedYear, setSelectedYear } = useYearWithFallback();
+
   const [backupName, setBackupName] = useState('');
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+
 
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleModalMode, setRoleModalMode] = useState('create');
@@ -602,6 +605,7 @@ const OtherSettings = () => {
     }
   };
 
+
   // Open restore modal
   const openRestoreModal = () => {
     setRestoreModalOpen(true);
@@ -622,6 +626,8 @@ const OtherSettings = () => {
       }
       setRestoreModalOpen(false);
       setBackupName('');
+
+
     } catch (error) {
       console.error('Error during database restore:', error);
       alert(error.response?.data?.message || 'Failed to restore database.');
@@ -1121,4 +1127,6 @@ const OtherSettings = () => {
   );
 };
 
+
 export default OtherSettings;
+

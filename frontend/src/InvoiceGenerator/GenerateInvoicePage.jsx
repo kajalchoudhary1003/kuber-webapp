@@ -39,20 +39,24 @@ const GenerateInvoicePage = () => {
   const fetchClients = async () => {
     try {
       const res = await fetch(`${API_BASE}/clients?year=${selectedYear}`);
+      if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
       const data = await res.json();
       setClients(data);
     } catch (err) {
       console.error('Error fetching clients:', err);
+      alert('Failed to fetch clients. Please try again.');
     }
   };
 
   const fetchGeneratedInvoices = async () => {
     try {
       const res = await fetch(`${API_BASE}/invoices/generated/${selectedYear}/${selectedMonth}`);
+      if (!res.ok) throw new Error(`Failed to fetch invoices: ${res.status}`);
       const data = await res.json();
       setGeneratedInvoices(data);
     } catch (err) {
       console.error('Error fetching invoices:', err);
+      alert('Failed to fetch invoices. Please try again.');
     }
   };
 
@@ -65,40 +69,65 @@ const GenerateInvoicePage = () => {
 
   const handleGenerateInvoice = async () => {
     const toGenerate = mergedInvoices.filter(inv => selectedRows.includes(inv.clientId) && !inv.id);
-    if (toGenerate.length === 0) return;
+    console.log('Invoices to generate:', toGenerate);
+    if (toGenerate.length === 0) {
+      alert('No invoices selected to generate.');
+      return;
+    }
 
     try {
       for (const inv of toGenerate) {
-        await fetch(`${API_BASE}/invoices/generate`, {
+        const response = await fetch(`${API_BASE}/invoices/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ year: selectedYear, month: selectedMonth, clientId: inv.clientId }),
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to generate invoice for ${inv.clientName}: ${errorData.error}`);
+        }
       }
       setSelectedRows([]);
-      fetchGeneratedInvoices();
+      await fetchGeneratedInvoices();
+      alert('Invoices generated successfully.');
     } catch (err) {
       console.error('Generate invoice failed:', err);
+      alert(`Error generating invoices: ${err.message}`);
     }
   };
 
   const handleDelete = async () => {
     const toDelete = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
-    if (toDelete.length === 0) return;
+    if (toDelete.length === 0) {
+      alert('No generated invoices selected to delete.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${toDelete.length} invoice(s)?`)) {
+      return;
+    }
 
     try {
       for (const inv of toDelete) {
-        await fetch(`${API_BASE}/invoices/delete/${inv.id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE}/invoices/delete/${inv.id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`Failed to delete invoice ${inv.id}`);
       }
       setSelectedRows([]);
-      fetchGeneratedInvoices();
+      await fetchGeneratedInvoices();
+      alert(`${toDelete.length} invoice(s) deleted successfully.`);
     } catch (err) {
       console.error('Delete invoice failed:', err);
+      alert('Failed to delete invoice(s). Please try again.');
     }
   };
 
   const handleDownload = async () => {
     const toDownload = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
+    if (toDownload.length === 0) {
+      alert('No generated invoices selected to download.');
+      return;
+    }
     for (const inv of toDownload) {
       window.open(`${API_BASE}/invoices/download/${inv.id}`, '_blank');
     }
@@ -106,76 +135,91 @@ const GenerateInvoicePage = () => {
 
   const handleMarkAsSent = async () => {
     const toMark = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
-    for (const inv of toMark) {
-      await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
+    if (toMark.length === 0) {
+      alert('No generated invoices selected to mark as sent.');
+      return;
     }
-    setSelectedRows([]);
-    fetchGeneratedInvoices();
+    try {
+      for (const inv of toMark) {
+        const response = await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
+        if (!response.ok) throw new Error(`Failed to mark invoice ${inv.id} as sent`);
+      }
+      setSelectedRows([]);
+      await fetchGeneratedInvoices();
+      alert('Invoices marked as sent successfully.');
+    } catch (err) {
+      console.error('Mark as sent failed:', err);
+      alert('Failed to mark invoice(s) as sent. Please try again.');
+    }
   };
 
   const handleRegenerate = async () => {
-  const toRegenerate = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
-  if (toRegenerate.length === 0) return;
-
-  if (!window.confirm(`Are you sure you want to regenerate ${toRegenerate.length} invoice(s)?`)) {
-    return;
-  }
-
-  try {
-    for (const inv of toRegenerate) {
-      const response = await fetch(`${API_BASE}/invoices/regenerate/${inv.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to regenerate invoice ${inv.id}`);
-      }
+    const toRegenerate = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
+    if (toRegenerate.length === 0) {
+      alert('No generated invoices selected to regenerate.');
+      return;
     }
-    setSelectedRows([]); // Clear selected rows
-    await fetchGeneratedInvoices();
-    alert(`${toRegenerate.length} invoice(s) regenerated successfully.`);
-  } catch (err) {
-    console.error('Regenerate invoice failed:', err);
-    alert('Failed to regenerate invoice(s). Please try again.');
-  }
-};
+
+    if (!window.confirm(`Are you sure you want to regenerate ${toRegenerate.length} invoice(s)?`)) {
+      return;
+    }
+
+    try {
+      for (const inv of toRegenerate) {
+        const response = await fetch(`${API_BASE}/invoices/regenerate/${inv.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to regenerate invoice ${inv.id}: ${errorData.error}`);
+        }
+      }
+      setSelectedRows([]);
+      await fetchGeneratedInvoices();
+      alert(`${toRegenerate.length} invoice(s) regenerated successfully.`);
+    } catch (err) {
+      console.error('Regenerate invoice failed:', err);
+      alert('Failed to regenerate invoice(s). Please try again.');
+    }
+  };
 
   const handleViewInvoice = (filePath) => {
     window.open(`${API_BASE}/invoices/view/${filePath}`, '_blank');
   };
 
   const mergedInvoices = clients.map((client) => {
-  const invoice = generatedInvoices.find((inv) => inv.ClientID === client.id);
-  const result = invoice
-    ? {
-        id: invoice.id,
-        clientId: client.id,
-        clientName: client.ClientName,
-        totalAmount: invoice.TotalAmount,
-        currencyCode: invoice.Currency?.CurrencyCode || '',
-        generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
-        invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
-        year: invoice.Year,
-        month: invoice.Month,
-        status: invoice.Status,
-        pdfPath: invoice.PdfPath,
-      }
-    : {
-        id: null,
-        clientId: client.id,
-        clientName: client.ClientName,
-        totalAmount: 0,
-        currencyCode: '',
-        generatedOn: null,
-        invoicedOn: null,
-        year: null, // Set to null instead of selectedYear
-        month: null, // Set to null instead of selectedMonth
-        status: 'Not generated yet',
-        pdfPath: null,
-      };
-  console.log('Merged invoice for client:', client.ClientName, { year: result.year, month: result.month });
-  return result;
-});
+    const invoice = generatedInvoices.find((inv) => inv.ClientID === client.id);
+    const result = invoice
+      ? {
+          id: invoice.id,
+          clientId: client.id,
+          clientName: client.ClientName,
+          totalAmount: invoice.TotalAmount,
+          currencyCode: invoice.Currency?.CurrencyCode || '',
+          generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
+          invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
+          year: invoice.Year,
+          month: invoice.Month,
+          status: invoice.Status,
+          pdfPath: invoice.PdfPath,
+        }
+      : {
+          id: null,
+          clientId: client.id,
+          clientName: client.ClientName,
+          totalAmount: 0,
+          currencyCode: '',
+          generatedOn: null,
+          invoicedOn: null,
+          year: null,
+          month: null,
+          status: 'Not generated yet',
+          pdfPath: null,
+        };
+    console.log('Merged invoice for client:', client.ClientName, { year: result.year, month: result.month });
+    return result;
+  });
 
   useEffect(() => {
     setAllSelected(selectedRows.length === mergedInvoices.length);
@@ -194,19 +238,19 @@ const GenerateInvoicePage = () => {
     setSelectedRows(checked ? mergedInvoices.map((m) => m.id || m.clientId) : []);
   };
 
-  if (loading) return <p>Loading...</p>;
-
-  // Check if there are any non-generated invoices selected
   const hasNonGeneratedSelected = selectedRows.some(rowId => {
     const inv = mergedInvoices.find(i => (i.id || i.clientId) === rowId);
     return inv && !inv.id;
   });
 
-  // Check if there are any generated invoices selected
   const onlyGeneratedSelected = selectedRows.every(rowId => {
     const inv = mergedInvoices.find(i => i.id === rowId);
     return inv && inv.id;
   });
+
+  console.log('hasNonGeneratedSelected:', hasNonGeneratedSelected);
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="flex flex-col items-center gap-5 p-4">
@@ -220,7 +264,7 @@ const GenerateInvoicePage = () => {
               <SelectTrigger className="w-40 rounded-full border-gray-300">
                 <SelectValue placeholder="Select Month" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='bg-white border-none'>
                 {fiscalMonths.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
@@ -233,102 +277,102 @@ const GenerateInvoicePage = () => {
       </Card>
 
       <Card className="w-full bg-white border-white rounded-3xl shadow-sm">
-  <CardContent className="p-7">
-    <div className="flex justify-between items-center mb-5">
-      <h2 className="text-[24px] font-normal text-[#272727]">Generated Invoices</h2>
-      <div className="flex gap-3">
-        <Button
-          onClick={handleDelete}
-          disabled={!onlyGeneratedSelected}
-          className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Delete
-        </Button>
-        <Button
-          onClick={handleMarkAsSent}
-          disabled={!onlyGeneratedSelected}
-          className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Mark as Sent
-        </Button>
-        <Button
-          onClick={handleRegenerate}
-          disabled={!onlyGeneratedSelected}
-          className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Re-generate
-        </Button>
-        <Button
-          onClick={handleGenerateInvoice}
-          disabled={!hasNonGeneratedSelected}
-          className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Generate Invoice(s)
-        </Button>
-      </div>
-    </div>
+        <CardContent className="p-7">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-[24px] font-normal text-[#272727]">Generated Invoices</h2>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleDelete}
+                disabled={!onlyGeneratedSelected}
+                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete
+              </Button>
+              <Button
+                onClick={handleMarkAsSent}
+                disabled={!onlyGeneratedSelected}
+                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Mark as Sent
+              </Button>
+              <Button
+                onClick={handleRegenerate}
+                disabled={!onlyGeneratedSelected}
+                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Re-generate
+              </Button>
+              <Button
+                onClick={handleGenerateInvoice}
+                disabled={!hasNonGeneratedSelected}
+                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Generate Invoice(s)
+              </Button>
+            </div>
+          </div>
 
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-3 text-center">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={handleSelectAll}
-                indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
-              />
-            </th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Total Billing Amount</th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Generated On</th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Month & Year</th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Status</th>
-            <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {mergedInvoices.map((invoice, index) => (
-            <tr key={`${invoice.id || invoice.clientId}-${index}`} className="border-b border-gray-200">
-              <td className="p-3 text-center">
-                <Checkbox
-                  checked={selectedRows.includes(invoice.id || invoice.clientId)}
-                  onCheckedChange={(checked) => handleRowSelect(checked, invoice.id || invoice.clientId)}
-                />
-              </td>
-              <td className="p-3 text-center">{invoice.clientName}</td>
-              <td className="p-3 text-center">
-                {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString()}` : 'N/A'}
-              </td>
-              <td className="p-3 text-center">
-                {invoice.generatedOn ? new Date(invoice.generatedOn).toLocaleDateString() : 'N/A'}
-              </td>
-              <td className="p-3 text-center">
-                {invoice.year && invoice.month
-                  ? `${fiscalMonths.find((m) => m.value === invoice.month)?.label} ${invoice.year}`
-                  : 'N/A'}
-              </td>
-              <td className="p-3 text-center">{invoice.status}</td>
-              <td className="p-3 text-center">
-                {invoice.pdfPath ? (
-                  <Button
-                    variant="outline"
-                    className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
-                    onClick={() => handleViewInvoice(invoice.pdfPath)}
-                  >
-                    View
-                  </Button>
-                ) : (
-                  'N/A'
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </CardContent>
-</Card>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-3 text-center">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={handleSelectAll}
+                      indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
+                    />
+                  </th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Total Billing Amount</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Generated On</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Month & Year</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Status</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mergedInvoices.map((invoice, index) => (
+                  <tr key={`${invoice.id || invoice.clientId}-${index}`} className="border-b border-gray-200">
+                    <td className="p-3 text-center">
+                      <Checkbox
+                        checked={selectedRows.includes(invoice.id || invoice.clientId)}
+                        onCheckedChange={(checked) => handleRowSelect(checked, invoice.id || invoice.clientId)}
+                      />
+                    </td>
+                    <td className="p-3 text-center">{invoice.clientName}</td>
+                    <td className="p-3 text-center">
+                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString()}` : 'N/A'}
+                    </td>
+                    <td className="p-3 text-center">
+                      {invoice.generatedOn ? new Date(invoice.generatedOn).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="p-3 text-center">
+                      {invoice.year && invoice.month
+                        ? `${fiscalMonths.find((m) => m.value === invoice.month)?.label} ${invoice.year}`
+                        : 'N/A'}
+                    </td>
+                    <td className="p-3 text-center">{invoice.status}</td>
+                    <td className="p-3 text-center">
+                      {invoice.pdfPath ? (
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                          onClick={() => handleViewInvoice(invoice.pdfPath)}
+                        >
+                          View
+                        </Button>
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

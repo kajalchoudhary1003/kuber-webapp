@@ -1,3 +1,4 @@
+
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
@@ -51,18 +52,14 @@ const backupDatabase = async () => {
 
 const restoreDatabase = async (backupName) => {
   try {
-    if (!backupName) {
-      logger.error('No backup name provided.');
-      return { success: false, message: 'No backup name provided' };
+
+
+
+    if (!backupFile) {
+      logger.error('No backup file provided.');
+      return { success: false, message: 'No backup file provided' };
     }
 
-    const backupDir = path.join(__dirname, '../backups');
-    const backupPath = path.join(backupDir, backupName);
-
-    if (!fs.existsSync(backupPath)) {
-      logger.error('Backup file does not exist.', { backupPath });
-      return { success: false, message: 'Backup file does not exist.' };
-    }
 
     const dbPath = path.join(__dirname, '../database/database.sqlite');
     const dbDir = path.dirname(dbPath);
@@ -72,7 +69,9 @@ const restoreDatabase = async (backupName) => {
       logger.info('Created database directory.', { dbDir });
     }
 
-    fs.copyFileSync(backupPath, dbPath);
+
+    fs.copyFileSync(backupFile.tempFilePath, dbPath);
+
     fs.chmodSync(dbPath, 0o666);
     logger.info('Database restored successfully.', { dbPath });
 
