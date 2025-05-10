@@ -130,11 +130,11 @@ useEffect(() => {
       setLoading(true)
       
       // Fetch client profitability data
-      const clientResponse = await axios.get(`http://localhost:5001/api/client-profitability-report/${selectedYear}`)
+      const clientResponse = await axios.get(`http://localhost:5001/api/profitability/clients-report/${selectedYear}`)
       setClientProfitabilityData(clientResponse.data)
       
       // Fetch employee profitability data
-      const employeeResponse = await axios.get(`http://localhost:5001/api/employee-profitability-report/${selectedYear}`)
+      const employeeResponse = await axios.get(`http://localhost:5001/api/profitability/employee-report/${selectedYear}`)
       setEmployeeProfitabilityData(employeeResponse.data)
       
       setShowProfitability(true)
