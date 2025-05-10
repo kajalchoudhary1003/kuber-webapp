@@ -1,9 +1,7 @@
-const express = require('express');
-const router = express.Router();
 const ledgerService = require('../services/ledgerService');
 const logger = require('../utils/logger');
 
-router.post('/by-client-date-range', async (req, res) => {
+const getLedgerByClientAndDateRange = async (req, res) => {
   const { clientId, startDate, endDate } = req.body;
 
   if (!clientId || !startDate || !endDate) {
@@ -17,6 +15,8 @@ router.post('/by-client-date-range', async (req, res) => {
     logger.error(`Error fetching ledger data: ${error.message}`);
     res.status(500).json({ error: 'Failed to fetch ledger data' });
   }
-});
+};
 
-module.exports = router;
+module.exports = {
+  getLedgerByClientAndDateRange
+};

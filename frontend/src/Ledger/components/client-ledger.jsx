@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,57 +8,173 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-
-// Dummy data for ledger entries
-const ledgerEntries = [
-  {
-    date: "03/04/2025",
-    particulars: "Payment Received",
-    invoiceRaised: "-",
-    paymentReceived: 100,
-    balancePayment: -100,
-  },
-  {
-    date: "02/05/2025",
-    particulars: "Invoice Raised",
-    invoiceRaised: 600,
-    paymentReceived: "-",
-    balancePayment: 500,
-  },
-  {
-    date: "02/05/2025",
-    particulars: "Invoice Raised",
-    invoiceRaised: 600,
-    paymentReceived: "-",
-    balancePayment: 1100,
-  },
-  {
-    date: "05/05/2025",
-    particulars: "Payment Received",
-    invoiceRaised: "-",
-    paymentReceived: 20,
-    balancePayment: 1080,
-  },
-]
+import axios from "axios"
 
 export default function ClientLedger() {
+  const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState("")
   const [selectedPeriod, setSelectedPeriod] = useState("")
   const [showLedger, setShowLedger] = useState(false)
   const [startDate, setStartDate] = useState(null)
   const [endDate, setEndDate] = useState(null)
+  const [ledgerEntries, setLedgerEntries] = useState([])
+  const [balance, setBalance] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const handleShowLedger = () => {
-    if (selectedClient && 
-        (selectedPeriod !== "custom" || (startDate && endDate))) {
+  // Fetch clients on component mount
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://localhost:5001/api/clients')
+        setClients(response.data)
+        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching clients:', err)
+        setError('Failed to load clients')
+        setLoading(false)
+      }
+    }
+
+    fetchClients()
+  }, [])
+
+  // Replace the handleShowLedger function with this:
+const handleShowLedger = async () => {
+  if (selectedClient && 
+      (selectedPeriod !== "custom" || (startDate && endDate))) {
+    try {
+      setLoading(true)
+      
+      // Calculate date range based on selected period
+      let startDateStr = ''
+      let endDateStr = new Date().toISOString().split('T')[0] // Current date
+      
+      if (selectedPeriod === "custom" && startDate && endDate) {
+        startDateStr = format(startDate, 'yyyy-MM-dd')
+        endDateStr = format(endDate, 'yyyy-MM-dd')
+      } else {
+        switch (selectedPeriod) {
+          case "1month":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd')
+            break
+          case "3months":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 3)), 'yyyy-MM-dd')
+            break
+          case "6months":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 6)), 'yyyy-MM-dd')
+            break
+          case "1year":
+            startDateStr = format(new Date(new Date().setFullYear(new Date().getFullYear() - 1)), 'yyyy-MM-dd')
+            break
+          default:
+            break
+        }
+      }
+      
+      // Fetch ledger data from backend - using POST as required by your API
+      const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
+        clientId: selectedClient,
+        startDate: startDateStr,
+        endDate: endDateStr
+      })
+      
+      setLedgerEntries(response.data.entries)
+      setBalance(response.data.balance)
       setShowLedger(true)
+      setLoading(false)
+    } catch (err) {
+      console.error('Error fetching ledger data:', err)
+      setError('Failed to load ledger data')
+      setLoading(false)
     }
   }
+}
+
 
   const isButtonDisabled = () => {
     if (!selectedClient) return true;
     if (selectedPeriod === "custom" && (!startDate || !endDate)) return true;
     return false;
+  }
+
+  const handleDownload = async () => {
+    try {
+      if (!selectedClient) return;
+      
+      let startDateStr = ''
+      let endDateStr = new Date().toISOString().split('T')[0]
+      
+      if (selectedPeriod === "custom" && startDate && endDate) {
+        startDateStr = format(startDate, 'yyyy-MM-dd')
+        endDateStr = format(endDate, 'yyyy-MM-dd')
+      } else {
+        switch (selectedPeriod) {
+          case "1month":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd')
+            break
+          case "3months":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 3)), 'yyyy-MM-dd')
+            break
+          case "6months":
+            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 6)), 'yyyy-MM-dd')
+            break
+          case "1year":
+            startDateStr = format(new Date(new Date().setFullYear(new Date().getFullYear() - 1)), 'yyyy-MM-dd')
+            break
+          default:
+            break
+        }
+      }
+      
+      // Request the PDF download
+      const response = await axios.get(`http://localhost:5001/api/ledger/client/${selectedClient}/download`, {
+        params: {
+          startDate: startDateStr,
+          endDate: endDateStr
+        },
+        responseType: 'blob'
+      })
+      
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `client_ledger_${selectedClient}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (err) {
+      console.error('Error downloading ledger:', err)
+      setError('Failed to download ledger')
+    }
+  }
+
+  // Format date for display
+  // Format date for display - with error handling
+const formatDate = (dateString) => {
+  try {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return '-';
+    }
+    
+    return format(date, 'dd/MM/yyyy');
+  } catch (err) {
+    console.error('Error formatting date:', dateString, err);
+    return '-';
+  }
+}
+
+
+  // Format number with commas
+  const formatNumberWithCommas = (number) => {
+    if (number == null) return '-'
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
   }
 
   return (
@@ -74,14 +190,20 @@ export default function ClientLedger() {
                   <SelectValue placeholder="Select Client" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
-                  <SelectItem className="cursor-pointer" value="bev">BirdsEyeView (BEV)</SelectItem>
-                  <SelectItem className="cursor-pointer" value="acme">Acme Corp</SelectItem>
-                  <SelectItem className="cursor-pointer" value="globex">Globex Industries</SelectItem>
+                  {clients.map(client => (
+                    <SelectItem 
+                      key={client.id} 
+                      className="cursor-pointer" 
+                      value={client.id.toString()}
+                    >
+                      {client.ClientName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className=" cursor-pointer w-[180px]">
+                <SelectTrigger className="cursor-pointer w-[180px]">
                   <SelectValue placeholder="Select Period" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
@@ -104,13 +226,13 @@ export default function ClientLedger() {
                           !startDate && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2  h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {startDate ? format(startDate, "PPP") : "Start date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto bg-white p-0">
                       <Calendar
-                      className="cursor-pointer"
+                        className="cursor-pointer"
                         mode="single"
                         selected={startDate}
                         onSelect={setStartDate}
@@ -149,13 +271,17 @@ export default function ClientLedger() {
 
               <Button 
                 className="bg-blue-500 cursor-pointer hover:bg-blue-500/90 text-white rounded-full" 
-                disabled={isButtonDisabled()}
+                disabled={isButtonDisabled() || loading}
                 onClick={handleShowLedger}
               >
-                Show Ledger
+                {loading ? "Loading..." : "Show Ledger"}
               </Button>
             </div>
           </div>
+          
+          {error && (
+            <div className="text-red-500 mt-2">{error}</div>
+          )}
         </CardContent>
       </Card>
 
@@ -165,8 +291,8 @@ export default function ClientLedger() {
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-medium">Ledger</h3>
               <div className="flex items-center gap-2">
-                <span className="font-medium">Balance: $1080</span>
-                <Button variant="outline" size="sm">
+                <span className="font-medium">Balance: {formatNumberWithCommas(balance)}</span>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
                   DOWNLOAD
                 </Button>
               </div>
@@ -184,16 +310,31 @@ export default function ClientLedger() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ledgerEntries.map((entry, index) => (
-                    <TableRow key={index} className="border-b border-slate-200">
-                      <TableCell className="text-center">{entry.date}</TableCell>
-                      <TableCell className="text-center">{entry.particulars}</TableCell>
-                      <TableCell className="text-center">{entry.invoiceRaised}</TableCell>
-                      <TableCell className="text-center">{entry.paymentReceived}</TableCell>
-                      <TableCell className="text-center">{entry.balancePayment}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+  {ledgerEntries.length > 0 ? (
+    ledgerEntries.map((entry, index) => (
+      <TableRow key={index} className="border-b border-slate-200">
+        <TableCell className="text-center">{formatDate(entry.Date || entry.date)}</TableCell>
+        <TableCell className="text-center">{entry.type === 'Invoice' || entry.type === 'invoice' ? 'Invoice Raised' : 'Payment Received'}</TableCell>
+        <TableCell className="text-center">
+          {(entry.type === 'Invoice' || entry.type === 'invoice') 
+            ? formatNumberWithCommas(entry.InvoiceRaised || entry.amount) 
+            : '-'}
+        </TableCell>
+        <TableCell className="text-center">
+          {(entry.type === 'Payment' || entry.type === 'payment') 
+            ? formatNumberWithCommas(Math.abs(entry.PaymentReceived || entry.amount)) 
+            : '-'}
+        </TableCell>
+        <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={5} className="text-center py-4">No ledger entries found for the selected period</TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
               </Table>
             </div>
           </CardContent>
