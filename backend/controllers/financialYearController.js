@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 const getFinancialYears = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 2;
+    const limit = parseInt(req.query.limit) || 100;
 
     logger.info('Get financial years service called');
     const years = await financialYearService.getFinancialYears({ page, limit });
