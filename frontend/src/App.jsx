@@ -8,7 +8,8 @@ import Ledger from './Ledger/Ledger';
 import InvoiceGeneratorPage from './InvoiceGenerator/InvoiceGenerator';
 import AdminPage from './Admin/AdminPage/page/admin';
 import EmployeeDetail from './Admin/EmployeeDetailPage/EmployeeDetail';
-import ClientDetail from './Admin/ClientDetailPage/ClientDetails'; // Adjust path as per your project structure
+import ClientDetail from './Admin/ClientDetailPage/ClientDetails';
+import { YearProvider } from './contexts/YearContexts'; // ✅ IMPORT YearProvider
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>;
@@ -18,12 +19,10 @@ const AppContent = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Force re-render on location change
+
   const [key, setKey] = useState(0);
-  
+
   useEffect(() => {
-    // Update key to force re-render when location changes
     setKey(prev => prev + 1);
   }, [location.pathname]);
 
@@ -55,7 +54,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <BrowserRouter>
-      <AppContent />
+      <YearProvider> {/* ✅ WRAPPED YearProvider */}
+        <AppContent />
+      </YearProvider>
     </BrowserRouter>
   );
 };
