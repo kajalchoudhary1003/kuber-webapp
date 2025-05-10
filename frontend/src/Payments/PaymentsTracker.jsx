@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
+import axios from "axios"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,14 +22,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-
-// Dummy data for clients
-const clients = [
-  { id: 1, name: "Acme Corp" },
-  { id: 2, name: "Globex Industries" },
-  { id: 3, name: "Wayne Enterprises" },
-  { id: 4, name: "Stark Industries" },
-]
 
 // Dummy data for payments
 const clientPayments = {
@@ -51,12 +44,34 @@ const clientPayments = {
 }
 
 export default function PaymentTracker() {
+  const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [selectedClient, setSelectedClient] = useState(null)
   const [date, setDate] = useState()
   const [amount, setAmount] = useState("")
   const [remark, setRemark] = useState("")
   const [reconciliationNote, setReconciliationNote] = useState("")
   const currentDate = new Date()
+
+  // Fetch clients when component mounts
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://localhost:5001/api/clients')
+        setClients(response.data)
+        setError(null)
+      } catch (err) {
+        setError("Failed to fetch clients")
+        console.error("Error fetching clients:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchClients()
+  }, [])
 
   const handleRecordPayment = () => {
     // This would normally send data to a backend
@@ -79,21 +94,31 @@ export default function PaymentTracker() {
               <span className="text-sm text-muted-foreground">
                 Last Updated on: {format(currentDate, "dd/MM/yyyy")}
               </span>
-              <Select onValueChange={setSelectedClient} >
-                <SelectTrigger className="w-[180px] cursor-pointer">
-                  <SelectValue placeholder="Select Client" />
-                </SelectTrigger>
-                <SelectContent className="bg-white ">
-                  <SelectGroup >
-                    <SelectItem  value="default" disabled>Select Client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem className="cursor-pointer" key={client.id} value={client.id.toString()}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              {loading ? (
+                <div>Loading clients...</div>
+              ) : error ? (
+                <div className="text-red-500">{error}</div>
+              ) : (
+                <Select onValueChange={setSelectedClient}>
+                  <SelectTrigger className="w-[180px] cursor-pointer">
+                    <SelectValue placeholder="Select Client" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectGroup>
+                      <SelectItem value="default" disabled>Select Client</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem 
+                          className="cursor-pointer" 
+                          key={client.id} 
+                          value={client.id.toString()}
+                        >
+                          {client.ClientName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardHeader>

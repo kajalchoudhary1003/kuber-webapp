@@ -12,7 +12,7 @@ const clientService = {
         include: [
           { model: Organisation, as: 'Organisation' },
           { model: BankDetail, as: 'BankDetail' },
-          { model: Currency, as: 'Currency' }
+          { model: Currency, as: 'BillingCurrency' }
         ]
       });
       return clients;
