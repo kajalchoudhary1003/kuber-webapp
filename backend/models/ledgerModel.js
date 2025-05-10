@@ -32,7 +32,5 @@ const Ledger = sequelize.define('Ledger', {
   timestamps: true,
 });
 
-// Define associations
-Ledger.belongsTo(Client, { foreignKey: 'ClientID' });
 
 module.exports = Ledger;

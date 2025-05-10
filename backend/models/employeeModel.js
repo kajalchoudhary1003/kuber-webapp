@@ -63,13 +63,7 @@ const Employee = sequelize.define('Employee', {
   },
 }, {
   timestamps: true,
-  paranoid: true, // Enables soft delete
+  paranoid: true
 });
-
-// Define associations
-Employee.belongsTo(Role, { foreignKey: 'RoleID' });
-Employee.belongsTo(Level, { foreignKey: 'LevelID' });
-Employee.belongsTo(Organisation, { foreignKey: 'OrganisationID' });
-Employee.hasMany(ClientEmployee, { foreignKey: 'EmployeeID' });
 
 module.exports = Employee;
