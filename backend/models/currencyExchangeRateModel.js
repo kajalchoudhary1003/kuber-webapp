@@ -28,11 +28,6 @@ const CurrencyExchangeRate = sequelize.define('CurrencyExchangeRate', {
     type: DataTypes.DECIMAL(18, 6),
     allowNull: false,
   },
-  Date: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW,
-  },
   Year: {
     type: DataTypes.INTEGER,
     allowNull: false,

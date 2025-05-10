@@ -10,7 +10,7 @@ const currencyExchangeRateService = {
           { model: Currency, as: 'CurrencyFrom' },
           { model: Currency, as: 'CurrencyTo' }
         ],
-        order: [['Date', 'DESC']]
+        order: [['Year', 'DESC']]
       });
       return rates;
     } catch (error) {
@@ -35,37 +35,48 @@ const currencyExchangeRateService = {
     }
   },
 
-  async createExchangeRate(rateData) {
+  
+  async createExchangeRate(data) {
     try {
-      // Validate currencies exist
-      const [fromCurrency, toCurrency] = await Promise.all([
-        Currency.findByPk(rateData.CurrencyFromID),
-        Currency.findByPk(rateData.CurrencyToID)
-      ]);
-
+      console.log('Received data:', data);
+      
+      // (Optional) validate currency IDs exist first
+      const fromCurrency = await Currency.findByPk(data.CurrencyFromID);
+      const toCurrency = await Currency.findByPk(data.CurrencyToID);
+  
       if (!fromCurrency || !toCurrency) {
         throw new Error('One or both currencies not found');
       }
-
-      // Check for existing rate on the same date
-      const existingRate = await CurrencyExchangeRate.findOne({
+  
+      // Check for existing exchange rate
+      const existing = await CurrencyExchangeRate.findOne({
         where: {
-          CurrencyFromID: rateData.CurrencyFromID,
-          CurrencyToID: rateData.CurrencyToID,
-          Date: rateData.Date
+          CurrencyFromID: data.CurrencyFromID,
+          CurrencyToID: data.CurrencyToID,
+          Year: data.Year,
         }
       });
-
-      if (existingRate) {
-        throw new Error('Exchange rate already exists for this currency pair and date');
+  
+      if (existing) {
+        throw new Error('Exchange rate already exists for this currency pair and period');
       }
-
-      const rate = await CurrencyExchangeRate.create(rateData);
+  
+      const rate = await CurrencyExchangeRate.create(data);
       return rate;
+  
     } catch (error) {
+      console.error('Full error object:', error);
+      console.error('Validation Error Details:', error.errors || error);
+      if (error.errors) {
+        error.errors.forEach(err => {
+          console.error('Field:', err.path, 'Message:', err.message);
+        });
+      }
       throw new Error('Error creating exchange rate: ' + error.message);
     }
   },
+  
+  
 
   async updateExchangeRate(id, rateData) {
     try {
@@ -74,7 +85,6 @@ const currencyExchangeRateService = {
         throw new Error('Exchange rate not found');
       }
 
-      // If currencies are being changed, validate they exist
       if (rateData.CurrencyFromID || rateData.CurrencyToID) {
         const [fromCurrency, toCurrency] = await Promise.all([
           Currency.findByPk(rateData.CurrencyFromID || rate.CurrencyFromID),
@@ -86,19 +96,18 @@ const currencyExchangeRateService = {
         }
       }
 
-      // Check for duplicate if date or currencies are being changed
-      if (rateData.Date || rateData.CurrencyFromID || rateData.CurrencyToID) {
+      if (rateData.Year || rateData.CurrencyFromID || rateData.CurrencyToID) {
         const existingRate = await CurrencyExchangeRate.findOne({
           where: {
             CurrencyFromID: rateData.CurrencyFromID || rate.CurrencyFromID,
             CurrencyToID: rateData.CurrencyToID || rate.CurrencyToID,
-            Date: rateData.Date || rate.Date,
+            Year: rateData.Year || rate.Year,
             id: { [Op.ne]: id }
           }
         });
 
         if (existingRate) {
-          throw new Error('Exchange rate already exists for this currency pair and date');
+          throw new Error('Exchange rate already exists for this currency pair and year');
         }
       }
 
@@ -126,13 +135,13 @@ const currencyExchangeRateService = {
     try {
       const rates = await CurrencyExchangeRate.findAll({
         where: {
-          Date: { [Op.like]: `%${query}%` }
+          Year: { [Op.like]: `%${query}%` }
         },
         include: [
           { model: Currency, as: 'CurrencyFrom' },
           { model: Currency, as: 'CurrencyTo' }
         ],
-        order: [['Date', 'DESC']]
+        order: [['Year', 'DESC']]
       });
       return rates;
     } catch (error) {
@@ -140,13 +149,13 @@ const currencyExchangeRateService = {
     }
   },
 
-  async getExchangeRateByCurrencies(fromCurrencyId, toCurrencyId, date) {
+  async getExchangeRateByCurrencies(fromCurrencyId, toCurrencyId, year) {
     try {
       const rate = await CurrencyExchangeRate.findOne({
         where: {
           CurrencyFromID: fromCurrencyId,
           CurrencyToID: toCurrencyId,
-          Date: date
+          Year: year
         },
         include: [
           { model: Currency, as: 'CurrencyFrom' },
@@ -154,7 +163,7 @@ const currencyExchangeRateService = {
         ]
       });
       if (!rate) {
-        throw new Error('Exchange rate not found for the specified currencies and date');
+        throw new Error('Exchange rate not found for the specified currencies and year');
       }
       return rate;
     } catch (error) {
