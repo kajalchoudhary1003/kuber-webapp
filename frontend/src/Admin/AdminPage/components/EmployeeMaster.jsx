@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from 'react';
-// import axios from 'axios';
+import axios from 'axios';
 import SearchBar from '@/Admin/SearchBar/SearchBar';
 import EmployeeTable from '@/Admin/EmployeeTable/EmployeeTable';
 import EmployeeModal from '@/Modal/EmployeeModal/EmployeeModal';
+import RoleModal from '@/Modal/EmployeeModal/RoleModal';
+import LevelModal from '@/Modal/EmployeeModal/LevelModal';
+import OrganisationModal from '@/Modal/EmployeeModal/OrganisationModal';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// const API_BASE_URL = 'http://localhost:5001/api/employees';
+const API_BASE_URL = 'http://localhost:5001/api';
+
+// Simple in-memory cache
+const cache = {
+  roles: {},
+  levels: {},
+  organisations: {},
+};
 
 const EmployeeMaster = () => {
   const [employees, setEmployees] = useState([]);
@@ -14,7 +26,14 @@ const EmployeeMaster = () => {
   const [levels, setLevels] = useState([]);
   const [organisations, setOrganisations] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [levelModalOpen, setLevelModalOpen] = useState(false);
+  const [orgModalOpen, setOrgModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [selectedLevel, setSelectedLevel] = useState(null);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [modalMode, setModalMode] = useState('create');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
@@ -22,73 +41,101 @@ const EmployeeMaster = () => {
   const [limit] = useState(10);
 
   useEffect(() => {
-    fetchDummyEmployees(page);
-    fetchDummyRolesLevelsOrgs();
+    fetchEmployees(page);
+    fetchRolesLevelsOrgs();
   }, [page]);
 
-  // Fetching dummy employees data with CTC and Status fields
-  const fetchDummyEmployees = async () => {
+  const fetchEmployees = async (page) => {
     setLoading(true);
     try {
-      const dummyEmployees = [
-        { 
-          _id: '1', 
-          name: 'John Doe', 
-          role: 'Manager', 
-          level: 'Senior', 
-          organisation: 'XYZ Corp',
-          CTCAnnual: 1200000,  // Added CTCAnnual
-          CTCMonthly: 100000,  // Added CTCMonthly
-          Status: 'Active'  // Added Status
-        },
-        { 
-          _id: '2', 
-          name: 'Jane Smith', 
-          role: 'Developer', 
-          level: 'Mid', 
-          organisation: 'ABC Inc.',
-          CTCAnnual: 800000,
-          CTCMonthly: 66667,
-          Status: 'Inactive'
-        },
-        { 
-          _id: '3', 
-          name: 'Samuel Lee', 
-          role: 'Designer', 
-          level: 'Junior', 
-          organisation: 'Tech Solutions',
-          CTCAnnual: 600000,
-          CTCMonthly: 50000,
-          Status: 'Active'
-        },
-      ];
-      setEmployees(dummyEmployees);
-      setTotalEmployees(dummyEmployees.length);  // Total employees count for pagination
+      const response = await axios.get(`${API_BASE_URL}/employees?page=${page}&limit=${limit}`);
+      setEmployees(response.data.employees);
+      setTotalEmployees(response.data.total);
     } catch (err) {
       setError('Error fetching employees');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetching dummy roles, levels, and organisations data
-  const fetchDummyRolesLevelsOrgs = async () => {
+  const fetchRolesLevelsOrgs = async () => {
     try {
-      const dummyRoles = ['Manager', 'Developer', 'Designer'];
-      const dummyLevels = ['Junior', 'Mid', 'Senior'];
-      const dummyOrganisations = ['XYZ Corp', 'ABC Inc.', 'Tech Solutions'];
-
-      setRoles(dummyRoles);
-      setLevels(dummyLevels);
-      setOrganisations(dummyOrganisations);
+      const [rolesRes, levelsRes, orgsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/roles`),
+        axios.get(`${API_BASE_URL}/levels`),
+        axios.get(`${API_BASE_URL}/organisations`),
+      ]);
+      setRoles(rolesRes.data);
+      setLevels(levelsRes.data);
+      setOrganisations(orgsRes.data);
+      // Cache the data
+      rolesRes.data.forEach((role) => (cache.roles[role.id] = role));
+      levelsRes.data.forEach((level) => (cache.levels[level.id] = level));
+      orgsRes.data.forEach((org) => (cache.organisations[org.id] = org));
     } catch (err) {
-      console.error('Error fetching roles, levels, or organisations');
+      console.error('Error fetching roles, levels, or organisations:', err);
     }
   };
 
-  const handleOpenModal = (employee = null) => {
+  const fetchRoleById = async (id) => {
+    if (cache.roles[id]) return cache.roles[id];
+    try {
+      const response = await axios.get(`${API_BASE_URL}/roles/${id}`);
+      cache.roles[id] = response.data;
+      return response.data;
+    } catch (err) {
+      console.error(`Error fetching role ${id}:`, err);
+      return null;
+    }
+  };
+
+  const fetchLevelById = async (id) => {
+    if (cache.levels[id]) return cache.levels[id];
+    try {
+      const response = await axios.get(`${API_BASE_URL}/levels/${id}`);
+      cache.levels[id] = response.data;
+      return response.data;
+    } catch (err) {
+      console.error(`Error fetching level ${id}:`, err);
+      return null;
+    }
+  };
+
+  const fetchOrganisationById = async (id) => {
+    if (cache.organisations[id]) return cache.organisations[id];
+    try {
+      const response = await axios.get(`${API_BASE_URL}/organisations/${id}`);
+      cache.organisations[id] = response.data;
+      return response.data;
+    } catch (err) {
+      console.error(`Error fetching organisation ${id}:`, err);
+      return null;
+    }
+  };
+
+  const handleOpenModal = (employee = null, mode = 'create') => {
     setSelectedEmployee(employee);
+    setModalMode(mode);
     setModalOpen(true);
+  };
+
+  const handleOpenRoleModal = (role = null, mode = 'create') => {
+    setSelectedRole(role);
+    setModalMode(mode);
+    setRoleModalOpen(true);
+  };
+
+  const handleOpenLevelModal = (level = null, mode = 'create') => {
+    setSelectedLevel(level);
+    setModalMode(mode);
+    setLevelModalOpen(true);
+  };
+
+  const handleOpenOrgModal = (org = null, mode = 'create') => {
+    setSelectedOrg(org);
+    setModalMode(mode);
+    setOrgModalOpen(true);
   };
 
   const handleCloseModal = async (newEmployee) => {
@@ -97,35 +144,118 @@ const EmployeeMaster = () => {
     if (newEmployee) {
       try {
         if (selectedEmployee) {
-          // Simulate employee update
-          console.log('Employee updated:', newEmployee);
+          await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
+          toast.success('Employee updated successfully');
         } else {
-          // Simulate new employee creation
-          console.log('Employee created:', newEmployee);
+          await axios.post(`${API_BASE_URL}/employees`, newEmployee);
+          toast.success('Employee created successfully');
         }
-        fetchDummyEmployees(page);  // Re-fetch employees to simulate a data update
+        fetchEmployees(page);
       } catch (err) {
-        console.error('Error saving employee');
+        console.error('Error saving employee:', err);
+        setError('Error saving employee');
+        toast.error('Error saving employee');
+      }
+    }
+  };
+
+  const handleCloseRoleModal = async (roleData) => {
+    setRoleModalOpen(false);
+    setSelectedRole(null);
+    if (roleData) {
+      try {
+        if (selectedRole) {
+          await axios.put(`${API_BASE_URL}/roles/${selectedRole.id}`, roleData);
+          toast.success('Role updated successfully');
+        } else {
+          await axios.post(`${API_BASE_URL}/roles`, roleData);
+          toast.success('Role created successfully');
+        }
+        fetchRolesLevelsOrgs();
+      } catch (err) {
+        console.error('Error saving role:', err);
+        setError('Error saving role');
+        toast.error('Error saving role');
+      }
+    }
+  };
+
+  const handleCloseLevelModal = async (levelData) => {
+    setLevelModalOpen(false);
+    setSelectedLevel(null);
+    if (levelData) {
+      try {
+        if (selectedLevel) {
+          await axios.put(`${API_BASE_URL}/levels/${selectedLevel.id}`, levelData);
+          toast.success('Level updated successfully');
+        } else {
+          await axios.post(`${API_BASE_URL}/levels`, levelData);
+          toast.success('Level created successfully');
+        }
+        fetchRolesLevelsOrgs();
+      } catch (err) {
+        console.error('Error saving level:', err);
+        setError('Error saving level');
+        toast.error('Error saving level');
+      }
+    }
+  };
+
+  const handleCloseOrgModal = async (orgData) => {
+    setOrgModalOpen(false);
+    setSelectedOrg(null);
+    if (orgData) {
+      try {
+        if (selectedOrg) {
+          await axios.put(`${API_BASE_URL}/organisations/${selectedOrg.id}`, orgData);
+          toast.success('Organisation updated successfully');
+        } else {
+          await axios.post(`${API_BASE_URL}/organisations`, orgData);
+          toast.success('Organisation created successfully');
+        }
+        fetchRolesLevelsOrgs();
+      } catch (err) {
+        console.error('Error saving organisation:', err);
+        setError('Error saving organisation');
+        toast.error('Error saving organisation');
       }
     }
   };
 
   const handleDeleteEmployee = async (employeeId) => {
     try {
-      // Simulate employee deletion
-      console.log('Employee deleted:', employeeId);
-      fetchDummyEmployees(page);  // Re-fetch employees after deletion
+      await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
+      fetchEmployees(page);
+      toast.success('Employee deleted successfully');
     } catch (err) {
-      console.error('Error deleting employee');
+      console.error('Error deleting employee:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      const errorMessage = err.response?.data?.error || 'Error deleting employee';
+      setError(errorMessage);
+      if (errorMessage === 'Active employees cannot be deleted') {
+        toast.error('Active employees cannot be deleted');
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
   const handleSearch = async (query) => {
-    // Simulating a search functionality using the dummy data
-    const filteredEmployees = employees.filter(employee =>
-      employee.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setEmployees(filteredEmployees);
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/employees/search/${query}`);
+      setEmployees(response.data);
+      setTotalEmployees(response.data.length);
+    } catch (err) {
+      console.error('Error searching employees:', err);
+      setError('Error searching employees');
+      toast.error('Error searching employees');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
@@ -140,7 +270,10 @@ const EmployeeMaster = () => {
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
-            <Button onClick={() => handleOpenModal()} className="whitespace-nowrap bg-blue-500 rounded-full text-white hover:bg-blue-500/90 cursor-pointer px-6 py-2">
+            <Button
+              onClick={() => handleOpenModal()}
+              className="whitespace-nowrap bg-blue-500 rounded-full text-white hover:bg-blue-500/90 cursor-pointer px-6 py-2"
+            >
               Create Employee
             </Button>
           </div>
@@ -155,6 +288,9 @@ const EmployeeMaster = () => {
               roles={roles}
               levels={levels}
               organisations={organisations}
+              fetchRoleById={fetchRoleById}
+              fetchLevelById={fetchLevelById}
+              fetchOrganisationById={fetchOrganisationById}
             />
             <div className="mt-8 flex justify-center">
               <Pagination
@@ -176,6 +312,28 @@ const EmployeeMaster = () => {
           organisations={organisations}
           initialData={selectedEmployee}
         />
+        <RoleModal
+          open={roleModalOpen}
+          onClose={handleCloseRoleModal}
+          mode={modalMode}
+          initialData={selectedRole}
+          onSubmit={handleCloseRoleModal}
+        />
+        <LevelModal
+          open={levelModalOpen}
+          onClose={handleCloseLevelModal}
+          mode={modalMode}
+          initialData={selectedLevel}
+          onSubmit={handleCloseLevelModal}
+        />
+        <OrganisationModal
+          open={orgModalOpen}
+          onClose={handleCloseOrgModal}
+          mode={modalMode}
+          initialData={selectedOrg}
+          onSubmit={handleCloseOrgModal}
+        />
+        <ToastContainer />
       </div>
     </div>
   );
