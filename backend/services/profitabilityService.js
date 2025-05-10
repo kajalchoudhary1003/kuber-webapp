@@ -7,56 +7,40 @@ const Employee = require('../models/employeeModel');
 const EmployeeCost = require('../models/EmployeeCostModel');
 const logger = require('../utils/logger');
 
-const getProfitabilityReport = async (clientId, financialYear) => {
+/**
+ * Generate a profitability report for a specific client in a given financial year
+ * @param {number} clientId - ID of the client
+ * @param {number} financialYear - Financial year for the report
+ * @returns {Object} Monthly and yearly profitability data
+ */
+async function getProfitabilityReport(clientId, financialYear) {
   try {
     // Fetch client data
     const client = await Client.findOne({ where: { id: clientId } });
     if (!client) throw new Error('Client not found.');
-    logger.info(`Found client: ${JSON.stringify(client, null, 2)}`);
 
     const billingCurrency = client.BillingCurrencyID;
-    logger.info(`Client billing currency ID: ${billingCurrency}`);
-
-    // Log all available currencies
-    const allCurrencies = await Currency.findAll();
-    logger.info(`All available currencies: ${JSON.stringify(allCurrencies, null, 2)}`);
-
-    // Log the billing currency details
-    const billingCurrencyDetails = await Currency.findOne({ where: { id: billingCurrency } });
-    logger.info(`Billing currency details: ${JSON.stringify(billingCurrencyDetails, null, 2)}`);
-
     const inrCurrency = await Currency.findOne({ where: { CurrencyCode: 'INR' } });
     if (!inrCurrency) throw new Error('INR currency not found.');
-    logger.info(`Found INR currency: ${JSON.stringify(inrCurrency, null, 2)}`);
 
     const inrCurrencyId = inrCurrency.id;
     logger.info(`INR currency ID: ${inrCurrencyId}`);
-
-    // Log all available exchange rates
-    const allExchangeRates = await CurrencyExchangeRate.findAll();
-    logger.info(`All available exchange rates: ${JSON.stringify(allExchangeRates, null, 2)}`);
 
     // Fetch billing data for the selected client and financial year
     const billingData = await BillingSetup.findAll({
       where: { ClientID: clientId, Year: financialYear },
     });
     if (!billingData.length) throw new Error('No billing data found for the selected client and financial year.');
-    logger.info(`Found billing data: ${JSON.stringify(billingData, null, 2)}`);
+
+    logger.info(`Billing data: ${JSON.stringify(billingData, null, 2)}`);
 
     // Fetch exchange rate
-    logger.info(`Looking for exchange rate with: FromCurrencyID=${billingCurrency}, ToCurrencyID=${inrCurrencyId}, Year=${financialYear}`);
     const exchangeRate = await CurrencyExchangeRate.findOne({
-      where: {
-        CurrencyFromID: billingCurrency,
-        CurrencyToID: inrCurrencyId,
-        Year: financialYear
-      }
+      where: { CurrencyFromID: billingCurrency, CurrencyToID: inrCurrencyId, Year: financialYear },
     });
-    if (!exchangeRate) {
-      logger.error(`No exchange rate found for: FromCurrencyID=${billingCurrency}, ToCurrencyID=${inrCurrencyId}`);
-      throw new Error('No exchange rate found for the billing currency.');
-    }
-    logger.info(`Found exchange rate: ${JSON.stringify(exchangeRate, null, 2)}`);
+    if (!exchangeRate) throw new Error('No exchange rate found for the billing currency.');
+
+    logger.info(`Exchange rate: ${JSON.stringify(exchangeRate)}`);
 
     // Calculate billing amounts in INR for each month
     const billingAmountsInINR = {};
@@ -70,6 +54,7 @@ const getProfitabilityReport = async (clientId, financialYear) => {
     const totalSalariesInINR = {};
     const employeeClientCounts = {};
 
+    // Initialize salary totals for each month
     for (const month of months) totalSalariesInINR[month] = 0;
 
     for (const billing of billingData) {
@@ -116,7 +101,6 @@ const getProfitabilityReport = async (clientId, financialYear) => {
     });
 
     // Calculate top 5 employees and others' profit for each month
-    const top5EmployeesMonthly = {};
     const employeeContributionsMonthly = [];
 
     for (const billing of billingData) {
@@ -199,9 +183,14 @@ const getProfitabilityReport = async (clientId, financialYear) => {
     logger.error(`Error generating profitability report: ${error.message}`);
     throw new Error(`Error generating profitability report: ${error.message}`);
   }
-};
+}
 
-const getEmployeeProfitabilityReport = async (financialYear) => {
+/**
+ * Generate profitability report for all employees in a given financial year
+ * @param {number} financialYear - Financial year for the report
+ * @returns {Object} Employee profitability data
+ */
+async function getEmployeeProfitabilityReport(financialYear) {
   try {
     // Step 1: Fetch all unique employees for the FY
     const billingData = await BillingSetup.findAll({
@@ -232,8 +221,8 @@ const getEmployeeProfitabilityReport = async (financialYear) => {
         where: {
           CurrencyFromID: billingCurrency,
           CurrencyToID: inrCurrency.id,
-          Year: financialYear
-        }
+          Year: financialYear,
+        },
       });
 
       if (!exchangeRate) {
@@ -295,9 +284,14 @@ const getEmployeeProfitabilityReport = async (financialYear) => {
     logger.error(`Error generating employee profitability report: ${error.message}`);
     throw new Error(`Error generating employee profitability report: ${error.message}`);
   }
-};
+}
 
-const getClientProfitabilityReport = async (financialYear) => {
+/**
+ * Generate profitability report for all clients in a given financial year
+ * @param {number} financialYear - Financial year for the report
+ * @returns {Object} Client profitability data
+ */
+async function getClientProfitabilityReport(financialYear) {
   try {
     // Step 1: Fetch all billing data for the specified financial year
     const billingData = await BillingSetup.findAll({
@@ -329,8 +323,8 @@ const getClientProfitabilityReport = async (financialYear) => {
         where: {
           CurrencyFromID: billingCurrency,
           CurrencyToID: inrCurrency.id,
-          Year: financialYear
-        }
+          Year: financialYear,
+        },
       });
 
       if (!exchangeRate) {
@@ -389,7 +383,7 @@ const getClientProfitabilityReport = async (financialYear) => {
     logger.error(`Error generating client profitability report: ${error.message}`);
     throw new Error(`Error generating client profitability report: ${error.message}`);
   }
-};
+}
 
 module.exports = {
   getProfitabilityReport,
