@@ -1,30 +1,40 @@
-// EmployeeTable.jsx
 import React from 'react';
-import { Table, TableBody, TableHeader } from '@/components/ui/table';
-import Tableheader from './EmployeeTableHeader';
-import TableRow from './EmployeeTableRow';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import EmployeeTableRow from './EmployeeTableRow';
 
-const EmployeeTable = ({ data, onEdit, onDelete, roles, levels, organisations }) => (
-  <div className="p-4">
-    <Table className="w-full mt-5">
+const EmployeeTable = ({ data, onEdit, onDelete, roles, levels, organisations, fetchRoleById, fetchLevelById, fetchOrganisationById }) => {
+  return (
+    <Table className="w-full">
       <TableHeader>
-        <Tableheader />
+        <TableRow className="border-b border-[#9DA4B3]">
+          <TableCell className="py-3 px-1 text-[16px] font-medium">ID</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Name</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Employee Code</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Role</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Level</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Organisation</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Projects</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">CTC Annual</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">CTC Monthly</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Status</TableCell>
+          <TableCell className="py-3 px-1 text-[16px] font-medium">Action</TableCell>
+        </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((row, index) => (
-          <TableRow
-            key={index}
-            data={row}
+        {data.map((employee) => (
+          <EmployeeTableRow
+            key={employee.id}
+            data={employee}
             onEdit={onEdit}
             onDelete={onDelete}
-            roles={roles}
-            levels={levels}
-            organisations={organisations}
+            fetchRoleById={fetchRoleById}
+            fetchLevelById={fetchLevelById}
+            fetchOrganisationById={fetchOrganisationById}
           />
         ))}
       </TableBody>
     </Table>
-  </div>
-);
+  );
+};
 
 export default EmployeeTable;
