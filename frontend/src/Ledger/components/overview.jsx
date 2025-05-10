@@ -2,8 +2,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bar } from "react-chartjs-2"
+import axios from "axios"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,28 +24,6 @@ ChartJS.register(
   Tooltip,
   Legend
 )
-
-// Dummy data for client balance report
-const clientBalanceData = [
-  {
-    client: "BirdsEyeView",
-    totalBill: 1200,
-    paidAmount: 120,
-    balance: 1080,
-  },
-  {
-    client: "TechSolutions",
-    totalBill: 2500,
-    paidAmount: 1500,
-    balance: 1000,
-  },
-  {
-    client: "GlobalInnovate",
-    totalBill: 3200,
-    paidAmount: 2200,
-    balance: 1000,
-  },
-]
 
 // Fiscal months
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"]
@@ -68,104 +47,15 @@ const generateColorPalette = (numColors) => {
   return colors
 }
 
-// Dummy data for client profitability
-const dummyClientProfitabilityData = {
-  client1: {
-    clientName: "BirdsEyeView",
-    monthlyProfit: {
-      "Apr": 12000,
-      "May": 15000,
-      "Jun": 18000,
-      "Jul": 14000,
-      "Aug": 16000,
-      "Sep": 19000,
-      "Oct": 21000,
-      "Nov": 17000,
-      "Dec": 22000,
-      "Jan": 20000,
-      "Feb": 23000,
-      "Mar": 25000,
-    }
-  },
-  client2: {
-    clientName: "TechSolutions",
-    monthlyProfit: {
-      "Apr": 8000,
-      "May": 10000,
-      "Jun": 12000,
-      "Jul": 9000,
-      "Aug": 11000,
-      "Sep": 13000,
-      "Oct": 15000,
-      "Nov": 14000,
-      "Dec": 16000,
-      "Jan": 17000,
-      "Feb": 18000,
-      "Mar": 19000,
-    }
-  },
-  client3: {
-    clientName: "GlobalInnovate",
-    monthlyProfit: {
-      "Apr": 15000,
-      "May": 18000,
-      "Jun": 20000,
-      "Jul": 17000,
-      "Aug": 19000,
-      "Sep": 21000,
-      "Oct": 23000,
-      "Nov": 22000,
-      "Dec": 24000,
-      "Jan": 25000,
-      "Feb": 26000,
-      "Mar": 28000,
-    }
-  }
-}
-
-// Dummy data for employee profitability
-const dummyEmployeeProfitabilityData = {
-  emp1: {
-    name: "John Doe",
-    clients: ["BirdsEyeView", "TechSolutions"],
-    monthlyProfit: {
-      "Apr": 5000,
-      "May": 5500,
-      "Jun": 6000,
-      "Jul": 5800,
-      "Aug": 6200,
-      "Sep": 6500,
-      "Oct": 6800,
-      "Nov": 6300,
-      "Dec": 7000,
-      "Jan": 7200,
-      "Feb": 7500,
-      "Mar": 7800,
-    }
-  },
-  emp2: {
-    name: "Jane Smith",
-    clients: ["GlobalInnovate"],
-    monthlyProfit: {
-      "Apr": 4500,
-      "May": 4800,
-      "Jun": 5200,
-      "Jul": 5000,
-      "Aug": 5300,
-      "Sep": 5600,
-      "Oct": 5900,
-      "Nov": 5700,
-      "Dec": 6100,
-      "Jan": 6300,
-      "Feb": 6600,
-      "Mar": 6900,
-    }
-  }
-}
-
 export default function Overview() {
-  const [selectedYear, setSelectedYear] = useState("2026-2027")
+  const [financialYears, setFinancialYears] = useState([])
+  const [selectedYear, setSelectedYear] = useState("")
   const [showProfitability, setShowProfitability] = useState(false)
+  const [clientBalanceData, setClientBalanceData] = useState([])
+  const [clientProfitabilityData, setClientProfitabilityData] = useState({})
+  const [employeeProfitabilityData, setEmployeeProfitabilityData] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // Format number with commas
   const formatNumberWithCommas = (number) => {
@@ -173,16 +63,99 @@ export default function Overview() {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
   }
 
+  // Format year for display
+  const formatYear = (year) => {
+    const nextYear = parseInt(year) + 1;
+    return `${year}-${nextYear}`;
+  }
+
+  // Fetch financial years on component mount
+  useEffect(() => {
+    const fetchFinancialYears = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://localhost:5001/api/financial-years')
+        const years = response.data.financialYears.map(year => year.year)
+        setFinancialYears(years)
+        
+        // Set the first year as default if available
+        if (years.length > 0 && !selectedYear) {
+          setSelectedYear(years[0])
+        }
+        
+        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching financial years:', err)
+        setError('Failed to load financial years')
+        setLoading(false)
+      }
+    }
+
+    fetchFinancialYears()
+  }, [])
+
+  // Fetch client balance data on component mount
+  // Update the fetchClientBalanceData function in your useEffect
+useEffect(() => {
+  const fetchClientBalanceData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5001/api/client-balance/report');
+      
+      // Make sure we're handling the data format correctly
+      if (Array.isArray(response.data)) {
+        setClientBalanceData(response.data);
+      } else {
+        console.error('Unexpected data format:', response.data);
+        setError('Received invalid data format from server');
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching client balance data:', err);
+      setError('Failed to load client balance data');
+      setLoading(false);
+    }
+  };
+
+  fetchClientBalanceData();
+}, []);
+
+
+  // Handle showing profitability report
+  const handleShowProfitabilityReport = async () => {
+    if (!selectedYear) return
+    
+    try {
+      setLoading(true)
+      
+      // Fetch client profitability data
+      const clientResponse = await axios.get(`http://localhost:5001/api/profitability/clients-report/${selectedYear}`)
+      setClientProfitabilityData(clientResponse.data)
+      
+      // Fetch employee profitability data
+      const employeeResponse = await axios.get(`http://localhost:5001/api/profitability/employee-report/${selectedYear}`)
+      setEmployeeProfitabilityData(employeeResponse.data)
+      
+      setShowProfitability(true)
+      setLoading(false)
+    } catch (err) {
+      console.error('Error fetching profitability data:', err)
+      setError('Failed to load profitability data')
+      setLoading(false)
+    }
+  }
+
   // Create client dataset for chart
   const createClientDataset = () => {
-    const colors = generateColorPalette(Object.keys(dummyClientProfitabilityData).length)
+    const colors = generateColorPalette(Object.keys(clientProfitabilityData).length)
     const datasets = []
     
-    Object.keys(dummyClientProfitabilityData).forEach((clientId, index) => {
-      const client = dummyClientProfitabilityData[clientId]
+    Object.keys(clientProfitabilityData).forEach((clientId, index) => {
+      const client = clientProfitabilityData[clientId]
       datasets.push({
         label: client.clientName,
-        data: fiscalMonths.map((month) => client.monthlyProfit[month]),
+        data: fiscalMonths.map((month) => client.monthlyProfit[month] || 0),
         backgroundColor: colors[index],
       })
     })
@@ -193,7 +166,7 @@ export default function Overview() {
   // Chart data
   const cvtClientData = {
     labels: fiscalMonths,
-    datasets: createClientDataset(),
+    datasets: Object.keys(clientProfitabilityData).length > 0 ? createClientDataset() : [],
   }
 
   // Calculate total CVT Profit
@@ -240,8 +213,12 @@ export default function Overview() {
     },
   }
 
-  const handleShowProfitabilityReport = () => {
-    setShowProfitability(true)
+  if (loading && !clientBalanceData.length) {
+    return <div className="p-4">Loading data...</div>
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error: {error}</div>
   }
 
   return (
@@ -262,14 +239,20 @@ export default function Overview() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clientBalanceData.map((item, index) => (
-                  <TableRow key={index} className="border-b border-slate-200">
-                    <TableCell className="text-center">{item.client}</TableCell>
-                    <TableCell className="text-center">{item.totalBill.toLocaleString()}</TableCell>
-                    <TableCell className="text-center">{item.paidAmount.toLocaleString()}</TableCell>
-                    <TableCell className="text-center">{item.balance.toLocaleString()}</TableCell>
+                {clientBalanceData.length > 0 ? (
+                  clientBalanceData.map((item, index) => (
+                    <TableRow key={index} className="border-b border-slate-200">
+                      <TableCell className="text-center">{item.clientName}</TableCell>
+                      <TableCell className="text-center">{formatNumberWithCommas(item.totalBill)}</TableCell>
+                      <TableCell className="text-center">{formatNumberWithCommas(item.totalPaid)}</TableCell>
+                      <TableCell className="text-center">{formatNumberWithCommas(item.balance)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">No data available</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
@@ -283,22 +266,25 @@ export default function Overview() {
             <h2 className="text-xl font-semibold">Employee & CVT Profitability Report</h2>
 
             <div className="flex items-center gap-4">
-              <Select defaultValue="2026-2027" onValueChange={setSelectedYear}>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-[180px] cursor-pointer">
                   <SelectValue placeholder="Select Year" />
                 </SelectTrigger>
                 <SelectContent className="bg-white cursor-pointer">
-                  <SelectItem className="cursor-pointer" value="2025-2026">2025-2026</SelectItem>
-                  <SelectItem className="cursor-pointer" value="2026-2027">2026-2027</SelectItem>
-                  <SelectItem className="cursor-pointer" value="2027-2028">2027-2028</SelectItem>
+                  {financialYears.map((year) => (
+                    <SelectItem key={year} className="cursor-pointer" value={year}>
+                      {formatYear(year)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
               <Button 
                 className="bg-blue-500 cursor-pointer hover:bg-blue-500/90 text-white rounded-full"
                 onClick={handleShowProfitabilityReport}
+                disabled={!selectedYear || loading}
               >
-                Show Profitability Report
+                {loading ? "Loading..." : "Show Profitability Report"}
               </Button>
             </div>
           </div>
@@ -306,7 +292,7 @@ export default function Overview() {
       </Card>
 
       {/* CVT Profitability Report Chart */}
-      {showProfitability && (
+      {showProfitability && Object.keys(clientProfitabilityData).length > 0 && (
         <Card className="bg-white border-0 max-w-screen shadow-md rounded-lg">
           <CardContent className="pt-6 pb-6">
             <div className="flex justify-between items-center mb-4">
@@ -325,9 +311,9 @@ export default function Overview() {
         </Card>
       )}
 
-       {/* Employee Profitability Table - Using custom div instead of Card */}
-       {showProfitability && (
-        <div className="bg-white border-0 md:w-6xl 2xl:w-auto shadow-md rounded-lg p-6"  >
+      {/* Employee Profitability Table */}
+      {showProfitability && Object.keys(employeeProfitabilityData).length > 0 && (
+        <div className="bg-white border-0 md:w-6xl 2xl:w-auto shadow-md rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Employee Profitability Report</h2>
           
           <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
@@ -345,8 +331,8 @@ export default function Overview() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.keys(dummyEmployeeProfitabilityData).map((employeeId, index) => {
-                  const employee = dummyEmployeeProfitabilityData[employeeId];
+                {Object.keys(employeeProfitabilityData).map((employeeId, index) => {
+                  const employee = employeeProfitabilityData[employeeId];
                   const monthlyProfits = Object.values(employee.monthlyProfit);
                   const averageProfit = monthlyProfits.reduce((sum, profit) => sum + profit, 0) / 12;
                   const yearlyProfit = monthlyProfits.reduce((sum, profit) => sum + profit, 0);
@@ -358,7 +344,7 @@ export default function Overview() {
                       <TableCell className="text-center whitespace-nowrap">{employee.clients.join(', ')}</TableCell>
                       {fiscalMonths.map((month) => (
                         <TableCell key={month} className="text-center whitespace-nowrap">
-                          ₹{formatNumberWithCommas(employee.monthlyProfit[month].toFixed(2))}
+                          ₹{formatNumberWithCommas((employee.monthlyProfit[month] || 0).toFixed(2))}
                         </TableCell>
                       ))}
                       <TableCell className="text-center whitespace-nowrap">₹{formatNumberWithCommas(averageProfit.toFixed(2))}</TableCell>
