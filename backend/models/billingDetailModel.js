@@ -100,9 +100,4 @@ const BillingDetail = sequelize.define('BillingDetail', {
   ]
 });
 
-Employee.hasMany(BillingDetail, { foreignKey: 'EmployeeID' });
-Client.hasMany(BillingDetail, { foreignKey: 'ClientID' });
-BillingDetail.belongsTo(Employee, { foreignKey: 'EmployeeID' });
-BillingDetail.belongsTo(Client, { foreignKey: 'ClientID' });
-
 module.exports = BillingDetail;

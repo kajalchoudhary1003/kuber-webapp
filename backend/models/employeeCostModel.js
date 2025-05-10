@@ -90,7 +90,4 @@ const EmployeeCost = sequelize.define('EmployeeCost', {
   },
 });
 
-Employee.hasMany(EmployeeCost, { foreignKey: 'EmployeeID' });
-EmployeeCost.belongsTo(Employee, { foreignKey: 'EmployeeID' });
-
 module.exports = EmployeeCost;

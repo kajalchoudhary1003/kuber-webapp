@@ -69,8 +69,4 @@ const Invoice = sequelize.define('Invoice', {
   tableName: 'Invoices' // Explicitly set the table name
 });
 
-// Define associations
-Invoice.belongsTo(Client, { foreignKey: 'ClientID' });
-Invoice.belongsTo(Currency, { foreignKey: 'BillingCurrencyID', as: 'Currency' });
-
 module.exports = Invoice;
