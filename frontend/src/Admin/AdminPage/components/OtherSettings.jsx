@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useYear } from '../../../contexts/YearContexts';
+import { Input } from '@/components/ui/input';
 
 // API base URLs
 const API_BASE_URL = 'http://localhost:5001/api/levels';
@@ -50,6 +51,10 @@ const OtherSettings = () => {
   const [showMoreAvailable, setShowMoreAvailable] = useState(true);
   const [randomCode, setRandomCode] = useState('');
   const { selectedYear, setSelectedYear } = useYearWithFallback();
+
+  const [backupName, setBackupName] = useState('');
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+
 
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleModalMode, setRoleModalMode] = useState('create');
@@ -600,19 +605,29 @@ const OtherSettings = () => {
     }
   };
 
-  // Restore database
+
+  // Open restore modal
+  const openRestoreModal = () => {
+    setRestoreModalOpen(true);
+  };
+
+  // Handle restore database
   const restoreDatabase = async () => {
     try {
-      alert('Please select a backup file to restore (file upload not implemented in this UI).');
-      // Implement file upload modal for restore if needed
-      /*
-      const formData = new FormData();
-      formData.append('backupFile', selectedFile);
-      const response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      alert(response.data.message);
-      */
+      if (!backupName) {
+        alert('Please enter a backup name.');
+        return;
+      }
+      const response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, { backupName });
+      if (response.data.success) {
+        alert(response.data.message);
+      } else {
+        alert(response.data.message);
+      }
+      setRestoreModalOpen(false);
+      setBackupName('');
+
+
     } catch (error) {
       console.error('Error during database restore:', error);
       alert(error.response?.data?.message || 'Failed to restore database.');
@@ -687,12 +702,44 @@ const OtherSettings = () => {
             <Button onClick={backupDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Backup Database
             </Button>
-            <Button onClick={restoreDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <Button onClick={openRestoreModal} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
               Restore Database
             </Button>
           </div>
         </div>
       </div>
+
+      {restoreModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs bg-opacity-10">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Restore Database</h3>
+            <Input
+              type="text"
+              placeholder="Enter backup name (e.g., kuber_20250511_123456.db)"
+              value={backupName}
+              onChange={(e) => setBackupName(e.target.value)}
+              className="mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={() => {
+                  setRestoreModalOpen(false);
+                  setBackupName('');
+                }}
+                className="bg-gray-300 text-black hover:bg-gray-400 rounded-full"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={restoreDatabase}
+                className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              >
+                Restore
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
@@ -1079,6 +1126,7 @@ const OtherSettings = () => {
     </div>
   );
 };
+
 
 export default OtherSettings;
 

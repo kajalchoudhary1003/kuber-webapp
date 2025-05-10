@@ -50,12 +50,16 @@ const backupDatabase = async () => {
   }
 };
 
-const restoreDatabase = async (backupFile) => {
+const restoreDatabase = async (backupName) => {
   try {
+
+
+
     if (!backupFile) {
       logger.error('No backup file provided.');
       return { success: false, message: 'No backup file provided' };
     }
+
 
     const dbPath = path.join(__dirname, '../database/database.sqlite');
     const dbDir = path.dirname(dbPath);
@@ -65,7 +69,9 @@ const restoreDatabase = async (backupFile) => {
       logger.info('Created database directory.', { dbDir });
     }
 
+
     fs.copyFileSync(backupFile.tempFilePath, dbPath);
+
     fs.chmodSync(dbPath, 0o666);
     logger.info('Database restored successfully.', { dbPath });
 
