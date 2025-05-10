@@ -34,7 +34,14 @@ const ClientEmployee = sequelize.define('ClientEmployee', {
   }
 }, {
   timestamps: true,
-  paranoid: true  // Enables soft delete
+  paranoid: true,  // Enables soft delete
+  indexes: [
+    {
+      unique: true,
+      fields: ['EmployeeID', 'ClientID'],
+      name: 'unique_employee_client'
+    }
+  ]
 });
 
 module.exports = ClientEmployee;
