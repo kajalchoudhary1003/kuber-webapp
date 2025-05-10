@@ -30,7 +30,7 @@ const bankDetailService = {
         where: {
           [Op.or]: [
             { AccountNumber: bankDetailData.AccountNumber },
-            { IfscCode: bankDetailData.IfscCode }
+            { IFSC: bankDetailData.IFSC }
           ]
         }
       });
@@ -53,12 +53,12 @@ const bankDetailService = {
         throw new Error('Bank detail not found');
       }
 
-      if (bankDetailData.AccountNumber || bankDetailData.IfscCode) {
+      if (bankDetailData.AccountNumber || bankDetailData.IFSC) {
         const existingBank = await BankDetail.findOne({
           where: {
             [Op.or]: [
               { AccountNumber: bankDetailData.AccountNumber },
-              { IfscCode: bankDetailData.IfscCode }
+              { IFSC: bankDetailData.IFSC }
             ],
             id: { [Op.ne]: id }
           }
@@ -105,7 +105,7 @@ const bankDetailService = {
           [Op.or]: [
             { BankName: { [Op.like]: `%${query}%` } },
             { AccountNumber: { [Op.like]: `%${query}%` } },
-            { IfscCode: { [Op.like]: `%${query}%` } }
+            { IFSC: { [Op.like]: `%${query}%` } }
           ]
         }
       });

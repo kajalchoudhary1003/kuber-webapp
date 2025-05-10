@@ -8,23 +8,19 @@ const BankDetail = sequelize.define('BankDetail', {
     autoIncrement: true,
   },
   BankName: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING,
     allowNull: false,
   },
   AccountNumber: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  SwiftCode: {
+    type: DataTypes.STRING,
     allowNull: false,
   },
   IFSC: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
-  },
-  BranchName: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
-  },
-  AccountHolderName: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING,
     allowNull: false,
   },
 }, {

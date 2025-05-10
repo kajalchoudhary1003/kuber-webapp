@@ -13,7 +13,7 @@ const bankDetailController = {
 
   async getBankDetailById(req, res) {
     try {
-      const bankDetail = await bankDetailService.getBankDetailById(req.params.id);
+      const bankDetail = await bankDetailService.getBankDetailById(req.params.bankDetailId);
       res.json(bankDetail);
     } catch (error) {
       if (error.message === 'Bank detail not found') {
@@ -39,7 +39,7 @@ const bankDetailController = {
 
   async updateBankDetail(req, res) {
     try {
-      const bankDetail = await bankDetailService.updateBankDetail(req.params.id, req.body);
+      const bankDetail = await bankDetailService.updateBankDetail(req.params.bankDetailId, req.body);
       res.json(bankDetail);
     } catch (error) {
       if (error.message === 'Bank detail not found') {
@@ -54,7 +54,7 @@ const bankDetailController = {
 
   async deleteBankDetail(req, res) {
     try {
-      const result = await bankDetailService.deleteBankDetail(req.params.id);
+      const result = await bankDetailService.deleteBankDetail(req.params.bankDetailId);
       res.json(result);
     } catch (error) {
       if (error.message === 'Bank detail not found') {
@@ -78,7 +78,7 @@ const bankDetailController = {
 
   async getBankDetailClients(req, res) {
     try {
-      const clients = await bankDetailService.getBankDetailClients(req.params.id);
+      const clients = await bankDetailService.getBankDetailClients(req.params.bankDetailId);
       res.json(clients);
     } catch (error) {
       if (error.message === 'Bank detail not found') {
