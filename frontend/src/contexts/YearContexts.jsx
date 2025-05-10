@@ -1,14 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const YearContext = createContext();
-
-// Static data for financial years
-const staticFinancialYears = [
-  { year: '2022' },
-  { year: '2023' },
-  { year: '2024' },
-];
+const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
 
 export const YearProvider = ({ children }) => {
   const [selectedYear, setSelectedYear] = useState('');
@@ -16,42 +10,29 @@ export const YearProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchLatestYear = () => {
+    const fetchFinancialYears = async () => {
       try {
-        // Simulate fetching the latest year from static data
-        if (staticFinancialYears && staticFinancialYears.length > 0) {
-          const latestYear = staticFinancialYears[staticFinancialYears.length - 1].year;
-          setSelectedYear(latestYear);
-          localStorage.setItem('selectedYear', latestYear);
+        const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=1&limit=100`);
+        const years = response.data.financialYears.map((year) => year.year);
+        if (years.length > 0) {
+          const latestYear = years[0]; // Assuming sorted DESC
+          const storedYear = localStorage.getItem('selectedYear');
+          const selected = storedYear && years.includes(storedYear) ? storedYear : latestYear;
+          setSelectedYear(selected);
+          localStorage.setItem('selectedYear', selected);
         } else {
           setSelectedYear('');
           localStorage.removeItem('selectedYear');
         }
       } catch (error) {
-        console.error('Error setting the latest year:', error);
-        setError('Failed to set financial year');
+        console.error('Error fetching financial years:', error);
+        setError('Failed to fetch financial years');
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchStoredYear = () => {
-      const storedYear = localStorage.getItem('selectedYear');
-      if (storedYear) {
-        // Check if stored year exists in static data
-        const exists = staticFinancialYears.some(year => year.year === storedYear);
-        if (exists) {
-          setSelectedYear(storedYear);
-          setLoading(false);
-        } else {
-          fetchLatestYear();
-        }
-      } else {
-        fetchLatestYear();
-      }
-    };
-
-    fetchStoredYear();
+    fetchFinancialYears();
   }, []);
 
   useEffect(() => {

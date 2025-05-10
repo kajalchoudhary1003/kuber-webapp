@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     BankName: '',
     AccountNumber: '',
     SwiftCode: '',
-    IfscCode: '',
+    IFSC: '',
   });
 
   useEffect(() => {
@@ -20,7 +21,7 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
         BankName: initialData.BankName || '',
         AccountNumber: initialData.AccountNumber || '',
         SwiftCode: initialData.SwiftCode || '',
-        IfscCode: initialData.IfscCode || '',
+        IFSC: initialData.IFSC || '',
       });
     } else {
       resetForm();
@@ -47,7 +48,7 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
       BankName: '',
       AccountNumber: '',
       SwiftCode: '',
-      IfscCode: '',
+      IFSC: '',
     });
   };
 
@@ -58,7 +59,6 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
           <DialogTitle className="text-xl font-normal">
             {mode === 'edit' ? 'Edit Bank Detail' : 'Add Bank Detail'}
           </DialogTitle>
-          
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex gap-4">
@@ -90,8 +90,8 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
             />
             <Input
               placeholder="IFSC Code"
-              name="IfscCode"
-              value={formData.IfscCode}
+              name="IFSC"
+              value={formData.IFSC}
               onChange={handleChange}
               required
               className="flex-1"
