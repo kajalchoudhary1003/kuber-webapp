@@ -1,3 +1,5 @@
+
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
 import axios from 'axios';
@@ -22,6 +24,10 @@ import { useYear } from '../../../contexts/YearContexts';
 const API_BASE_URL = 'http://localhost:5001/api/levels';
 const ORGANISATION_API_BASE_URL = 'http://localhost:5001/api/organisations';
 const ROLES_API_BASE_URL = 'http://localhost:5001/api/roles';
+const CURRENCY_API_BASE_URL = 'http://localhost:5001/api/currencies';
+const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
+const EXCHANGE_RATE_API_BASE_URL = 'http://localhost:5001/api/exchange-rates';
+const BANK_DETAIL_API_BASE_URL = 'http://localhost:5001/api/bank-details/all';
 
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
@@ -30,55 +36,6 @@ const useYearWithFallback = () => {
   } catch (e) {
     return { selectedYear: null, setSelectedYear: () => { } };
   }
-};
-
-// Dummy data for non-role sections
-const dummyData = {
-  financialYears: {
-    financialYears: [
-      { year: "2023" },
-      { year: "2022" },
-      { year: "2021" },
-    ],
-    total: 5,
-  },
-  exchangeRates: [
-    {
-      _id: "rate1",
-      CurrencyFrom: { _id: "curr1", CurrencyName: "USD" },
-      CurrencyTo: { _id: "curr2", CurrencyName: "EURrr" },
-      ExchangeRate: 0.85,
-      Year: "2023",
-    },
-    {
-      _id: "rate2",
-      CurrencyFrom: { _id: "curr2", CurrencyName: "EUR" },
-      CurrencyTo: { _id: "curr3", CurrencyName: "GBP" },
-      ExchangeRate: 0.88,
-      Year: "2023",
-    },
-  ],
-  currencies: [
-    { _id: "curr1", CurrencyCode: "USDdd", CurrencyName: "United States Dollar" },
-    { _id: "curr2", CurrencyCode: "EUR", CurrencyName: "Euro" },
-    { _id: "curr3", CurrencyCode: "GBP", CurrencyName: "British Pound" },
-  ],
-  bankDetails: [
-    {
-      _id: "bank1",
-      BankName: "Global Bank",
-      AccountNumber: "1234567890",
-      SwiftCode: "GBL12345",
-      IfscCode: "GBL0001234",
-    },
-    {
-      _id: "bank2",
-      BankName: "National Bank",
-      AccountNumber: "0987654321",
-      SwiftCode: "NAT54321",
-      IfscCode: "NAT0005678",
-    },
-  ],
 };
 
 const OtherSettings = () => {
@@ -124,23 +81,26 @@ const OtherSettings = () => {
   const [randomCode, setRandomCode] = useState('');
   const buttonRef = useRef(null);
 
+  // Fetch financial years from backend
+  const fetchFinancialYears = async (page = 1, limit = 2) => {
+    try {
+      const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=${page}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching financial years:', error);
+      alert('Failed to fetch financial years. Please check if the backend server is running.');
+      throw error;
+    }
+  };
+
   // Fetch levels from backend
   const fetchLevels = async () => {
     try {
       const response = await axios.get(API_BASE_URL);
       setEmployeeLevels(response.data);
     } catch (error) {
-      console.error('Error fetching levels:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to fetch levels. Please check if the backend server is running.'
-      );
+      console.error('Error fetching levels:', error);
+      alert('Failed to fetch levels. Please check if the backend server is running.');
     }
   };
 
@@ -150,17 +110,8 @@ const OtherSettings = () => {
       const response = await axios.get(ORGANISATION_API_BASE_URL);
       setOrganisations(response.data);
     } catch (error) {
-      console.error('Error fetching organisations:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to fetch organisations. Please check if the backend server is running.'
-      );
+      console.error('Error fetching organisations:', error);
+      alert('Failed to fetch organisations. Please check if the backend server is running.');
     }
   };
 
@@ -170,44 +121,89 @@ const OtherSettings = () => {
       const response = await axios.get(ROLES_API_BASE_URL);
       setEmployeeRoles(response.data);
     } catch (error) {
-      console.error('Error fetching roles:', {
+      console.error('Error fetching roles:', error);
+      alert('Failed to fetch roles. Please check if the backend server is running.');
+    }
+  };
+
+  // Fetch currencies from backend
+  const fetchCurrencies = async () => {
+    try {
+      const response = await axios.get(CURRENCY_API_BASE_URL);
+      setCurrencies(response.data);
+    } catch (error) {
+      console.error('Error fetching currencies:', error);
+      alert('Failed to fetch currencies. Please check if the backend server is running.');
+    }
+  };
+
+  // Fetch exchange rates from backend
+  const fetchExchangeRates = async (year) => {
+    try {
+      if (!year) return;
+      const response = await axios.get(`${EXCHANGE_RATE_API_BASE_URL}?year=${year}`);
+      const mappedRates = response.data.map(rate => ({
+        ...rate,
+        _id: rate.id,
+        ExchangeRate: rate.Rate,
+        CurrencyFrom: {
+          _id: rate.CurrencyFrom?.id,
+          CurrencyName: rate.CurrencyFrom?.CurrencyName,
+          CurrencyCode: rate.CurrencyFrom?.CurrencyCode,
+        },
+        CurrencyTo: {
+          _id: rate.CurrencyTo?.id,
+          CurrencyName: rate.CurrencyTo?.CurrencyName,
+          CurrencyCode: rate.CurrencyTo?.CurrencyCode,
+        },
+      }));
+      setExchangeRates(mappedRates);
+    } catch (error) {
+      console.error('Error fetching exchange rates:', error);
+      alert('Failed to fetch exchange rates.');
+      setExchangeRates([]);
+    }
+  };
+
+  // Fetch bank details from backend
+  const fetchBankDetails = async () => {
+    try {
+      const response = await axios.get(BANK_DETAIL_API_BASE_URL);
+      console.log('Bank details response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching bank details:', {
         message: error.message,
-        code: error.code,
-        response: error.response?.data,
         status: error.response?.status,
+        data: error.response?.data,
+        url: BANK_DETAIL_API_BASE_URL,
       });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to fetch roles. Please check if the backend server is running.'
-      );
+      alert('Failed to fetch bank details. Please check if the backend server is running.');
+      return [];
     }
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch levels, organisations, and roles from backend
-        await fetchLevels();
-        await fetchOrganisations();
-        await fetchRoles();
+        await Promise.all([
+          fetchLevels(),
+          fetchOrganisations(),
+          fetchRoles(),
+          fetchCurrencies(),
+          fetchBankDetails().then(data => setBankDetails(data)),
+        ]);
 
-        // Non-role dummy data
-        setExchangeRates(dummyData.exchangeRates);
-        setCurrencies(dummyData.currencies);
-        setBankDetails(dummyData.bankDetails);
+        const financialYearData = await fetchFinancialYears(page, limit);
+        setFinancialYears(financialYearData.financialYears.map(year => year.year));
+        setTotalYears(financialYearData.total);
+        setShowMoreAvailable(financialYearData.financialYears.length < financialYearData.total);
 
-        const newYears = dummyData.financialYears.financialYears.map((year) => year.year);
-        const uniqueYears = [...new Set([...financialYears, ...newYears])];
-        setFinancialYears(uniqueYears);
-        setShowMoreAvailable(uniqueYears.length < dummyData.financialYears.total);
-        setTotalYears(dummyData.financialYears.total);
-
-        if (dummyData.financialYears.financialYears.length > 0 && page === 1 && !selectedYear) {
-          setSelectedYear(dummyData.financialYears.financialYears[0].year);
+        if (financialYearData.financialYears.length > 0 && page === 1 && !selectedYear) {
+          setSelectedYear(financialYearData.financialYears[0].year);
         }
       } catch (error) {
-        console.error('Error setting data:', error);
+        console.error('Error fetching initial data:', error);
       }
     };
 
@@ -215,30 +211,19 @@ const OtherSettings = () => {
   }, [page]);
 
   useEffect(() => {
-    const fetchExchangeRatesForYear = async () => {
-      try {
-        if (!selectedYear) {
-          setExchangeRates([]);
-          return;
-        }
-        const filteredRates = dummyData.exchangeRates.filter((rate) => rate.Year === selectedYear);
-        setExchangeRates(filteredRates);
-      } catch (error) {
-        console.error('Error fetching dummy exchange rates:', error);
-      }
-    };
-
-    fetchExchangeRatesForYear();
+    fetchExchangeRates(selectedYear);
   }, [selectedYear]);
 
   const handleAddExchangeRate = (event) => {
     event.stopPropagation();
     if (!selectedYear) {
-      console.error('No financial year selected');
       alert('Please select a financial year first.');
       return;
     }
-    console.log('Opening CurrencyExchangeModal in create mode');
+    if (currencies.length === 0) {
+      alert('No currencies available. Please add currencies first.');
+      return;
+    }
     setCurrencyExchangeModalMode('create');
     setCurrencyExchangeModalData(null);
     setCurrencyExchangeModalOpen(true);
@@ -246,66 +231,104 @@ const OtherSettings = () => {
 
   const handleEditExchangeRate = (rate, event) => {
     event.stopPropagation();
-    if (!rate || !rate.CurrencyFrom || !rate.CurrencyTo) {
-      console.error('Invalid exchange rate data:', rate);
-      return;
-    }
-    console.log('Opening CurrencyExchangeModal in edit mode with:', rate);
     setCurrencyExchangeModalMode('edit');
     setCurrencyExchangeModalData({
       id: rate._id,
       CurrencyFromID: rate.CurrencyFrom._id,
       CurrencyToID: rate.CurrencyTo._id,
-      ExchangeRate: parseFloat(rate.ExchangeRate),
+      ExchangeRate: rate.ExchangeRate,
     });
     setCurrencyExchangeModalOpen(true);
   };
 
   const handleExchangeRateSubmit = async (exchangeRate) => {
     try {
+      // Validate inputs
       if (!exchangeRate.CurrencyFromID || !exchangeRate.CurrencyToID || !exchangeRate.ExchangeRate || !selectedYear) {
-        throw new Error('All fields are required, including financial year.');
+        throw new Error('Please fill all fields: Currency From, Currency To, Exchange Rate, and Financial Year.');
+      }
+      if (isNaN(parseFloat(exchangeRate.ExchangeRate)) || parseFloat(exchangeRate.ExchangeRate) <= 0) {
+        throw new Error('Exchange Rate must be a positive number.');
+      }
+      if (exchangeRate.CurrencyFromID === exchangeRate.CurrencyToID) {
+        throw new Error('Currency From and Currency To cannot be the same.');
       }
 
-      const exchangeRateWithYear = {
-        CurrencyFromID: exchangeRate.CurrencyFromID,
-        CurrencyToID: exchangeRate.CurrencyToID,
-        ExchangeRate: parseFloat(exchangeRate.ExchangeRate),
-        Year: selectedYear,
-        CurrencyFrom: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyFromID),
-        CurrencyTo: dummyData.currencies.find((c) => c._id === exchangeRate.CurrencyToID),
+      const payload = {
+        CurrencyFromID: parseInt(exchangeRate.CurrencyFromID),
+        CurrencyToID: parseInt(exchangeRate.CurrencyToID),
+        Rate: parseFloat(exchangeRate.ExchangeRate),
+        Year: parseInt(selectedYear),
       };
 
+      console.log('Sending payload:', payload);
+
+      let response;
       if (exchangeRate.id) {
-        const updatedRate = { ...exchangeRateWithYear, _id: exchangeRate.id };
-        setExchangeRates((prevRates) =>
-          prevRates.map((rate) => (rate._id === updatedRate._id ? updatedRate : rate))
-        );
+        response = await axios.put(`${EXCHANGE_RATE_API_BASE_URL}/${exchangeRate.id}`, payload);
       } else {
-        const newRate = { ...exchangeRateWithYear, _id: `rate${Math.random().toString(36).substring(2, 9)}` };
-        setExchangeRates((prevRates) => [...prevRates, newRate]);
+        response = await axios.post(EXCHANGE_RATE_API_BASE_URL, payload);
       }
+
+      console.log('Backend response:', response.data);
+
+      // Validate response structure
+      if (!response.data || typeof response.data !== 'object') {
+        throw new Error('Invalid response from server: response data is missing or not an object.');
+      }
+
+      // Log warning if expected fields are missing (for debugging)
+      if (!response.data.id || !response.data.CurrencyFrom || !response.data.CurrencyTo) {
+        console.warn('Response is missing expected fields:', {
+          hasId: !!response.data.id,
+          hasCurrencyFrom: !!response.data.CurrencyFrom,
+          hasCurrencyTo: !!response.data.CurrencyTo,
+          responseData: response.data,
+        });
+      }
+
+      // Use fallback data if CurrencyFrom or CurrencyTo are missing
+      const updatedRate = {
+        ...response.data,
+        _id: response.data.id || exchangeRate.id || Date.now(), // Fallback ID
+        ExchangeRate: response.data.Rate || parseFloat(exchangeRate.ExchangeRate),
+        CurrencyFrom: response.data.CurrencyFrom || {
+          _id: parseInt(exchangeRate.CurrencyFromID),
+          CurrencyName: currencies.find(c => c.id === parseInt(exchangeRate.CurrencyFromID))?.CurrencyName || 'Unknown',
+          CurrencyCode: currencies.find(c => c.id === parseInt(exchangeRate.CurrencyFromID))?.CurrencyCode || 'UNK',
+        },
+        CurrencyTo: response.data.CurrencyTo || {
+          _id: parseInt(exchangeRate.CurrencyToID),
+          CurrencyName: currencies.find(c => c.id === parseInt(exchangeRate.CurrencyToID))?.CurrencyName || 'Unknown',
+          CurrencyCode: currencies.find(c => c.id === parseInt(exchangeRate.CurrencyToID))?.CurrencyCode || 'UNK',
+        },
+      };
+
+      setExchangeRates(prevRates =>
+        exchangeRate.id
+          ? prevRates.map(rate => (rate._id === exchangeRate.id ? updatedRate : rate))
+          : [...prevRates, updatedRate]
+      );
       setCurrencyExchangeModalOpen(false);
     } catch (error) {
       console.error('Error submitting exchange rate:', error);
-      alert('Failed to submit exchange rate. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to submit exchange rate. Please check the backend server.';
+      alert(errorMessage);
     }
   };
 
   const deleteExchangeRate = async (exchangeRateId) => {
     try {
-      console.log('Deleting exchange rate:', exchangeRateId);
-      setExchangeRates((prevExchangeRates) =>
-        prevExchangeRates.filter((rate) => rate._id !== exchangeRateId)
-      );
+      await axios.delete(`${EXCHANGE_RATE_API_BASE_URL}/${exchangeRateId}`);
+      setExchangeRates(prev => prev.filter(rate => rate._id !== exchangeRateId));
     } catch (error) {
       console.error('Error deleting exchange rate:', error);
+      alert(error.response?.data?.error || 'Failed to delete exchange rate.');
     }
   };
 
   const handleAddEmployeeRole = (event) => {
     event.stopPropagation();
-    console.log('Opening RoleModal in create mode');
     setRoleModalMode('create');
     setRoleModalData(null);
     setRoleModalOpen(true);
@@ -313,76 +336,46 @@ const OtherSettings = () => {
 
   const handleEditEmployeeRole = (role, event) => {
     event.stopPropagation();
-    console.log('Opening RoleModal in edit mode with:', role);
     setRoleModalMode('edit');
     setRoleModalData({ id: role.id, RoleName: role.RoleName });
     setRoleModalOpen(true);
   };
 
   const handleRoleSubmit = async (role) => {
-    console.log('Handling role submit:', role);
     try {
       if (!role.RoleName) {
         throw new Error('Role name is required');
       }
       if (role.id) {
-        // Update existing role
         const response = await axios.put(`${ROLES_API_BASE_URL}/${role.id}`, {
           RoleName: role.RoleName,
         });
-        setEmployeeRoles((prevRoles) =>
-          prevRoles.map((r) => (r.id === role.id ? response.data : r))
-        );
+        setEmployeeRoles(prev => prev.map(r => (r.id === role.id ? response.data : r)));
       } else {
-        // Create new role
         const response = await axios.post(ROLES_API_BASE_URL, {
           RoleName: role.RoleName,
         });
-        setEmployeeRoles((prevRoles) => [...prevRoles, response.data]);
+        setEmployeeRoles(prev => [...prev, response.data]);
       }
       setRoleModalOpen(false);
     } catch (error) {
-      console.error('Error submitting role:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const errorMessage =
-        error.response?.status === 404
-          ? 'Role not found'
-          : error.response?.status === 400
-            ? error.response?.data?.error || 'Invalid role data'
-            : 'Failed to submit role. ';
-      alert(errorMessage);
+      console.error('Error submitting role:', error);
+      alert(error.response?.data?.error || 'Failed to submit role.');
     }
   };
 
   const deleteRole = async (roleId) => {
-    console.log('Deleting role:', roleId);
     try {
       await axios.delete(`${ROLES_API_BASE_URL}/${roleId}`);
-      setEmployeeRoles((prevRoles) => prevRoles.filter((role) => role.id !== roleId));
+      setEmployeeRoles(prev => prev.filter(role => role.id !== roleId));
     } catch (error) {
-      console.error('Error deleting role:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const errorMessage =
-        error.response?.status === 404
-          ? 'Role not found'
-          : error.response?.status === 400
-            ? error.response?.data?.error || 'Cannot delete role'
-            : 'Failed to delete role.';
-      alert(errorMessage);
+      console.error('Error deleting role:', error);
+      alert(error.response?.data?.error || 'Failed to delete role.');
     }
   };
 
   const handleAddOrganisation = (event) => {
     event.stopPropagation();
-    console.log('Opening OrganisationModal in create mode');
     setOrganisationModalMode('create');
     setOrganisationModalData(null);
     setOrganisationModalOpen(true);
@@ -390,7 +383,6 @@ const OtherSettings = () => {
 
   const handleEditOrganisation = (organisation, event) => {
     event.stopPropagation();
-    console.log('Opening OrganisationModal in edit mode with:', organisation);
     setOrganisationModalMode('edit');
     setOrganisationModalData({
       id: organisation.id,
@@ -403,72 +395,43 @@ const OtherSettings = () => {
 
   const handleOrganisationSubmit = async (organisation) => {
     try {
-      console.log('Submitting organisation:', organisation);
+      if (!organisation.OrganisationName || !organisation.Abbreviation || !organisation.RegNumber) {
+        throw new Error('All organisation fields are required');
+      }
       if (organisation.id) {
-        // Update existing organisation
         const response = await axios.put(`${ORGANISATION_API_BASE_URL}/${organisation.id}`, {
           OrganisationName: organisation.OrganisationName,
           Abbreviation: organisation.Abbreviation,
           RegNumber: organisation.RegNumber,
         });
-        setOrganisations((prevOrganisations) =>
-          prevOrganisations.map((org) =>
-            org.id === organisation.id ? response.data : org
-          )
-        );
+        setOrganisations(prev => prev.map(org => (org.id === organisation.id ? response.data : org)));
       } else {
-        // Create new organisation
         const response = await axios.post(ORGANISATION_API_BASE_URL, {
           OrganisationName: organisation.OrganisationName,
           Abbreviation: organisation.Abbreviation,
           RegNumber: organisation.RegNumber,
         });
-        setOrganisations((prevOrganisations) => [
-          ...prevOrganisations,
-          response.data,
-        ]);
+        setOrganisations(prev => [...prev, response.data]);
       }
       setOrganisationModalOpen(false);
     } catch (error) {
-      console.error('Error submitting organisation:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to submit organisation. Please check if the backend server is running.'
-      );
+      console.error('Error submitting organisation:', error);
+      alert(error.response?.data?.error || 'Failed to submit organisation.');
     }
   };
 
   const deleteOrganisation = async (organisationId) => {
     try {
-      console.log('Deleting organisation:', organisationId);
       await axios.delete(`${ORGANISATION_API_BASE_URL}/${organisationId}`);
-      setOrganisations((prevOrganisations) =>
-        prevOrganisations.filter((org) => org.id !== organisationId)
-      );
+      setOrganisations(prev => prev.filter(org => org.id !== organisationId));
     } catch (error) {
-      console.error('Error deleting organisation:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to delete organisation. Please check if the backend server is running.'
-      );
+      console.error('Error deleting organisation:', error);
+      alert(error.response?.data?.error || 'Failed to delete organisation.');
     }
   };
 
   const handleAddEmployeeLevel = (event) => {
     event.stopPropagation();
-    console.log('Opening LevelModal in create mode');
     setLevelModalMode('create');
     setLevelModalData(null);
     setLevelModalOpen(true);
@@ -476,7 +439,6 @@ const OtherSettings = () => {
 
   const handleEditEmployeeLevel = (level, event) => {
     event.stopPropagation();
-    console.log('Opening LevelModal in edit mode with:', level);
     setLevelModalMode('edit');
     setLevelModalData({ id: level.id, LevelName: level.LevelName });
     setLevelModalOpen(true);
@@ -484,57 +446,34 @@ const OtherSettings = () => {
 
   const handleLevelSubmit = async (level) => {
     try {
-      console.log('Handling level submit:', level);
       if (!level.LevelName) {
         throw new Error('Level name is required');
       }
       if (level.id) {
         await axios.put(`${API_BASE_URL}/${level.id}`, { LevelName: level.LevelName });
-        console.log('Level updated:', level);
       } else {
         await axios.post(API_BASE_URL, { LevelName: level.LevelName });
-        console.log('Level created:', level);
       }
       await fetchLevels();
       setLevelModalOpen(false);
     } catch (error) {
-      console.error('Error submitting level:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to submit level. Please check if the backend server is running.'
-      );
+      console.error('Error submitting level:', error);
+      alert(error.response?.data?.error || 'Failed to submit level.');
     }
   };
 
   const deleteLevel = async (levelId) => {
     try {
-      console.log('Deleting level:', levelId);
       await axios.delete(`${API_BASE_URL}/${levelId}`);
       await fetchLevels();
     } catch (error) {
-      console.error('Error deleting level:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      alert(
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to delete level. Please check if the backend server is running.'
-      );
+      console.error('Error deleting level:', error);
+      alert(error.response?.data?.error || 'Failed to delete level.');
     }
   };
 
   const handleAddCurrency = (event) => {
     event.stopPropagation();
-    console.log('Opening CurrencyModal in create mode');
     setCurrencyModalMode('create');
     setCurrencyModalData(null);
     setCurrencyModalOpen(true);
@@ -542,10 +481,9 @@ const OtherSettings = () => {
 
   const handleEditCurrency = (currency, event) => {
     event.stopPropagation();
-    console.log('Opening CurrencyModal in edit mode with:', currency);
     setCurrencyModalMode('edit');
     setCurrencyModalData({
-      id: currency._id,
+      id: currency.id,
       CurrencyCode: currency.CurrencyCode,
       CurrencyName: currency.CurrencyName,
     });
@@ -554,35 +492,41 @@ const OtherSettings = () => {
 
   const handleCurrencySubmit = async (currency) => {
     try {
-      console.log('Submitting currency:', currency);
+      if (!currency.CurrencyCode || !currency.CurrencyName) {
+        throw new Error('Currency code and name are required');
+      }
       if (currency.id) {
-        const updatedCurrency = { ...currency, _id: currency.id };
-        setCurrencies((prevCurrencies) =>
-          prevCurrencies.map((c) => (c._id === updatedCurrency._id ? updatedCurrency : c))
-        );
+        const response = await axios.put(`${CURRENCY_API_BASE_URL}/${currency.id}`, {
+          CurrencyCode: currency.CurrencyCode,
+          CurrencyName: currency.CurrencyName,
+        });
+        setCurrencies(prev => prev.map(c => (c.id === currency.id ? response.data : c)));
       } else {
-        const newCurrency = { ...currency, _id: `curr${Math.random().toString(36).substring(2, 9)}` };
-        setCurrencies((prevCurrencies) => [...prevCurrencies, newCurrency]);
+        const response = await axios.post(CURRENCY_API_BASE_URL, {
+          CurrencyCode: currency.CurrencyCode,
+          CurrencyName: currency.CurrencyName,
+        });
+        setCurrencies(prev => [...prev, response.data]);
       }
       setCurrencyModalOpen(false);
     } catch (error) {
       console.error('Error submitting currency:', error);
-      alert('Failed to submit currency. Please try again.');
+      alert(error.response?.data?.error || 'Failed to submit currency.');
     }
   };
 
   const deleteCurrency = async (currencyId) => {
     try {
-      console.log('Deleting currency:', currencyId);
-      setCurrencies((prevCurrencies) => prevCurrencies.filter((currency) => currency._id !== currencyId));
+      await axios.delete(`${CURRENCY_API_BASE_URL}/${currencyId}`);
+      setCurrencies(prev => prev.filter(currency => currency.id !== currencyId));
     } catch (error) {
       console.error('Error deleting currency:', error);
+      alert(error.response?.data?.error || 'aes.');
     }
   };
 
   const handleAddBankDetail = (event) => {
     event.stopPropagation();
-    console.log('Opening BankDetailModal in create mode');
     setBankDetailModalMode('create');
     setBankDetailModalData(null);
     setBankDetailModalOpen(true);
@@ -590,69 +534,88 @@ const OtherSettings = () => {
 
   const handleEditBankDetail = (bankDetail, event) => {
     event.stopPropagation();
-    console.log('Opening BankDetailModal in edit mode with:', bankDetail);
     setBankDetailModalMode('edit');
     setBankDetailModalData({
-      id: bankDetail._id,
+      id: bankDetail.id,
       BankName: bankDetail.BankName,
       AccountNumber: bankDetail.AccountNumber,
       SwiftCode: bankDetail.SwiftCode,
-      IfscCode: bankDetail.IfscCode,
+      IFSC: bankDetail.IFSC,
     });
     setBankDetailModalOpen(true);
   };
 
   const handleBankDetailSubmit = async (bankDetail) => {
     try {
-      console.log('Submitting bank detail:', bankDetail);
-      if (bankDetail.id) {
-        const updatedBankDetail = { ...bankDetail, _id: bankDetail.id };
-        setBankDetails((prevBankDetails) =>
-          prevBankDetails.map((b) => (b._id === updatedBankDetail._id ? updatedBankDetail : b))
-        );
-      } else {
-        const newBankDetail = { ...bankDetail, _id: `bank${Math.random().toString(36).substring(2, 9)}` };
-        setBankDetails((prevBankDetails) => [...prevBankDetails, newBankDetail]);
+      // Validate inputs
+      if (!bankDetail.BankName || !bankDetail.AccountNumber || !bankDetail.SwiftCode || !bankDetail.IFSC) {
+        throw new Error('All bank detail fields are required');
       }
+
+      const payload = {
+        BankName: bankDetail.BankName,
+        AccountNumber: bankDetail.AccountNumber,
+        SwiftCode: bankDetail.SwiftCode,
+        IFSC: bankDetail.IFSC,
+      };
+
+      console.log('Submitting bank detail payload:', payload);
+
+      let response;
+      if (bankDetail.id) {
+        response = await axios.put(`${BANK_DETAIL_API_BASE_URL.replace('/all', '')}/update/${bankDetail.id}`, payload);
+        console.log('Update response:', response.data);
+      } else {
+        response = await axios.post(`${BANK_DETAIL_API_BASE_URL.replace('/all', '')}/create`, payload);
+        console.log('Create response:', response.data);
+      }
+
+      setBankDetails(prev =>
+        bankDetail.id
+          ? prev.map(b => (b.id === bankDetail.id ? response.data : b))
+          : [...prev, response.data]
+      );
       setBankDetailModalOpen(false);
     } catch (error) {
-      console.error('Error submitting bank detail:', error);
-      alert('Failed to submit bank detail. Please try again.');
+      console.error('Error submitting bank detail:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      alert(error.response?.data?.error || 'Failed to submit bank detail. Please check the backend server.');
     }
   };
 
   const deleteBankDetail = async (bankDetailId) => {
     try {
-      console.log('Deleting bank detail:', bankDetailId);
-      setBankDetails((prevBankDetails) =>
-        prevBankDetails.filter((bankDetail) => bankDetail._id !== bankDetailId)
-      );
+      await axios.delete(`${BANK_DETAIL_API_BASE_URL.replace('/all', '')}/delete/${bankDetailId}`);
+      setBankDetails(prev => prev.filter(bankDetail => bankDetail.id !== bankDetailId));
     } catch (error) {
       console.error('Error deleting bank detail:', error);
+      alert(error.response?.data?.error || 'Failed to delete bank detail.');
     }
   };
 
   const handleYearChange = (year) => {
-    console.log('Changing financial year to:', year);
     setSelectedYear(year);
   };
 
   const handleAddUpcomingYear = (event) => {
     event.stopPropagation();
-    console.log('Opening ConfirmationModal for adding financial year');
     setRandomCode(Math.random().toString(36).substring(2, 8));
     setModalOpen(true);
   };
 
   const confirmAddUpcomingYear = async () => {
     try {
-      console.log('Adding new financial year');
-      const newYear = (parseInt(financialYears[0]) + 1).toString();
-      setFinancialYears((prevYears) => [newYear, ...prevYears]);
+      const response = await axios.post(FINANCIAL_YEAR_API_BASE_URL);
+      const newYear = response.data.year;
+      setFinancialYears(prev => [newYear, ...prev]);
       setSelectedYear(newYear);
+      setTotalYears(prev => prev + 1);
     } catch (error) {
       console.error('Error adding financial year:', error);
-      alert('Failed to add financial year. Please try again.');
+      alert(error.response?.data?.error || 'Failed to add financial year.');
     }
     setModalOpen(false);
   };
@@ -660,33 +623,36 @@ const OtherSettings = () => {
   const backupDatabase = async () => {
     try {
       console.log('Backing up database');
-      // Simulate backup
+      // Implement actual API call if available
     } catch (error) {
-      console.error('Unexpected error during database backup:', error);
-      alert('Failed to backup database. Please try again.');
+      console.error('Error during database backup:', error);
+      alert('Failed to backup database.');
     }
   };
 
   const restoreDatabase = async () => {
     try {
       console.log('Restoring database');
-      // Simulate restore
+      // Implement actual API call if available
     } catch (error) {
-      console.error('Unexpected error during database restore:', error);
-      alert('Failed to restore database. Please try again.');
+      console.error('Error during database restore:', error);
+      alert('Failed to restore database.');
     }
   };
 
-  const handleShowMoreYears = (event) => {
-    event.stopPropagation();
-    console.log('Showing more financial years');
-    setPage((prevPage) => prevPage + 1);
-    setFinancialYears((prevYears) => {
-      const newYears = [...prevYears, `202${3 - prevYears.length}`];
-      setShowMoreAvailable(newYears.length < dummyData.financialYears.total);
-      return newYears;
-    });
-  };
+  const handleShowMoreYears = async (event) => {
+  event.stopPropagation();
+  try {
+    // Fetch all financial years by setting a high limit or removing pagination
+    const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?limit=${totalYears}`);
+    const allYears = response.data.financialYears.map(year => year.year);
+    setFinancialYears(allYears);
+    setShowMoreAvailable(false); // Hide "Show More" since all years are loaded
+  } catch (error) {
+    console.error('Error fetching all financial years:', error);
+    alert('Failed to fetch all financial years.');
+  }
+};
 
   const formatYear = (year) => {
     const nextYear = parseInt(year) + 1;
@@ -710,7 +676,10 @@ const OtherSettings = () => {
                   <ChevronDown className="ml-2" size={24} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent style={{ width: buttonRef.current ? buttonRef.current.offsetWidth : 'auto' }}>
+              <DropdownMenuContent
+                className="bg-white"
+                style={{ width: buttonRef.current ? buttonRef.current.offsetWidth : 'auto' }}
+              >
                 {financialYears.map((year, index) => (
                   <DropdownMenuItem key={`${year}-${index}`} onClick={() => handleYearChange(year)}>
                     {formatYear(year)}
@@ -928,7 +897,7 @@ const OtherSettings = () => {
               </TableHeader>
               <TableBody>
                 {bankDetails.map((detail) => (
-                  <TableRow key={detail._id}>
+                  <TableRow key={detail.id}>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {detail.BankName}
                     </TableCell>
@@ -939,7 +908,7 @@ const OtherSettings = () => {
                       {detail.SwiftCode}
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {detail.IfscCode}
+                      {detail.IFSC}
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
@@ -952,7 +921,7 @@ const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-red-500 mx-1"
                         title="Delete"
-                        onClick={() => deleteBankDetail(detail._id)}
+                        onClick={() => deleteBankDetail(detail.id)}
                       >
                         <Trash size={20} />
                       </button>
@@ -989,7 +958,7 @@ const OtherSettings = () => {
               </TableHeader>
               <TableBody>
                 {currencies.map((currency) => (
-                  <TableRow key={currency._id}>
+                  <TableRow key={currency.id}>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       {currency.CurrencyCode}
                     </TableCell>
@@ -1007,7 +976,7 @@ const OtherSettings = () => {
                       <button
                         className="text-gray-500 hover:text-red-500 mx-1"
                         title="Delete"
-                        onClick={() => deleteCurrency(currency._id)}
+                        onClick={() => deleteCurrency(currency.id)}
                       >
                         <Trash size={20} />
                       </button>
@@ -1050,7 +1019,7 @@ const OtherSettings = () => {
                       {rate.CurrencyTo?.CurrencyName || 'N/A'}
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
-                      {parseFloat(rate.ExchangeRate)}
+                      {parseFloat(rate.ExchangeRate).toFixed(6)}
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
@@ -1080,40 +1049,28 @@ const OtherSettings = () => {
 
       <RoleModal
         open={roleModalOpen}
-        onClose={() => {
-          console.log('Closing RoleModal');
-          setRoleModalOpen(false);
-        }}
+        onClose={() => setRoleModalOpen(false)}
         mode={roleModalMode}
         initialData={roleModalData}
         onSubmit={handleRoleSubmit}
       />
       <OrganisationModal
         open={organisationModalOpen}
-        onClose={() => {
-          console.log('Closing OrganisationModal');
-          setOrganisationModalOpen(false);
-        }}
+        onClose={() => setOrganisationModalOpen(false)}
         mode={organisationModalMode}
         initialData={organisationModalData}
         onSubmit={handleOrganisationSubmit}
       />
       <LevelModal
         open={levelModalOpen}
-        onClose={() => {
-          console.log('Closing LevelModal');
-          setLevelModalOpen(false);
-        }}
+        onClose={() => setLevelModalOpen(false)}
         mode={levelModalMode}
         initialData={levelModalData}
         onSubmit={handleLevelSubmit}
       />
       <CurrencyExchangeModal
         open={currencyExchangeModalOpen}
-        onClose={() => {
-          console.log('Closing CurrencyExchangeModal');
-          setCurrencyExchangeModalOpen(false);
-        }}
+        onClose={() => setCurrencyExchangeModalOpen(false)}
         mode={currencyExchangeModalMode}
         initialData={currencyExchangeModalData}
         onSubmit={handleExchangeRateSubmit}
@@ -1121,30 +1078,21 @@ const OtherSettings = () => {
       />
       <CurrencyModal
         open={currencyModalOpen}
-        onClose={() => {
-          console.log('Closing CurrencyModal');
-          setCurrencyModalOpen(false);
-        }}
+        onClose={() => setCurrencyModalOpen(false)}
         mode={currencyModalMode}
         initialData={currencyModalData}
         onSubmit={handleCurrencySubmit}
       />
       <BankDetailModal
         open={bankDetailModalOpen}
-        onClose={() => {
-          console.log('Closing BankDetailModal');
-          setBankDetailModalOpen(false);
-        }}
+        onClose={() => setBankDetailModalOpen(false)}
         mode={bankDetailModalMode}
         initialData={bankDetailModalData}
         onSubmit={handleBankDetailSubmit}
       />
       <ConfirmationModal
         open={modalOpen}
-        onClose={() => {
-          console.log('Closing ConfirmationModal');
-          setModalOpen(false);
-        }}
+        onClose={() => setModalOpen(false)}
         onConfirm={confirmAddUpcomingYear}
         randomCode={randomCode}
       />
