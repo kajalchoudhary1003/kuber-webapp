@@ -10,64 +10,75 @@ const getFormattedTimestamp = () => {
   const day = String(now.getDate()).padStart(2, '0');
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
 
-  return `${year}${month}${day}_${hours}${minutes}`;
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
 };
 
 const backupDatabase = async () => {
   try {
-    // Use the database path from your configuration
     const dbPath = path.join(__dirname, '../database/database.sqlite');
     const backupDir = path.join(__dirname, '../backups');
 
     if (!fs.existsSync(dbPath)) {
-      logger.error('Database file does not exist.');
+      logger.error('Database file does not exist.', { dbPath });
       return { success: false, message: 'Database file does not exist.' };
     }
 
-    // Create backups directory if it doesn't exist
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
+      logger.info('Created backups directory.', { backupDir });
     }
 
     const timestamp = getFormattedTimestamp();
     const backupPath = path.join(backupDir, `kuber_${timestamp}.db`);
 
     fs.copyFileSync(dbPath, backupPath);
-    logger.info('Database backup created successfully.');
-    return { 
-      success: true, 
+    fs.chmodSync(backupPath, 0o666); // Ensure the backup file is writable
+    logger.info('Database backup created successfully.', { backupPath });
+
+    return {
+      success: true,
       message: 'Database backup created successfully.',
-      backupPath: backupPath
+      backupFile: `kuber_${timestamp}.db`,
+      backupPath,
     };
   } catch (err) {
-    logger.error(`Error during database backup: ${err.message}`);
+    logger.error('Error during database backup:', { error: err.message, stack: err.stack });
     return { success: false, message: `Error during database backup: ${err.message}` };
   }
 };
 
-const restoreDatabase = async (backupFile) => {
+const restoreDatabase = async (backupName) => {
   try {
-    if (!backupFile) {
-      return { success: false, message: 'No backup file provided' };
+    if (!backupName) {
+      logger.error('No backup name provided.');
+      return { success: false, message: 'No backup name provided' };
+    }
+
+    const backupDir = path.join(__dirname, '../backups');
+    const backupPath = path.join(backupDir, backupName);
+
+    if (!fs.existsSync(backupPath)) {
+      logger.error('Backup file does not exist.', { backupPath });
+      return { success: false, message: 'Backup file does not exist.' };
     }
 
     const dbPath = path.join(__dirname, '../database/database.sqlite');
-
-    // Create database directory if it doesn't exist
     const dbDir = path.dirname(dbPath);
+
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
+      logger.info('Created database directory.', { dbDir });
     }
 
-    // Move the uploaded file to the database location
-    fs.copyFileSync(backupFile.tempFilePath, dbPath);
+    fs.copyFileSync(backupPath, dbPath);
     fs.chmodSync(dbPath, 0o666);
-    
-    logger.info('Database restored successfully.');
+    logger.info('Database restored successfully.', { dbPath });
+
     return { success: true, message: 'Database restored successfully.' };
   } catch (err) {
-    logger.error(`Error during database restore: ${err.message}`);
+    logger.error('Error during database restore:', { error: err.message, stack: err.stack });
     return { success: false, message: `Error during database restore: ${err.message}` };
   }
 };
