@@ -26,6 +26,8 @@ const EmployeeMaster = () => {
   const [roles, setRoles] = useState([]);
   const [levels, setLevels] = useState([]);
   const [organisations, setOrganisations] = useState([]);
+  const [clientAssignments, setClientAssignments] = useState({});
+  const [clientErrors, setClientErrors] = useState({}); // New state for client fetch errors
   const [modalOpen, setModalOpen] = useState(false);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [levelModalOpen, setLevelModalOpen] = useState(false);
@@ -56,16 +58,49 @@ const EmployeeMaster = () => {
       setEmployees(fetchedEmployees);
       setFilteredEmployees(fetchedEmployees);
       setTotalEmployees(response.data.total);
-      // If search is active, apply filter again
+
+      // Fetch client assignments for employees
+      await fetchClientAssignmentsForEmployees(fetchedEmployees);
+
       if (isSearchActive && searchQuery) {
         applySearchFilter(fetchedEmployees, searchQuery);
       }
     } catch (err) {
       setError('Error fetching employees');
-      console.error(err);
+      console.error('Error fetching employees:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchClientAssignmentsForEmployees = async (employees) => {
+    const assignments = {};
+    const errors = {};
+    await Promise.all(
+      employees.map(async (employee) => {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/employees/${employee.id}/clients`);
+          assignments[employee.id] = response.data;
+        } catch (err) {
+          console.error(`Error fetching clients for employee ${employee.id}:`, {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+            url: `${API_BASE_URL}/employees/${employee.id}/clients`,
+          });
+          assignments[employee.id] = [];
+          errors[employee.id] = err.response?.status === 404
+            ? 'Client assignments not found'
+            : `Error: ${err.message} (Status: ${err.response?.status})`;
+        }
+      })
+    );
+    setClientAssignments(assignments);
+    setClientErrors(errors);
   };
 
   const fetchRolesLevelsOrgs = async () => {
@@ -78,7 +113,6 @@ const EmployeeMaster = () => {
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
       setOrganisations(orgsRes.data);
-      // Cache the data
       rolesRes.data.forEach((role) => (cache.roles[role.id] = role));
       levelsRes.data.forEach((level) => (cache.levels[level.id] = level));
       orgsRes.data.forEach((org) => (cache.organisations[org.id] = org));
@@ -267,26 +301,33 @@ const EmployeeMaster = () => {
     }
 
     setIsSearchActive(true);
-    
+
     // Log the first employee to see the structure
     if (employeesList.length > 0) {
-      console.log("Employee structure for search:", employeesList[0]);
+      console.log('Employee structure for search:', employeesList[0]);
     }
 
     // Function to check if any value in an object contains the query
-    const checkObjectValues = (obj, searchQuery) => {
+    const checkObjectValues = (obj, searchQuery, employeeId) => {
       if (!obj) return false;
-      return Object.values(obj).some(value => {
+
+      // Check client names for the employee
+      const clientNames = clientAssignments[employeeId]?.map((assignment) => assignment.Client?.ClientName || '') || [];
+      if (clientNames.some((name) => name.toLowerCase().includes(searchQuery.toLowerCase()))) {
+        return true;
+      }
+
+      // Check other object properties
+      return Object.values(obj).some((value) => {
         if (value === null || value === undefined) return false;
-        if (typeof value === 'object') return checkObjectValues(value, searchQuery);
+        if (typeof value === 'object') return checkObjectValues(value, searchQuery, employeeId);
         return String(value).toLowerCase().includes(searchQuery.toLowerCase());
       });
     };
 
-    const filtered = employeesList.filter(employee => {
-      // Use the recursive function to check all properties
-      return checkObjectValues(employee, query);
-    });
+    const filtered = employeesList.filter((employee) =>
+      checkObjectValues(employee, query, employee.id)
+    );
 
     console.log(`Search query: "${query}" - Found ${filtered.length} results`);
     setFilteredEmployees(filtered);
@@ -331,6 +372,8 @@ const EmployeeMaster = () => {
               fetchRoleById={fetchRoleById}
               fetchLevelById={fetchLevelById}
               fetchOrganisationById={fetchOrganisationById}
+              clientAssignments={clientAssignments}
+              clientErrors={clientErrors} // Pass clientErrors for potential UI display
             />
             {!isSearchActive && (
               <div className="mt-8 flex justify-center">
