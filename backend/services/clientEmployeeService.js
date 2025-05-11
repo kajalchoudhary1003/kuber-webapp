@@ -1,4 +1,3 @@
-// clientEmployeeService.js
 const { Op } = require('sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
@@ -228,8 +227,7 @@ const clientEmployeeService = {
     try {
       const summary = await ClientEmployee.findAll({
         attributes: [
-          'Status',
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+          'Status',[sequelize.fn('COUNT', sequelize.col('id')), 'count']
         ],
         group: ['Status']
       });

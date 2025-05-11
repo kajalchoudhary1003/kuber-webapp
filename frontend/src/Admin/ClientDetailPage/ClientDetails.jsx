@@ -25,6 +25,8 @@ const ClientDetails = () => {
   const fetchClientData = async () => {
     try {
       setLoading(true);
+      setError(null);
+
       // Fetch client details
       const clientResponse = await fetch(`${API_BASE_URL}/clients/${id}`);
       if (!clientResponse.ok) {
@@ -36,14 +38,21 @@ const ClientDetails = () => {
       setClient(clientData);
 
       // Fetch resources
-      const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
-      if (!resourcesResponse.ok) {
-        const errorData = await resourcesResponse.json();
-        throw new Error(errorData.error || "Failed to fetch resources");
+      try {
+        const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
+        if (!resourcesResponse.ok) {
+          const errorData = await resourcesResponse.json();
+          console.warn("Resources fetch error:", errorData.error);
+          setResources([]);
+        } else {
+          const resourcesData = await resourcesResponse.json();
+          console.log("Resources data:", resourcesData);
+          setResources(Array.isArray(resourcesData) ? resourcesData : []);
+        }
+      } catch (resourceError) {
+        console.warn("Error fetching resources:", resourceError.message);
+        setResources([]);
       }
-      const resourcesData = await resourcesResponse.json();
-      console.log("Resources data:", resourcesData);
-      setResources(resourcesData);
     } catch (err) {
       console.error("Error fetching client data:", err.message);
       setError(err.message);
@@ -62,18 +71,22 @@ const ClientDetails = () => {
 
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
-    if (!employee) return "N/A";
-    if (employee.EmployeeName) return employee.EmployeeName;
-    if (employee.FirstName || employee.LastName) {
-      return `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+    if (!employee) {
+      console.warn("Employee data missing in resource");
+      return "N/A";
     }
-    return "N/A";
+    if (employee.EmployeeName) return employee.EmployeeName;
+    const name = `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+    return name || "N/A";
   };
 
   // Helper function to safely get employee code
   const getEmployeeCode = (employee) => {
-    if (!employee) return "N/A";
-    return employee.EmployeeCode || employee.EmpCode || "N/A";
+    if (!employee) {
+      console.warn("Employee data missing in resource");
+      return "N/A";
+    }
+    return employee.EmpCode || "N/A";
   };
 
   // Helper function to format billing
@@ -135,6 +148,8 @@ const ClientDetails = () => {
           setResources((prev) => [...prev, newResource]);
         }
       }
+      // Refresh resources after update
+      await fetchClientData();
     } catch (err) {
       console.error("Error submitting resource:", err.message);
       alert(`Error: ${err.message}`);
@@ -194,6 +209,7 @@ const ClientDetails = () => {
           throw new Error(errorData.error || "Failed to delete resource");
         }
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
+        await fetchClientData();
       } catch (err) {
         console.error("Error deleting resource:", err.message);
         alert(`Error: ${err.message}`);
@@ -221,8 +237,7 @@ const ClientDetails = () => {
   };
 
   if (loading) return <div className="p-4">Loading...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-  if (!client) return <div className="p-4">Client not found</div>;
+  if (error || !client) return <div className="p-4 text-red-500">Error: {error || "Client not found"}</div>;
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -245,15 +260,15 @@ const ClientDetails = () => {
         <div className="flex justify-between items-center border-b border-[#9DA4B3] pb-4">
           <h3 className="text-[24px] text-[#272727]">Client Details</h3>
           <div className="space-x-2">
-            <Button 
-              onClick={handleEditClient} 
+            <Button
+              onClick={handleEditClient}
               className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Edit
             </Button>
-            <Button 
-              variant="destructive" 
-              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all" 
+            <Button
+              variant="destructive"
+              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
               onClick={handleDeleteClient}
             >
               Delete
@@ -264,19 +279,19 @@ const ClientDetails = () => {
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Company name</p>
-            <p>{client.ClientName}</p>
+            <p>{client.ClientName || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-sm">Abbreviation</p>
-            <p>{client.Abbreviation}</p>
+            <p>{client.Abbreviation || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-sm">Contact person</p>
-            <p>{client.ContactPerson}</p>
+            <p>{client.ContactPerson || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-sm">Email</p>
-            <p>{client.Email}</p>
+            <p>{client.Email || "N/A"}</p>
           </div>
         </div>
 
@@ -285,7 +300,7 @@ const ClientDetails = () => {
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Registered address</p>
-            <p>{client.RegisteredAddress}</p>
+            <p>{client.RegisteredAddress || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-sm">Billing currency</p>
@@ -307,13 +322,22 @@ const ClientDetails = () => {
         <div className="flex justify-between items-center pb-4">
           <h3 className="text-[24px] text-[#272727]">Resources Assigned</h3>
           <div className="flex gap-2">
-            <Button onClick={() => setActiveTab("Active")} className={activeTab === "Active" ? "border-none text-black" : ""}>
+            <Button
+              onClick={() => setActiveTab("Active")}
+              className={activeTab === "Active" ? "border-none text-black" : ""}
+            >
               Active Resources
             </Button>
-            <Button onClick={() => setActiveTab("Inactive")} className={activeTab === "Inactive" ? "text-black" : ""}>
+            <Button
+              onClick={() => setActiveTab("Inactive")}
+              className={activeTab === "Inactive" ? "text-black" : ""}
+            >
               Inactive Resources
             </Button>
-            <Button onClick={handleAddResource} className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            <Button
+              onClick={handleAddResource}
+              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+            >
               Add Resource
             </Button>
           </div>
@@ -322,7 +346,7 @@ const ClientDetails = () => {
         <div className="my-2"></div>
 
         <Table>
-          <TableHeader className='border-b border-[#9DA4B3]'>
+          <TableHeader className="border-b border-[#9DA4B3]">
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
@@ -361,7 +385,9 @@ const ClientDetails = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-4">No {activeTab.toLowerCase()} resources found</TableCell>
+                <TableCell colSpan={10} className="text-center py-4">
+                  No {activeTab.toLowerCase()} resources found
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -380,6 +406,7 @@ const ClientDetails = () => {
           open={isClientModalOpen}
           onClose={handleCloseClientModal}
           initialData={client}
+          onSubmit={handleClientSubmit}
         />
       )}
     </div>
