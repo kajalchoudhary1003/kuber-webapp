@@ -291,6 +291,7 @@ export const EmployeeDetail = () => {
         {clientError ? (
           <div className="text-center text-red-500 py-4">{clientError}</div>
         ) : (
+
           <Table className="w-full border-b border-[#9DA4B3]">
             <TableHeader className='bg-[#EDEFF2] border-b border-[#9DA4B3]'>
               <TableRow className='border-b border-[#9DA4B3]'>
@@ -300,13 +301,16 @@ export const EmployeeDetail = () => {
                 <TableCell className="py-3 px-1 font-medium text-[16px]">End Date</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Billing Rate</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Status</TableCell>
+
               </TableRow>
             </TableHeader>
             <TableBody>
               {clientAssignments?.length > 0 ? (
                 clientAssignments.map((clientEmployee, index) => (
                   <TableRow className="border-b border-[#9DA4B3]" key={clientEmployee.id}>
+
                     
+
                     <TableCell className="py-3 px-1 text-[14px]">
                       {clientEmployee.Client?.ClientName || 'N/A'}
                     </TableCell>
