@@ -22,22 +22,22 @@ const clientService = {
   },
 
   async getClientById(id) {
-    try {
-      const client = await Client.findByPk(id, {
-        include: [
-          { model: Organisation, as: 'Organisation' },
-          { model: BankDetail, as: 'BankDetail' },
-          { model: Currency, as: 'Currency' }
-        ]
-      });
-      if (!client) {
-        throw new Error('Client not found');
-      }
-      return client;
-    } catch (error) {
-      throw new Error(`Error fetching client: ${error.message}`);
+  try {
+    const client = await Client.findByPk(id, {
+      include: [
+        { model: Organisation, as: 'Organisation' },
+        { model: BankDetail, as: 'BankDetail' },
+        { model: Currency, as: 'BillingCurrency' } // Correct alias
+      ]
+    });
+    if (!client) {
+      throw new Error('Client not found');
     }
-  },
+    return client;
+  } catch (error) {
+    throw new Error(`Error fetching client: ${error.message}`);
+  }
+},
 
   async createClient(clientData) {
     try {
@@ -88,7 +88,7 @@ const clientService = {
         include: [
           { model: Organisation, as: 'Organisation' },
           { model: BankDetail, as: 'BankDetail' },
-          { model: Currency, as: 'Currency' }
+          { model: Currency, as: 'BillingCurrency' }
         ]
       });
       return clients;
@@ -112,7 +112,7 @@ const clientService = {
         include: [
           { model: Organisation, as: 'Organisation' },
           { model: BankDetail, as: 'BankDetail' },
-          { model: Currency, as: 'Currency' }
+          { model: Currency, as: 'BillingCurrency' }
         ]
       });
       
@@ -137,7 +137,7 @@ const clientService = {
         include: [
           { model: Organisation, as: 'Organisation' },
           { model: BankDetail, as: 'BankDetail' },
-          { model: Currency, as: 'Currency' }
+          { model: Currency, as: 'BillingCurrency' }
         ]
       });
       

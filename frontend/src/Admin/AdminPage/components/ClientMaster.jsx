@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
+const API_BASE_URL = 'http://localhost:5001/api/clients'; // Adjust if your backend uses a different port
+
 const ClientMaster = () => {
   const [clients, setClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
@@ -14,40 +16,9 @@ const ClientMaster = () => {
 
   const fetchClients = async () => {
     try {
-      const fetchedClients = [
-        {
-          id: 1,
-          ClientName: 'Acme Corp',
-          ContactPerson: 'John Doe',
-          Email: 'john@acme.com',
-          RegisteredAddress: '123 Acme St, Springfield',
-          BillingCurrency: { CurrencyName: 'USD' }
-        },
-        {
-          id: 2,
-          ClientName: 'Globex Inc.',
-          ContactPerson: 'Jane Smith',
-          Email: 'jane@globex.com',
-          RegisteredAddress: '456 Globex Ave, Metropolis',
-          BillingCurrency: { CurrencyName: 'EUR' }
-        },
-        {
-          id: 3,
-          ClientName: 'Initech',
-          ContactPerson: 'Peter Gibbons',
-          Email: 'peter@initech.com',
-          RegisteredAddress: '789 Initech Rd, Silicon Valley',
-          BillingCurrency: { CurrencyName: 'GBP' }
-        },
-        {
-          id: 4,
-          ClientName: 'Hooli',
-          ContactPerson: 'Gavin Belson',
-          Email: 'gavin@hooli.com',
-          RegisteredAddress: '100 Hooli Blvd, Palo Alto',
-          BillingCurrency: { CurrencyName: 'USD' }
-        }
-      ];
+      const response = await fetch(API_BASE_URL);
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      const fetchedClients = await response.json();
       setClients(fetchedClients);
       setFilteredClients(fetchedClients);
     } catch (error) {
@@ -60,12 +31,21 @@ const ClientMaster = () => {
     fetchClients();
   }, []);
 
-  const handleSearch = (value) => {
+  const handleSearch = async (value) => {
     setQuery(value);
-    const filtered = clients.filter((client) =>
-      client.ClientName.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredClients(filtered);
+    try {
+      if (value.trim() === '') {
+        setFilteredClients(clients); // Show all clients if query is empty
+      } else {
+        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(value)}`);
+        if (!response.ok) throw new Error('Failed to search clients');
+        const searchedClients = await response.json();
+        setFilteredClients(searchedClients);
+      }
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      alert('Error searching clients');
+    }
   };
 
   const handleOpenModal = () => {
@@ -77,17 +57,32 @@ const ClientMaster = () => {
     setModalOpen(false);
     if (newClient) {
       try {
-        await fetchClients();
         if (selectedClient) {
+          // Update existing client
+          const response = await fetch(`${API_BASE_URL}/${selectedClient.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newClient),
+          });
+          if (!response.ok) throw new Error('Failed to update client');
           alert('Client updated successfully');
         } else {
+          // Create new client
+          const response = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newClient),
+          });
+          if (!response.ok) throw new Error('Failed to create client');
           alert('Client created successfully');
         }
+        await fetchClients(); // Refresh client list
       } catch (error) {
+        console.error('Error saving client:', error);
         if (error.message.includes('Client with the same name already exists')) {
           alert('Client with the same name already exists');
         } else {
-          alert('Error fetching clients after update');
+          alert(`Error saving client: ${error.message}`);
         }
       }
     }
@@ -101,9 +96,14 @@ const ClientMaster = () => {
   const handleDeleteClient = async (clientId) => {
     if (window.confirm('Are you sure you want to delete this client? This will also delete all associated resources.')) {
       try {
+        const response = await fetch(`${API_BASE_URL}/${clientId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete client');
         alert('Client and associated resources deleted successfully');
-        fetchClients();
+        await fetchClients(); // Refresh client list
       } catch (error) {
+        console.error('Error deleting client:', error);
         alert('An error occurred while deleting the client.');
       }
     }
