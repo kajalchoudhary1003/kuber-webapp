@@ -1,4 +1,4 @@
-'use client';
+
 
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -29,29 +29,42 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   // Fetch employees
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        setLoading(true);
-        const query = searchTerm ? `/search/${encodeURIComponent(searchTerm)}` : '';
-        const response = await fetch(`${API_BASE_URL}/employees${query}`);
-        if (!response.ok) throw new Error('Failed to fetch employees');
-        const data = await response.json();
-        // Handle both endpoints: /employees returns { employees: [], total: number }, /search returns array
-        const employeesArray = Array.isArray(data) ? data : data.employees || [];
-        setEmployeeOptions(employeesArray);
-      } catch (err) {
-        setError(err.message);
-        setEmployeeOptions([]); // Reset to empty array on error
-      } finally {
-        setLoading(false);
+  console.log('Initial data:', initialData); // Debug log
+  if (initialData) {
+    const formatDate = (date) => {
+      if (date && !isNaN(new Date(date))) {
+        return new Date(date).toISOString().split('T')[0];
       }
+      return '';
     };
 
-    if (open) fetchEmployees();
-  }, [open, searchTerm]);
+    // Ensure that you're getting FirstName, LastName, and EmpCode from initialData.Employee
+    const employeeName = `${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`.trim();
+
+    setEmployeeDetails({
+      empCode: initialData.Employee?.EmpCode || '',
+      role: initialData.Employee?.Role?.RoleName || '',
+      level: initialData.Employee?.Level?.LevelName || '',
+      organization: initialData.Employee?.Organisation?.Abbreviation || '',
+      startDate: formatDate(initialData.StartDate),
+      billingMonthly: initialData.MonthlyBilling || '',
+      endDate: formatDate(initialData.EndDate),
+      status: initialData.Status || 'Active',
+      EmployeeID: initialData.EmployeeID || null,
+    });
+
+    setSelectedEmployee(employeeName);
+    setSearchTerm(employeeName);
+  } else {
+    resetForm();
+  }
+}, [initialData]);
+
 
   // Populate form with initial data
   useEffect(() => {
+    console.log('Initial data:', initialData); // Debug log
+    console.log('initialData.Employee:', initialData?.Employee);
     if (initialData) {
       const formatDate = (date) => {
         if (date && !isNaN(new Date(date))) {
@@ -59,6 +72,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         }
         return '';
       };
+      const employeeName = `${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`.trim();
       setEmployeeDetails({
         empCode: initialData.Employee?.EmpCode || '',
         role: initialData.Employee?.Role?.RoleName || '',
@@ -70,8 +84,8 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         status: initialData.Status || 'Active',
         EmployeeID: initialData.EmployeeID || null,
       });
-      setSelectedEmployee(`${initialData.Employee?.FirstName} ${initialData.Employee?.LastName}` || '');
-      setSearchTerm(`${initialData.Employee?.FirstName} ${initialData.Employee?.LastName}` || '');
+      setSelectedEmployee(employeeName);
+      setSearchTerm(employeeName);
     } else {
       resetForm();
     }
@@ -91,6 +105,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     });
     setSelectedEmployee('');
     setSearchTerm('');
+    setError(null);
   };
 
   const handleEmployeeChange = (e) => {
@@ -98,7 +113,10 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     setSearchTerm(value);
     setSelectedEmployee(value);
 
-    const employee = employeeOptions.find((emp) => `${emp.FirstName} ${emp.LastName}` === value);
+    const employee = employeeOptions.find(
+      (emp) => `${emp.FirstName} ${emp.LastName}`.trim() === value.trim()
+    );
+    console.log('Selected employee:', employee); // Debug log
     if (employee) {
       setEmployeeDetails((prev) => ({
         ...prev,
@@ -106,11 +124,15 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         role: employee.Role?.RoleName || '',
         level: employee.Level?.LevelName || '',
         organization: employee.Organisation?.Abbreviation || '',
-        EmployeeID: employee.id,
+        EmployeeID: employee.id || null,
       }));
     } else {
       setEmployeeDetails((prev) => ({
         ...prev,
+        empCode: '',
+        role: '',
+        level: '',
+        organization: '',
         EmployeeID: null,
       }));
     }
@@ -140,12 +162,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!employeeDetails.EmployeeID) {
-      alert('Please select a valid employee.');
+      setError('Please select a valid employee.');
       return;
     }
 
     if (!employeeDetails.startDate || !employeeDetails.billingMonthly) {
-      alert('Please fill in all required fields (Start Date and Monthly Billing).');
+      setError('Please fill in all required fields (Start Date and Monthly Billing).');
       return;
     }
 
@@ -158,6 +180,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       Status: employeeDetails.status,
     };
 
+    console.log('Submitting payload:', payload); // Debug log
     onSubmit(payload);
     resetForm();
     onClose();
@@ -165,7 +188,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const handleDelete = () => {
     if (employeeDetails.status === 'Active') {
-      alert('Employee cannot be deleted in active state.');
+      setError('Employee cannot be deleted in active state.');
       return;
     }
 
@@ -174,6 +197,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       delete: true,
     };
 
+    console.log('Delete payload:', payload); // Debug log
     onSubmit(payload);
     resetForm();
     onClose();
@@ -196,7 +220,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input
                 value={searchTerm}
                 onChange={handleEmployeeChange}
-                placeholder="Search employee"
+                placeholder="Search employee by name"
                 list="employee-options"
               />
               <datalist id="employee-options">
@@ -204,14 +228,16 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
                   <option key={emp.id} value={`${emp.FirstName} ${emp.LastName}`} />
                 ))}
               </datalist>
-              <p className="text-sm text-muted-foreground">Fetches all details up to organisation</p>
+              {!searchTerm && (
+                <p className="text-sm text-red-500">Please select an employee</p>
+              )}
             </div>
 
             <div className="w-full">
               <Label>Emp. Code</Label>
               <Input
                 name="empCode"
-                value={employeeDetails.empCode}
+                value={employeeDetails.empCode || 'Select an employee'}
                 readOnly
               />
             </div>
@@ -222,7 +248,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Label>Role</Label>
               <Input
                 name="role"
-                value={employeeDetails.role}
+                value={employeeDetails.role || 'N/A'}
                 readOnly
               />
             </div>
@@ -230,7 +256,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Label>Level</Label>
               <Input
                 name="level"
-                value={employeeDetails.level}
+                value={employeeDetails.level || 'N/A'}
                 readOnly
               />
             </div>
@@ -240,7 +266,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             <Label>Organization</Label>
             <Input
               name="organization"
-              value={employeeDetails.organization}
+              value={employeeDetails.organization || 'N/A'}
               readOnly
             />
           </div>

@@ -131,7 +131,6 @@ const updateExistingYearlyBillingDetail = async (data, transaction, year, startM
   if (billingDetail) {
     for (let i = startMonthIndex; i < fiscalMonths.length; i++) {
       billingDetail[fiscalMonths[i]] = i < endMonthIndex ? data.MonthlyBilling : 0;
-    }
     await billingDetail.save({ transaction });
   }
 };
