@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const EmployeeCost = require('../models/EmployeeCostModel');
+const EmployeeCost = require('../models/employeeCostModel');
 const Employee = require('../models/employeeModel');
 
 const getEmployeeCostData = async (year) => {

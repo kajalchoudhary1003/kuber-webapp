@@ -27,14 +27,26 @@ const Employee = sequelize.define('Employee', {
   RoleID: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: Role,   // Reference the 'Role' model
+      key: 'id',     // The column in 'Role' that 'RoleID' refers to
+    },
   },
   LevelID: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: Level,  // Reference the 'Level' model
+      key: 'id',     // The column in 'Level' that 'LevelID' refers to
+    },
   },
   OrganisationID: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: Organisation, // Reference the 'Organisation' model
+      key: 'id',          // The column in 'Organisation' that 'OrganisationID' refers to
+    },
   },
   CTCAnnual: {
     type: DataTypes.DECIMAL(18, 2),
@@ -65,11 +77,5 @@ const Employee = sequelize.define('Employee', {
   timestamps: true,
   paranoid: true, // Enables soft delete
 });
-
-// Define associations
-Employee.belongsTo(Role, { foreignKey: 'RoleID' });
-Employee.belongsTo(Level, { foreignKey: 'LevelID' });
-Employee.belongsTo(Organisation, { foreignKey: 'OrganisationID' });
-Employee.hasMany(ClientEmployee, { foreignKey: 'EmployeeID' });
 
 module.exports = Employee;
