@@ -1,3 +1,4 @@
+// ClientDetails.jsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,19 +27,25 @@ const ClientDetails = () => {
       setLoading(true);
       // Fetch client details
       const clientResponse = await fetch(`${API_BASE_URL}/clients/${id}`);
-      if (!clientResponse.ok) throw new Error("Failed to fetch client");
+      if (!clientResponse.ok) {
+        const errorData = await clientResponse.json();
+        throw new Error(errorData.error || "Failed to fetch client");
+      }
       const clientData = await clientResponse.json();
       console.log("Fetched client data:", clientData);
       setClient(clientData);
 
       // Fetch resources
       const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
-      if (!resourcesResponse.ok) throw new Error("Failed to fetch resources");
+      if (!resourcesResponse.ok) {
+        const errorData = await resourcesResponse.json();
+        throw new Error(errorData.error || "Failed to fetch resources");
+      }
       const resourcesData = await resourcesResponse.json();
-      
       console.log("Resources data:", resourcesData);
       setResources(resourcesData);
     } catch (err) {
+      console.error("Error fetching client data:", err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -56,8 +63,6 @@ const ClientDetails = () => {
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
     if (!employee) return "N/A";
-    
-    // Try different property paths to find the name
     if (employee.EmployeeName) return employee.EmployeeName;
     if (employee.FirstName || employee.LastName) {
       return `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
@@ -71,15 +76,20 @@ const ClientDetails = () => {
     return employee.EmployeeCode || employee.EmpCode || "N/A";
   };
 
+  // Helper function to format billing
+  const formatBilling = (billing, currency) => {
+    if (!billing) return "N/A";
+    const currencyName = currency?.CurrencyName || currency?.CurrencyCode || "INR";
+    return `${currencyName} ${parseFloat(billing).toFixed(2)}`;
+  };
+
   const handleAddResource = () => {
     setSelectedResource(null);
     setIsResourceModalOpen(true);
   };
 
   const handleEditResource = (resource) => {
-    // Log the resource to verify data structure
     console.log("Editing resource:", resource);
-    
     setSelectedResource({ ...resource, ClientID: id });
     setIsResourceModalOpen(true);
   };
@@ -87,39 +97,46 @@ const ClientDetails = () => {
   const handleResourceSubmit = async (payload) => {
     try {
       if (payload.delete) {
-        // Delete resource
         const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
-        if (!response.ok) throw new Error("Failed to delete resource");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete resource");
+        }
         setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
       } else {
         if (selectedResource && selectedResource.id) {
-          // Update resource
           const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          if (!response.ok) throw new Error("Failed to update resource");
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update resource");
+          }
           const updatedResource = await response.json();
           setResources((prev) =>
             prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
           );
         } else {
-          // Create resource
           const response = await fetch(`${API_BASE_URL}/client-employees`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...payload, ClientID: id }),
           });
-          if (!response.ok) throw new Error("Failed to create resource");
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to create resource");
+          }
           const newResource = await response.json();
           setResources((prev) => [...prev, newResource]);
         }
       }
     } catch (err) {
+      console.error("Error submitting resource:", err.message);
       alert(`Error: ${err.message}`);
     }
     setIsResourceModalOpen(false);
@@ -144,13 +161,10 @@ const ClientDetails = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedClientData),
       });
-      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to update client");
       }
-      
-      // Refresh client data after successful update
       await fetchClientData();
       alert("Client updated successfully!");
     } catch (err) {
@@ -162,10 +176,8 @@ const ClientDetails = () => {
 
   const handleCloseClientModal = (formData) => {
     if (formData) {
-      // If form data is returned, submit it
       handleClientSubmit(formData);
     } else {
-      // If no form data, just close the modal
       setIsClientModalOpen(false);
     }
   };
@@ -177,9 +189,13 @@ const ClientDetails = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
-        if (!response.ok) throw new Error("Failed to delete resource");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete resource");
+        }
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
       } catch (err) {
+        console.error("Error deleting resource:", err.message);
         alert(`Error: ${err.message}`);
       }
     }
@@ -192,9 +208,13 @@ const ClientDetails = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
-        if (!response.ok) throw new Error("Failed to delete client");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete client");
+        }
         navigate("/admin");
       } catch (err) {
+        console.error("Error deleting client:", err.message);
         alert(`Error: ${err.message}`);
       }
     }
@@ -233,7 +253,7 @@ const ClientDetails = () => {
             </Button>
             <Button 
               variant="destructive" 
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" 
+              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all" 
               onClick={handleDeleteClient}
             >
               Delete
@@ -299,12 +319,11 @@ const ClientDetails = () => {
           </div>
         </div>
 
-        <div className=" my-2"></div>
+        <div className="my-2"></div>
 
         <Table>
           <TableHeader className='border-b border-[#9DA4B3]'>
             <TableRow>
-              
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
               <TableHead>Role</TableHead>
@@ -321,7 +340,6 @@ const ClientDetails = () => {
             {filteredResources.length > 0 ? (
               filteredResources.map((r) => (
                 <TableRow key={r.id}>
-                  
                   <TableCell>{getEmployeeName(r.Employee)}</TableCell>
                   <TableCell>{getEmployeeCode(r.Employee)}</TableCell>
                   <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>
@@ -329,7 +347,7 @@ const ClientDetails = () => {
                   <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
                   <TableCell>{formatDate(r.StartDate)}</TableCell>
                   <TableCell>{formatDate(r.EndDate)}</TableCell>
-                  <TableCell>{`${client.BillingCurrency?.CurrencyName || "N/A"} ${r.MonthlyBilling}`}</TableCell>
+                  <TableCell>{formatBilling(r.MonthlyBilling, r.Client?.BillingCurrency)}</TableCell>
                   <TableCell className="text-blue-500">{r.Status}</TableCell>
                   <TableCell className="flex gap-2">
                     <button onClick={() => handleEditResource(r)}>
@@ -343,7 +361,7 @@ const ClientDetails = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-4">No {activeTab.toLowerCase()} resources found</TableCell>
+                <TableCell colSpan={10} className="text-center py-4">No {activeTab.toLowerCase()} resources found</TableCell>
               </TableRow>
             )}
           </TableBody>

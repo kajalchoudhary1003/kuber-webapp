@@ -1,3 +1,4 @@
+// EmployeeDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -12,9 +13,8 @@ import {
   TableCell,
 } from '@/components/ui/table';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5001/api'; // Update port if different
 
-// Simple in-memory cache
 const cache = {
   roles: {},
   levels: {},
@@ -50,6 +50,7 @@ export const EmployeeDetail = () => {
   const [orgAbbreviation, setOrgAbbreviation] = useState('Loading...');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [clientError, setClientError] = useState(null);
 
   useEffect(() => {
     fetchEmployee();
@@ -62,7 +63,6 @@ export const EmployeeDetail = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/employees/${id}`);
       setEmployee(response.data);
-      // Fetch role, level, and organisation names
       if (response.data.RoleID) {
         const role = await fetchRoleById(response.data.RoleID);
         setRoleName(role ? role.RoleName : 'N/A');
@@ -99,7 +99,6 @@ export const EmployeeDetail = () => {
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
       setOrganisations(orgsRes.data);
-      // Cache the data
       rolesRes.data.forEach((role) => (cache.roles[role.id] = role));
       levelsRes.data.forEach((level) => (cache.levels[level.id] = level));
       orgsRes.data.forEach((org) => (cache.organisations[org.id] = org));
@@ -148,8 +147,14 @@ export const EmployeeDetail = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/employees/${id}/clients`);
       setClientAssignments(response.data);
+      setClientError(null);
     } catch (error) {
-      console.error('Error fetching client assignments:', error);
+      console.error('Error fetching client assignments:', error.response?.status, error.message);
+      setClientError(
+        `Failed to load client assignments: ${
+          error.response?.status === 404 ? 'Client assignments endpoint not found' : error.message
+        }`
+      );
     }
   };
 
@@ -283,33 +288,52 @@ export const EmployeeDetail = () => {
           <h2 className="text-xl text-primary-federal-blue">Clients</h2>
         </div>
 
-        <Table className="w-full">
-          <TableHeader>
-            <TableRow className="border-b border-[#9DA4B3]">
-              <TableCell className="py-3 px-1 text-[16px]">#</TableCell>
-              <TableCell className="py-3 px-1 text-[16px]">Client Name</TableCell>
-              <TableCell className="py-3 px-1 text-[16px]">Start Date</TableCell>
-              <TableCell className="py-3 px-1 text-[16px]">End Date</TableCell>
-              <TableCell className="py-3 px-1 text-[16px]">Billing Rate</TableCell>
-              <TableCell className="py-3 px-1 text-[16px]">Status</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clientAssignments?.map((clientEmployee, index) => (
-              <TableRow className="border-b border-[#9DA4B3]" key={index}>
-                <TableCell className="py-3 px-1 text-[14px]">{index + 1}</TableCell>
-                <TableCell className="py-3 px-1 text-[14px]">{clientEmployee.Client?.ClientName || 'N/A'}</TableCell>
-                <TableCell className="py-3 px-1 text-[14px]">{formatDate(clientEmployee.StartDate)}</TableCell>
-                <TableCell className="py-3 px-1 text-[14px]">{formatDate(clientEmployee.EndDate)}</TableCell>
-                <TableCell className="py-3 px-1 text-[14px]">
-                  {clientEmployee.Client?.BillingCurrency?.CurrencyCode || 'INR'}{' '}
-                  {formatCurrency(clientEmployee.MonthlyBilling)}
-                </TableCell>
-                <TableCell className="text-lg">{clientEmployee.Status}</TableCell>
+        {clientError ? (
+          <div className="text-center text-red-500 py-4">{clientError}</div>
+        ) : (
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="border-b border-[#9DA4B3]">
+                <TableCell className="py-3 px-1 text-[16px]">#</TableCell>
+                <TableCell className="py-3 px-1 text-[16px]">Client Name</TableCell>
+                <TableCell className="py-3 px-1 text-[16px]">Start Date</TableCell>
+                <TableCell className="py-3 px-1 text-[16px]">End Date</TableCell>
+                <TableCell className="py-3 px-1 text-[16px]">Billing Rate</TableCell>
+                <TableCell className="py-3 px-1 text-[16px]">Status</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {clientAssignments?.length > 0 ? (
+                clientAssignments.map((clientEmployee, index) => (
+                  <TableRow className="border-b border-[#9DA4B3]" key={clientEmployee.id}>
+                    <TableCell className="py-3 px-1 text-[14px]">{index + 1}</TableCell>
+                    <TableCell className="py-3 px-1 text-[14px]">
+                      {clientEmployee.Client?.ClientName || 'N/A'}
+                    </TableCell>
+                    <TableCell className="py-3 px-1 text-[14px]">
+                      {formatDate(clientEmployee.StartDate)}
+                    </TableCell>
+                    <TableCell className="py-3 px-1 text-[14px]">
+                      {formatDate(clientEmployee.EndDate)}
+                    </TableCell>
+                    <TableCell className="py-3 px-1 text-[14px]">
+                      {formatCurrency(clientEmployee.MonthlyBilling, 'INR')}
+                    </TableCell>
+                    <TableCell className="py-3 px-1 text-[14px]">
+                      {clientEmployee.Status}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-3 px-1 text-center text-[14px]">
+                    No client assignments found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <EmployeeModal
