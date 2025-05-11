@@ -51,3 +51,4 @@ export const YearProvider = ({ children }) => {
 };
 
 export const useYear = () => useContext(YearContext);
+export { YearContext }; // Add this export
