@@ -2,6 +2,9 @@ const { Op } = require('sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
 const Employee = require('../models/employeeModel');
+const Role = require('../models/roleModel');
+const Level = require('../models/levelModel');
+const Organisation = require('../models/organisationModel');
 
 const clientEmployeeService = {
   async getAllClientEmployees() {
@@ -10,11 +13,16 @@ const clientEmployeeService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName']
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -31,11 +39,16 @@ const clientEmployeeService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName']
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ]
       });
@@ -90,20 +103,25 @@ const clientEmployeeService = {
         where: {
           [Op.or]: [
             { '$Client.ClientName$': { [Op.like]: `%${query}%` } },
-            { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
-            { '$Employee.FirstName$': { [Op.like]: `%${query}%` } }, // Updated
-            { '$Employee.LastName$': { [Op.like]: `%${query}%` } },  // Updated
-            { '$Employee.EmpCode$': { [Op.like]: `%${query}%` } }    // Updated
+            // { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
+            { '$Employee.FirstName$': { [Op.like]: `%${query}%` } },
+            { '$Employee.LastName$': { [Op.like]: `%${query}%` } },
+            { '$Employee.EmpCode$': { [Op.like]: `%${query}%` } }
           ]
         },
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName']
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -121,7 +139,12 @@ const clientEmployeeService = {
         include: [
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -139,7 +162,16 @@ const clientEmployeeService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName']
+          },
+          {
+            model: Employee,
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -157,11 +189,16 @@ const clientEmployeeService = {
         include: [
           {
             model: Client,
-            attributes: ['ClientName', 'ClientCode']
+            attributes: ['ClientName']
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['FirstName', 'LastName', 'EmpCode'],
+            include: [
+              { model: Role, as: 'Role', attributes: ['RoleName'] },
+              { model: Level, as: 'Level', attributes: ['LevelName'] },
+              { model: Organisation, as: 'Organisation', attributes: ['Abbreviation'] }
+            ]
           }
         ],
         order: [['createdAt', 'DESC']]
