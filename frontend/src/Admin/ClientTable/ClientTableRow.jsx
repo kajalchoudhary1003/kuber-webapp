@@ -21,7 +21,7 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
 
   return (
     <TableRow className="hover:bg-blue-50">
-      <TableCell className="py-3 px-1">{data.id}</TableCell>
+      {/* Removed the ID cell */}
       <TableCell className="py-3 px-1">{data.ClientName}</TableCell>
       <TableCell className="py-3 px-1">{data.ContactPerson}</TableCell>
       <TableCell className="py-3 px-1">{data.Email}</TableCell>

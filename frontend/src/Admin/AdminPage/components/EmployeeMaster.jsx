@@ -22,6 +22,7 @@ const cache = {
 
 const EmployeeMaster = () => {
   const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [roles, setRoles] = useState([]);
   const [levels, setLevels] = useState([]);
   const [organisations, setOrganisations] = useState([]);
@@ -39,6 +40,8 @@ const EmployeeMaster = () => {
   const [page, setPage] = useState(1);
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [limit] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
     fetchEmployees(page);
@@ -49,8 +52,14 @@ const EmployeeMaster = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/employees?page=${page}&limit=${limit}`);
-      setEmployees(response.data.employees);
+      const fetchedEmployees = response.data.employees;
+      setEmployees(fetchedEmployees);
+      setFilteredEmployees(fetchedEmployees);
       setTotalEmployees(response.data.total);
+      // If search is active, apply filter again
+      if (isSearchActive && searchQuery) {
+        applySearchFilter(fetchedEmployees, searchQuery);
+      }
     } catch (err) {
       setError('Error fetching employees');
       console.error(err);
@@ -243,19 +252,50 @@ const EmployeeMaster = () => {
     }
   };
 
-  const handleSearch = async (query) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/employees/search/${query}`);
-      setEmployees(response.data);
-      setTotalEmployees(response.data.length);
-    } catch (err) {
-      console.error('Error searching employees:', err);
-      setError('Error searching employees');
-      toast.error('Error searching employees');
-    } finally {
-      setLoading(false);
+  // Helper function to check if a value contains the search query
+  const valueContainsQuery = (value, query) => {
+    if (value == null) return false;
+    return String(value).toLowerCase().includes(query.toLowerCase());
+  };
+
+  // Function to apply search filter
+  const applySearchFilter = (employeesList, query) => {
+    if (!query.trim()) {
+      setFilteredEmployees(employeesList);
+      setIsSearchActive(false);
+      return;
     }
+
+    setIsSearchActive(true);
+    
+    // Log the first employee to see the structure
+    if (employeesList.length > 0) {
+      console.log("Employee structure for search:", employeesList[0]);
+    }
+
+    // Function to check if any value in an object contains the query
+    const checkObjectValues = (obj, searchQuery) => {
+      if (!obj) return false;
+      return Object.values(obj).some(value => {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'object') return checkObjectValues(value, searchQuery);
+        return String(value).toLowerCase().includes(searchQuery.toLowerCase());
+      });
+    };
+
+    const filtered = employeesList.filter(employee => {
+      // Use the recursive function to check all properties
+      return checkObjectValues(employee, query);
+    });
+
+    console.log(`Search query: "${query}" - Found ${filtered.length} results`);
+    setFilteredEmployees(filtered);
+  };
+
+  // Handle search from SearchBar component
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    applySearchFilter(employees, query);
   };
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
@@ -279,10 +319,10 @@ const EmployeeMaster = () => {
           </div>
         </div>
 
-        {employees.length > 0 ? (
+        {filteredEmployees.length > 0 ? (
           <>
             <EmployeeTable
-              data={employees}
+              data={filteredEmployees}
               onEdit={handleOpenModal}
               onDelete={handleDeleteEmployee}
               roles={roles}
@@ -292,13 +332,15 @@ const EmployeeMaster = () => {
               fetchLevelById={fetchLevelById}
               fetchOrganisationById={fetchOrganisationById}
             />
-            <div className="mt-8 flex justify-center">
-              <Pagination
-                total={Math.ceil(totalEmployees / limit)}
-                current={page}
-                onChange={(value) => setPage(value)}
-              />
-            </div>
+            {!isSearchActive && (
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  total={Math.ceil(totalEmployees / limit)}
+                  current={page}
+                  onChange={(value) => setPage(value)}
+                />
+              </div>
+            )}
           </>
         ) : (
           <div className="text-center py-8 text-gray-500 text-lg">No employees found.</div>

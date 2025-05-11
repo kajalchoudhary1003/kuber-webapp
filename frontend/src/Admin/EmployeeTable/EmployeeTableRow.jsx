@@ -63,7 +63,7 @@ const EmployeeTableRow = ({ data, onEdit, onDelete, fetchRoleById, fetchLevelByI
 
   return (
     <TableRow className="hover:bg-blue-50">
-      <TableCell className="py-3 px-1">{data.id}</TableCell>
+      {/* Removed ID cell */}
       <TableCell className="py-3 px-1">{`${data.FirstName} ${data.LastName}`}</TableCell>
       <TableCell className="py-3 px-1">{data.EmpCode || 'N/A'}</TableCell>
       <TableCell className="py-3 px-1">{roleName}</TableCell>
