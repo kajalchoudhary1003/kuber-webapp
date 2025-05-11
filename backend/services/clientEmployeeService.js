@@ -1,6 +1,6 @@
-const { Op } = require('sequelize');
+const sequelize = require('../db/sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
-const Client = require('../models/clientModel');
+const BillingDetail = require('../models/billingDetailModel');
 const Employee = require('../models/employeeModel');
 
 const clientEmployeeService = {

@@ -89,7 +89,7 @@ const invoiceService = {
           },
           {
             model: Currency,
-            as: 'Currency',
+            as: 'BillingCurrency',
             attributes: ['CurrencyName', 'CurrencyCode'],
           },
         ],
