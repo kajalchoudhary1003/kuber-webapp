@@ -5,7 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-const EmployeeTableRow = ({ data, onEdit, onDelete, fetchRoleById, fetchLevelById, fetchOrganisationById }) => {
+const EmployeeTableRow = ({
+  data,
+  onEdit,
+  onDelete,
+  fetchRoleById,
+  fetchLevelById,
+  fetchOrganisationById,
+  clientAssignments,
+  clientError,
+}) => {
   const navigate = useNavigate();
   const [roleName, setRoleName] = useState('Loading...');
   const [levelName, setLevelName] = useState('Loading...');
@@ -63,13 +72,22 @@ const EmployeeTableRow = ({ data, onEdit, onDelete, fetchRoleById, fetchLevelByI
 
   return (
     <TableRow className="hover:bg-blue-50">
-      {/* Removed ID cell */}
       <TableCell className="py-3 px-1">{`${data.FirstName} ${data.LastName}`}</TableCell>
       <TableCell className="py-3 px-1">{data.EmpCode || 'N/A'}</TableCell>
       <TableCell className="py-3 px-1">{roleName}</TableCell>
       <TableCell className="py-3 px-1">{levelName}</TableCell>
       <TableCell className="py-3 px-1">{orgAbbreviation}</TableCell>
-      <TableCell className="py-3 px-1">{data.ClientEmployees?.length || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1">
+        {clientError ? (
+          <span className="text-red-500">{clientError}</span> // Optional: display error for debugging
+        ) : clientAssignments[data.id]?.length > 0 ? (
+          clientAssignments[data.id]
+            .map((assignment) => assignment.Client?.ClientName || 'N/A')
+            .join(', ')
+        ) : (
+          'None'
+        )}
+      </TableCell>
       <TableCell className="py-3 px-1">{formatCurrency(data.CTCAnnual)}</TableCell>
       <TableCell className="py-3 px-1">{formatCurrency(data.CTCMonthly)}</TableCell>
       <TableCell className="py-3 px-1">{data.Status || 'N/A'}</TableCell>
