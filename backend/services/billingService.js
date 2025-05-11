@@ -49,7 +49,7 @@ const getBillingData = async (clientId, year) => {
           include: [
             {
               model: Currency,
-              attributes: ['Code'],
+              attributes: ['CurrencyCode'],
               as: 'BillingCurrency',
             },
           ],
@@ -74,7 +74,7 @@ const getBillingData = async (clientId, year) => {
       Jan: detail.Jan,
       Feb: detail.Feb,
       Mar: detail.Mar,
-      currencyCode: detail.Client.BillingCurrency.Code,
+      currencyCode: detail.Client.BillingCurrency.CurrencyCode,
     }));
   } catch (error) {
     logger.error(`Error fetching billing data: ${error.message}`);
