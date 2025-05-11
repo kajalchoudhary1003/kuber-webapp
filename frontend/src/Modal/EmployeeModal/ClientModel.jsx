@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-const ClientModal = ({ open, onClose, initialData }) => {
+
+const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
   const [formData, setFormData] = useState({
     ClientName: '',
     Abbreviation: '',
@@ -16,39 +26,33 @@ const ClientModal = ({ open, onClose, initialData }) => {
   const [organisations, setOrganisations] = useState([]);
   const [bankDetails, setBankDetails] = useState([]);
 
-  // Base URL for the API
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = 'http://localhost:5001/api';
 
-  // Fetch data for dropdowns
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch currencies
-        const currenciesRes = await fetch(`${API_BASE_URL}/currencies`);
-        if (!currenciesRes.ok) throw new Error('Failed to fetch currencies');
-        const currenciesData = await currenciesRes.json();
-        setCurrencies(currenciesData);
+        const [currenciesRes, orgsRes, bankRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/currencies`),
+          fetch(`${API_BASE_URL}/organisations`),
+          fetch(`${API_BASE_URL}/bank-details/all`)
+        ]);
 
-        // Fetch organisations
-        const orgsRes = await fetch(`${API_BASE_URL}/organisations`);
-        if (!orgsRes.ok) throw new Error('Failed to fetch organisations');
-        const orgsData = await orgsRes.json();
-        setOrganisations(orgsData);
+        if (!currenciesRes.ok || !orgsRes.ok || !bankRes.ok) {
+          throw new Error('Failed to fetch dropdown data');
+        }
 
-        // Fetch bank details
-        const bankRes = await fetch(`${API_BASE_URL}/bank-details/all`);
-        if (!bankRes.ok) throw new Error('Failed to fetch bank details');
-        const bankData = await bankRes.json();
-        setBankDetails(bankData);
+        setCurrencies(await currenciesRes.json());
+        setOrganisations(await orgsRes.json());
+        setBankDetails(await bankRes.json());
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching dropdown data:', error);
+        alert('Error fetching dropdown data');
       }
     };
 
-    fetchData();
-  }, []);
+    if (open) fetchData();
+  }, [open]);
 
-  // Populate form with initial data when editing
   useEffect(() => {
     if (open && initialData) {
       setFormData({
@@ -68,48 +72,39 @@ const ClientModal = ({ open, onClose, initialData }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (initialData) {
-        // Update existing client
-        const response = await fetch(`${API_BASE_URL}/clients/${initialData._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update client');
-        }
-        alert('Client updated successfully');
-      } else {
-        // Create new client
-        const response = await fetch(`${API_BASE_URL}/clients`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create client');
-        }
-        alert('Client created successfully');
+      const url = initialData
+        ? `${API_BASE_URL}/clients/${initialData.id}`
+        : `${API_BASE_URL}/clients`;
+
+      const method = initialData ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to submit');
       }
+
       onClose(formData);
     } catch (error) {
-      if (error.message.includes('Client with the same name already exists')) {
-        alert('Client with the same name already exists');
-      } else {
-        console.error('Error submitting form:', error);
-        alert(error.message || 'Error submitting form');
-      }
+      console.error('Error submitting form:', error);
+      if (error.message.includes('not found')) alert('Client not found');
+      else if (error.message.includes('already exists')) alert('Client with this name or abbreviation already exists');
+      else if (error.message.includes('Validation')) alert('Please fill all required fields');
+      else alert(`Error submitting form: ${error.message}`);
     }
   };
 
@@ -126,136 +121,134 @@ const ClientModal = ({ open, onClose, initialData }) => {
     });
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 backdrop-blur-xs flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-normal text-[#272727]">
-            {initialData ? 'Edit Client' : 'Add Client'}
-          </h2>
-          <button
-            onClick={() => onClose(null)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          {/* Left Column */}
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              placeholder="Client Name *"
-              name="ClientName"
-              value={formData.ClientName}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Contact Person *"
-              name="ContactPerson"
-              value={formData.ContactPerson}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <select
-              name="BillingCurrencyID"
+    <Dialog open={open} onOpenChange={(val) => !val && onClose(null)}>
+      <DialogContent className="max-w-3xl border-none bg-white p-6">
+        <DialogHeader>
+          <DialogTitle>{initialData ? 'Edit Client' : 'Add Client'}</DialogTitle>
+          <DialogDescription>
+            Fill out the form to {initialData ? 'update' : 'add a new'} client.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mt-4">
+          <input
+            type="text"
+            placeholder="Client Name *"
+            name="ClientName"
+            value={formData.ClientName}
+            onChange={handleChange}
+            required
+            className="col-span-1 p-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Abbreviation *"
+            name="Abbreviation"
+            value={formData.Abbreviation}
+            onChange={handleChange}
+            required
+            className="col-span-1 p-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Contact Person *"
+            name="ContactPerson"
+            value={formData.ContactPerson}
+            onChange={handleChange}
+            required
+            className="col-span-1 p-2 border rounded"
+          />
+          <input
+            type="email"
+            placeholder="Email *"
+            name="Email"
+            value={formData.Email}
+            onChange={handleChange}
+            required
+            className="col-span-1 p-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Registered Address *"
+            name="RegisteredAddress"
+            value={formData.RegisteredAddress}
+            onChange={handleChange}
+            required
+            className="col-span-2 p-2 border rounded"
+          />
+
+          {/* Billing Currency Select */}
+          <div className="col-span-1">
+            <Select
               value={formData.BillingCurrencyID}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
             >
-              <option value="" disabled>Select Billing Currency</option>
-              {currencies.map((currency) => (
-                <option key={currency._id} value={currency._id}>
-                  {currency.CurrencyName}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Billing Currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((currency) => (
+                  <SelectItem key={currency.id} value={currency.id}>
+                    {currency.CurrencyName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Right Column */}
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              placeholder="Abbreviation *"
-              name="Abbreviation"
-              value={formData.Abbreviation}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="email"
-              placeholder="Email *"
-              name="Email"
-              value={formData.Email}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Registered Address *"
-              name="RegisteredAddress"
-              value={formData.RegisteredAddress}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <select
-              name="BankDetailID"
+          {/* Bank Detail Select */}
+          <div className="col-span-1">
+            <Select
               value={formData.BankDetailID}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(val) => handleSelectChange('BankDetailID', val)}
             >
-              <option value="" disabled>Select Bank Detail</option>
-              {bankDetails.map((bank) => (
-                <option key={bank._id} value={bank._id}>
-                  {bank.BankName}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Bank Detail" />
+              </SelectTrigger>
+              <SelectContent>
+                {bankDetails.map((bank) => (
+                  <SelectItem key={bank.id} value={bank.id}>
+                    {bank.BankName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          
 
-          {/* Full-width Payee Dropdown */}
+          {/* Organisation Select */}
           <div className="col-span-2">
-            <select
-              name="OrganisationID"
+            <Select
               value={formData.OrganisationID}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(val) => handleSelectChange('OrganisationID', val)}
             >
-              <option value="" disabled>Select Payee</option>
-              {organisations.map((org) => (
-                <option key={org._id} value={org._id}>
-                  {org.Abbreviation}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Organisation" />
+              </SelectTrigger>
+              <SelectContent>
+                {organisations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.Abbreviation}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Submit Button */}
-          <div className="col-span-2 flex justify-end mt-4">
+          <DialogFooter className="col-span-2 mt-4">
             <button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all">
-            
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+            >
               {initialData ? 'Update Client' : 'Add Client'}
             </button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+
+        
+      </DialogContent>
+    </Dialog>
   );
 };
 

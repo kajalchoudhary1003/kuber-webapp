@@ -14,7 +14,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['EmployeeName', 'EmployeeCode']
+            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -35,7 +35,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['EmployeeName', 'EmployeeCode']
+            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
           }
         ]
       });
@@ -91,8 +91,9 @@ const clientEmployeeService = {
           [Op.or]: [
             { '$Client.ClientName$': { [Op.like]: `%${query}%` } },
             { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
-            { '$Employee.EmployeeName$': { [Op.like]: `%${query}%` } },
-            { '$Employee.EmployeeCode$': { [Op.like]: `%${query}%` } }
+            { '$Employee.FirstName$': { [Op.like]: `%${query}%` } }, // Updated
+            { '$Employee.LastName$': { [Op.like]: `%${query}%` } },  // Updated
+            { '$Employee.EmpCode$': { [Op.like]: `%${query}%` } }    // Updated
           ]
         },
         include: [
@@ -102,7 +103,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['EmployeeName', 'EmployeeCode']
+            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -120,7 +121,7 @@ const clientEmployeeService = {
         include: [
           {
             model: Employee,
-            attributes: ['EmployeeName', 'EmployeeCode']
+            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -160,7 +161,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['EmployeeName', 'EmployeeCode']
+            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
           }
         ],
         order: [['createdAt', 'DESC']]

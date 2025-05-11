@@ -6,17 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
-
-const dummyEmployees = [
-  { id: '1', FirstName: 'John', LastName: 'Doe', EmpCode: 'EMP001', Role: { RoleName: 'Manager' }, Level: { LevelName: 'Senior' }, Organisation: { Abbreviation: 'XYZ' } },
-  { id: '2', FirstName: 'Jane', LastName: 'Smith', EmpCode: 'EMP002', Role: { RoleName: 'Developer' }, Level: { LevelName: 'Mid' }, Organisation: { Abbreviation: 'ABC' } },
-  { id: '3', FirstName: 'Samuel', LastName: 'Lee', EmpCode: 'EMP003', Role: { RoleName: 'Designer' }, Level: { LevelName: 'Junior' }, Organisation: { Abbreviation: 'TS' } },
-];
 
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [employeeOptions, setEmployeeOptions] = useState(dummyEmployees);
+  const [employeeOptions, setEmployeeOptions] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState({
     empCode: '',
@@ -29,18 +22,35 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     status: 'Active',
     EmployeeID: null,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  const API_BASE_URL = 'http://localhost:5001/api';
+
+  // Fetch employees
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = dummyEmployees.filter((emp) =>
-        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setEmployeeOptions(filtered);
-    } else {
-      setEmployeeOptions(dummyEmployees);
-    }
-  }, [searchTerm]);
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        const query = searchTerm ? `/search/${encodeURIComponent(searchTerm)}` : '';
+        const response = await fetch(`${API_BASE_URL}/employees${query}`);
+        if (!response.ok) throw new Error('Failed to fetch employees');
+        const data = await response.json();
+        // Handle both endpoints: /employees returns { employees: [], total: number }, /search returns array
+        const employeesArray = Array.isArray(data) ? data : data.employees || [];
+        setEmployeeOptions(employeesArray);
+      } catch (err) {
+        setError(err.message);
+        setEmployeeOptions([]); // Reset to empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    if (open) fetchEmployees();
+  }, [open, searchTerm]);
+
+  // Populate form with initial data
   useEffect(() => {
     if (initialData) {
       const formatDate = (date) => {
@@ -60,8 +70,8 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         status: initialData.Status || 'Active',
         EmployeeID: initialData.EmployeeID || null,
       });
-      setSelectedEmployee(`${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`);
-      setSearchTerm(`${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`);
+      setSelectedEmployee(`${initialData.Employee?.FirstName} ${initialData.Employee?.LastName}` || '');
+      setSearchTerm(`${initialData.Employee?.FirstName} ${initialData.Employee?.LastName}` || '');
     } else {
       resetForm();
     }
@@ -89,18 +99,16 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     setSelectedEmployee(value);
 
     const employee = employeeOptions.find((emp) => `${emp.FirstName} ${emp.LastName}` === value);
-    
     if (employee) {
       setEmployeeDetails((prev) => ({
         ...prev,
-        empCode: employee.EmpCode,
+        empCode: employee.EmpCode || '',
         role: employee.Role?.RoleName || '',
         level: employee.Level?.LevelName || '',
         organization: employee.Organisation?.Abbreviation || '',
         EmployeeID: employee.id,
       }));
     } else {
-      // Just clear EmployeeID but keep other fields editable
       setEmployeeDetails((prev) => ({
         ...prev,
         EmployeeID: null,
@@ -120,10 +128,10 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
           endDate: new Date().toISOString().split('T')[0],
         }));
       } else {
-        setEmployeeDetails((prev) => ({ 
-          ...prev, 
+        setEmployeeDetails((prev) => ({
+          ...prev,
           status: value,
-          endDate: '' 
+          endDate: '',
         }));
       }
     }
@@ -176,8 +184,10 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       <DialogContent className="max-w-3xl p-6 rounded-2xl shadow-lg bg-white">
         <DialogHeader className="flex justify-between items-center mb-4">
           <DialogTitle>{initialData ? 'Edit Resource' : 'Add Resource'}</DialogTitle>
-          
         </DialogHeader>
+
+        {loading && <p>Loading employees...</p>}
+        {error && <p className="text-red-500">Error: {error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex gap-4">
@@ -186,12 +196,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input
                 value={searchTerm}
                 onChange={handleEmployeeChange}
-                list="employee-options"
                 placeholder="Search employee"
+                list="employee-options"
               />
               <datalist id="employee-options">
-                {employeeOptions.map((emp, index) => (
-                  <option key={index} value={`${emp.FirstName} ${emp.LastName}`} />
+                {employeeOptions.map((emp) => (
+                  <option key={emp.id} value={`${emp.FirstName} ${emp.LastName}`} />
                 ))}
               </datalist>
               <p className="text-sm text-muted-foreground">Fetches all details up to organisation</p>
@@ -202,7 +212,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input
                 name="empCode"
                 value={employeeDetails.empCode}
-                onChange={handleChange}
+                readOnly
               />
             </div>
           </div>
@@ -213,7 +223,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input
                 name="role"
                 value={employeeDetails.role}
-                onChange={handleChange}
+                readOnly
               />
             </div>
             <div className="w-full">
@@ -221,7 +231,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input
                 name="level"
                 value={employeeDetails.level}
-                onChange={handleChange}
+                readOnly
               />
             </div>
           </div>
@@ -231,7 +241,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             <Input
               name="organization"
               value={employeeDetails.organization}
-              onChange={handleChange}
+              readOnly
             />
           </div>
 
