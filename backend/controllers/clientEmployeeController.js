@@ -1,6 +1,5 @@
-const clientEmployeeService = require('../services/clientEmployeeService');
-const logger = require('../utils/logger');
 // controllers/clientEmployeeController.js
+const clientEmployeeService = require('../services/clientEmployeeService');
 
 exports.assignEmployeeToClient = async (req, res) => {
   try {
