@@ -16,7 +16,7 @@ const EmployeeTable = ({
   return (
     <Table className="w-full">
       <TableHeader>
-        <TableRow className="border-b border-[#9DA4B3]">
+        <TableRow className="bg-[#EDEFF2] border-b border-[#9DA4B3]">
           {/* Removed ID column */}
           <TableCell className="py-3 px-1 text-[16px] font-medium">Name</TableCell>
           <TableCell className="py-3 px-1 text-[16px] font-medium">Employee Code</TableCell>

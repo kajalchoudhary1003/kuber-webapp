@@ -1,11 +1,20 @@
-
-
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,65 +36,30 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const API_BASE_URL = 'http://localhost:5001/api';
 
-  // Fetch employees
   useEffect(() => {
-  console.log('Initial data:', initialData); // Debug log
-  if (initialData) {
-    const formatDate = (date) => {
-      if (date && !isNaN(new Date(date))) {
-        return new Date(date).toISOString().split('T')[0];
-      }
-      return '';
-    };
-
-    // Ensure that you're getting FirstName, LastName, and EmpCode from initialData.Employee
-    const employeeName = `${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`.trim();
-
-    setEmployeeDetails({
-      empCode: initialData.Employee?.EmpCode || '',
-      role: initialData.Employee?.Role?.RoleName || '',
-      level: initialData.Employee?.Level?.LevelName || '',
-      organization: initialData.Employee?.Organisation?.Abbreviation || '',
-      startDate: formatDate(initialData.StartDate),
-      billingMonthly: initialData.MonthlyBilling || '',
-      endDate: formatDate(initialData.EndDate),
-      status: initialData.Status || 'Active',
-      EmployeeID: initialData.EmployeeID || null,
-    });
-
-    setSelectedEmployee(employeeName);
-    setSearchTerm(employeeName);
-  } else {
-    resetForm();
-  }
-}, [initialData]);
-
-
-  // Populate form with initial data
-  useEffect(() => {
-    console.log('Initial data:', initialData); // Debug log
-    console.log('initialData.Employee:', initialData?.Employee);
     if (initialData) {
-      const formatDate = (date) => {
-        if (date && !isNaN(new Date(date))) {
-          return new Date(date).toISOString().split('T')[0];
-        }
-        return '';
-      };
-      const employeeName = `${initialData.Employee?.FirstName || ''} ${initialData.Employee?.LastName || ''}`.trim();
+      const formatDate = (date) =>
+        date && !isNaN(new Date(date))
+          ? new Date(date).toISOString().split('T')[0]
+          : '';
+
+      const employee = initialData.Employee || {};
+      const name = `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+
       setEmployeeDetails({
-        empCode: initialData.Employee?.EmpCode || '',
-        role: initialData.Employee?.Role?.RoleName || '',
-        level: initialData.Employee?.Level?.LevelName || '',
-        organization: initialData.Employee?.Organisation?.Abbreviation || '',
+        empCode: employee.EmpCode || '',
+        role: employee.Role?.RoleName || '',
+        level: employee.Level?.LevelName || '',
+        organization: employee.Organisation?.Abbreviation || '',
         startDate: formatDate(initialData.StartDate),
         billingMonthly: initialData.MonthlyBilling || '',
         endDate: formatDate(initialData.EndDate),
         status: initialData.Status || 'Active',
         EmployeeID: initialData.EmployeeID || null,
       });
-      setSelectedEmployee(employeeName);
-      setSearchTerm(employeeName);
+
+      setSelectedEmployee(name);
+      setSearchTerm(name);
     } else {
       resetForm();
     }
@@ -116,7 +90,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     const employee = employeeOptions.find(
       (emp) => `${emp.FirstName} ${emp.LastName}`.trim() === value.trim()
     );
-    console.log('Selected employee:', employee); // Debug log
+
     if (employee) {
       setEmployeeDetails((prev) => ({
         ...prev,
@@ -140,27 +114,22 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEmployeeDetails((prev) => ({ ...prev, [name]: value }));
 
     if (name === 'status') {
-      if (value === 'Inactive') {
-        setEmployeeDetails((prev) => ({
-          ...prev,
-          status: value,
-          endDate: new Date().toISOString().split('T')[0],
-        }));
-      } else {
-        setEmployeeDetails((prev) => ({
-          ...prev,
-          status: value,
-          endDate: '',
-        }));
-      }
+      const endDate = value === 'Inactive' ? new Date().toISOString().split('T')[0] : '';
+      setEmployeeDetails((prev) => ({
+        ...prev,
+        status: value,
+        endDate,
+      }));
+    } else {
+      setEmployeeDetails((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!employeeDetails.EmployeeID) {
       setError('Please select a valid employee.');
       return;
@@ -180,7 +149,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       Status: employeeDetails.status,
     };
 
-    console.log('Submitting payload:', payload); // Debug log
     onSubmit(payload);
     resetForm();
     onClose();
@@ -197,7 +165,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       delete: true,
     };
 
-    console.log('Delete payload:', payload); // Debug log
     onSubmit(payload);
     resetForm();
     onClose();
@@ -211,9 +178,10 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         </DialogHeader>
 
         {loading && <p>Loading employees...</p>}
-        {error && <p className="text-red-500">Error: {error}</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name & Emp Code */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Name</Label>
@@ -228,49 +196,33 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
                   <option key={emp.id} value={`${emp.FirstName} ${emp.LastName}`} />
                 ))}
               </datalist>
-              {!searchTerm && (
-                <p className="text-sm text-red-500">Please select an employee</p>
-              )}
             </div>
 
             <div className="w-full">
               <Label>Emp. Code</Label>
-              <Input
-                name="empCode"
-                value={employeeDetails.empCode || 'Select an employee'}
-                readOnly
-              />
+              <Input name="empCode" value={employeeDetails.empCode} readOnly />
             </div>
           </div>
 
+          {/* Role & Level */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Role</Label>
-              <Input
-                name="role"
-                value={employeeDetails.role || 'N/A'}
-                readOnly
-              />
+              <Input name="role" value={employeeDetails.role} readOnly />
             </div>
             <div className="w-full">
               <Label>Level</Label>
-              <Input
-                name="level"
-                value={employeeDetails.level || 'N/A'}
-                readOnly
-              />
+              <Input name="level" value={employeeDetails.level} readOnly />
             </div>
           </div>
 
+          {/* Organization */}
           <div>
             <Label>Organization</Label>
-            <Input
-              name="organization"
-              value={employeeDetails.organization || 'N/A'}
-              readOnly
-            />
+            <Input name="organization" value={employeeDetails.organization} readOnly />
           </div>
 
+          {/* Start Date & Billing */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Start Date</Label>
@@ -294,6 +246,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             </div>
           </div>
 
+          {/* Status & End Date */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Status</Label>
@@ -326,6 +279,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             )}
           </div>
 
+          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2">
             {initialData && (
               <Button type="button" variant="destructive" onClick={handleDelete}>

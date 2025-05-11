@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-
-const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
+const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const [formData, setFormData] = useState({
     ClientName: '',
     Abbreviation: '',
@@ -41,9 +40,13 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
           throw new Error('Failed to fetch dropdown data');
         }
 
-        setCurrencies(await currenciesRes.json());
-        setOrganisations(await orgsRes.json());
-        setBankDetails(await bankRes.json());
+        const currenciesData = await currenciesRes.json();
+        const orgsData = await orgsRes.json();
+        const bankData = await bankRes.json();
+        
+        setCurrencies(currenciesData);
+        setOrganisations(orgsData);
+        setBankDetails(bankData);
       } catch (error) {
         console.error('Error fetching dropdown data:', error);
         alert('Error fetching dropdown data');
@@ -55,16 +58,22 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
 
   useEffect(() => {
     if (open && initialData) {
+      // Convert IDs to strings to ensure consistent comparison
       setFormData({
         ClientName: initialData.ClientName || '',
         Abbreviation: initialData.Abbreviation || '',
         ContactPerson: initialData.ContactPerson || '',
         Email: initialData.Email || '',
         RegisteredAddress: initialData.RegisteredAddress || '',
-        BillingCurrencyID: initialData.BillingCurrencyID || '',
-        OrganisationID: initialData.OrganisationID || '',
-        BankDetailID: initialData.BankDetailID || '',
+        BillingCurrencyID: initialData.BillingCurrencyID ? String(initialData.BillingCurrencyID) : 
+                         (initialData.BillingCurrency?.id ? String(initialData.BillingCurrency.id) : ''),
+        OrganisationID: initialData.OrganisationID ? String(initialData.OrganisationID) : 
+                       (initialData.Organisation?.id ? String(initialData.Organisation.id) : ''),
+        BankDetailID: initialData.BankDetailID ? String(initialData.BankDetailID) : 
+                     (initialData.BankDetail?.id ? String(initialData.BankDetail.id) : ''),
       });
+      
+      console.log("Setting initial data in modal:", formData);
     } else {
       resetForm();
     }
@@ -76,36 +85,16 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
   };
 
   const handleSelectChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    console.log(`Updating ${field} with value:`, value);
+    setFormData((prev) => ({ ...prev, [field]: String(value) }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const url = initialData
-        ? `${API_BASE_URL}/clients/${initialData.id}`
-        : `${API_BASE_URL}/clients`;
-
-      const method = initialData ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to submit');
-      }
-
-      onClose(formData);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      if (error.message.includes('not found')) alert('Client not found');
-      else if (error.message.includes('already exists')) alert('Client with this name or abbreviation already exists');
-      else if (error.message.includes('Validation')) alert('Please fill all required fields');
-      else alert(`Error submitting form: ${error.message}`);
-    }
+    console.log("Submitting form data:", formData);
+    
+    // Pass the formData to the parent component
+    onClose(formData);
   };
 
   const resetForm = () => {
@@ -125,9 +114,9 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
     <Dialog open={open} onOpenChange={(val) => !val && onClose(null)}>
       <DialogContent className="max-w-3xl border-none bg-white p-6">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Client' : 'Add Client'}</DialogTitle>
+          <DialogTitle>{initialData?.id ? 'Edit Client' : 'Add Client'}</DialogTitle>
           <DialogDescription>
-            Fill out the form to {initialData ? 'update' : 'add a new'} client.
+            Fill out the form to {initialData?.id ? 'update' : 'add a new'} client.
           </DialogDescription>
         </DialogHeader>
 
@@ -181,15 +170,15 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
           {/* Billing Currency Select */}
           <div className="col-span-1">
             <Select
-              value={formData.BillingCurrencyID}
+              value={formData.BillingCurrencyID || ""}
               onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full p-2 border rounded">
                 <SelectValue placeholder="Select Billing Currency" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='border-none bg-white'>
                 {currencies.map((currency) => (
-                  <SelectItem key={currency.id} value={currency.id}>
+                  <SelectItem key={currency.id} value={String(currency.id)}>
                     {currency.CurrencyName}
                   </SelectItem>
                 ))}
@@ -200,15 +189,15 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
           {/* Bank Detail Select */}
           <div className="col-span-1">
             <Select
-              value={formData.BankDetailID}
+              value={formData.BankDetailID || ""}
               onValueChange={(val) => handleSelectChange('BankDetailID', val)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full p-2 border rounded">
                 <SelectValue placeholder="Select Bank Detail" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='border-none bg-white'>
                 {bankDetails.map((bank) => (
-                  <SelectItem key={bank.id} value={bank.id}>
+                  <SelectItem key={bank.id} value={String(bank.id)}>
                     {bank.BankName}
                   </SelectItem>
                 ))}
@@ -216,19 +205,18 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
             </Select>
           </div>
           
-
           {/* Organisation Select */}
           <div className="col-span-2">
             <Select
-              value={formData.OrganisationID}
+              value={formData.OrganisationID || ""}
               onValueChange={(val) => handleSelectChange('OrganisationID', val)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full p-2 border rounded">
                 <SelectValue placeholder="Select Organisation" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='border-none bg-white'>
                 {organisations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
+                  <SelectItem key={org.id} value={String(org.id)}>
                     {org.Abbreviation}
                   </SelectItem>
                 ))}
@@ -241,12 +229,10 @@ const ClientModal = ({ open, onClose, initialData, clientList = [] }) => {
               type="submit"
               className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
-              {initialData ? 'Update Client' : 'Add Client'}
+              {initialData?.id ? 'Update Client' : 'Add Client'}
             </button>
           </DialogFooter>
         </form>
-
-        
       </DialogContent>
     </Dialog>
   );

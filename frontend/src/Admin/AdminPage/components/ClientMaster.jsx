@@ -63,38 +63,42 @@ const ClientMaster = () => {
     setModalOpen(true);
   };
 
-  const handleCloseModal = async (newClient) => {
-    setModalOpen(false);
-    if (newClient) {
-      try {
-        if (selectedClient) {
-          // Update existing client
-          const response = await fetch(`${API_BASE_URL}/${selectedClient.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newClient),
-          });
-          if (!response.ok) throw new Error('Failed to update client');
-          alert('Client updated successfully');
-        } else {
-          // Create new client
-          const response = await fetch(API_BASE_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newClient),
-          });
-          if (!response.ok) throw new Error('Failed to create client');
-          alert('Client created successfully');
-        }
-        await fetchClients(); // Refresh client list
-      } catch (error) {
-        console.error('Error saving client:', error);
-        if (error.message.includes('Client with the same name already exists')) {
-          alert('Client with the same name already exists');
-        } else {
-          alert(`Error saving client: ${error.message}`);
-        }
+  const handleSubmitClient = async (newClient) => {
+    try {
+      if (selectedClient) {
+        // Update existing client
+        const response = await fetch(`${API_BASE_URL}/${selectedClient.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newClient),
+        });
+        if (!response.ok) throw new Error('Failed to update client');
+        alert('Client updated successfully');
+      } else {
+        // Create new client
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newClient),
+        });
+        if (!response.ok) throw new Error('Failed to create client');
+        alert('Client created successfully');
       }
+      await fetchClients(); // Refresh client list
+    } catch (error) {
+      console.error('Error saving client:', error);
+      if (error.message.includes('Client with the same name already exists')) {
+        alert('Client with the same name already exists');
+      } else {
+        alert(`Error saving client: ${error.message}`);
+      }
+    }
+  };
+
+  const handleCloseModal = (formData) => {
+    setModalOpen(false);
+    if (formData) {
+      handleSubmitClient(formData);
     }
   };
 
@@ -155,6 +159,7 @@ const ClientMaster = () => {
           open={modalOpen}
           onClose={handleCloseModal}
           initialData={selectedClient}
+          onSubmit={handleSubmitClient}
         />
       </div>
     </div>

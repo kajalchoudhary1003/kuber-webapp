@@ -2,8 +2,7 @@ import React from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 
 const EmployeeTableHeader = () => (
-  <TableRow>
-    
+  <TableRow className='bg-[#EDEFF2]'>
     <TableCell className="py-3 px-1">Name</TableCell>
     <TableCell className="py-3 px-1"> Emp. Code</TableCell>
     <TableCell className="py-3 px-1">Role</TableCell>
