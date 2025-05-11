@@ -21,34 +21,55 @@ const ClientDetails = () => {
   const API_BASE_URL = "http://localhost:5001/api";
 
   // Fetch client and resources
+  const fetchClientData = async () => {
+    try {
+      setLoading(true);
+      // Fetch client details
+      const clientResponse = await fetch(`${API_BASE_URL}/clients/${id}`);
+      if (!clientResponse.ok) throw new Error("Failed to fetch client");
+      const clientData = await clientResponse.json();
+      console.log("Fetched client data:", clientData);
+      setClient(clientData);
+
+      // Fetch resources
+      const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
+      if (!resourcesResponse.ok) throw new Error("Failed to fetch resources");
+      const resourcesData = await resourcesResponse.json();
+      
+      console.log("Resources data:", resourcesData);
+      setResources(resourcesData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch client details
-        const clientResponse = await fetch(`${API_BASE_URL}/clients/${id}`);
-        if (!clientResponse.ok) throw new Error("Failed to fetch client");
-        const clientData = await clientResponse.json();
-        setClient(clientData);
-
-        // Fetch resources
-        const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
-        if (!resourcesResponse.ok) throw new Error("Failed to fetch resources");
-        const resourcesData = await resourcesResponse.json();
-        setResources(resourcesData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchClientData();
   }, [id]);
 
   const filteredResources = resources.filter((r) => r.Status === activeTab);
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : "N/A");
+
+  // Helper function to safely get employee name
+  const getEmployeeName = (employee) => {
+    if (!employee) return "N/A";
+    
+    // Try different property paths to find the name
+    if (employee.EmployeeName) return employee.EmployeeName;
+    if (employee.FirstName || employee.LastName) {
+      return `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+    }
+    return "N/A";
+  };
+
+  // Helper function to safely get employee code
+  const getEmployeeCode = (employee) => {
+    if (!employee) return "N/A";
+    return employee.EmployeeCode || employee.EmpCode || "N/A";
+  };
 
   const handleAddResource = () => {
     setSelectedResource(null);
@@ -56,6 +77,9 @@ const ClientDetails = () => {
   };
 
   const handleEditResource = (resource) => {
+    // Log the resource to verify data structure
+    console.log("Editing resource:", resource);
+    
     setSelectedResource({ ...resource, ClientID: id });
     setIsResourceModalOpen(true);
   };
@@ -108,27 +132,42 @@ const ClientDetails = () => {
   };
 
   const handleEditClient = () => {
+    console.log("Opening client modal with data:", client);
     setIsClientModalOpen(true);
   };
 
   const handleClientSubmit = async (updatedClientData) => {
     try {
+      console.log("Submitting client update with data:", updatedClientData);
       const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedClientData),
       });
-      if (!response.ok) throw new Error("Failed to update client");
-      const updatedClient = await response.json();
-      setClient(updatedClient);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update client");
+      }
+      
+      // Refresh client data after successful update
+      await fetchClientData();
+      alert("Client updated successfully!");
     } catch (err) {
+      console.error("Error updating client:", err);
       alert(`Error updating client: ${err.message}`);
     }
     setIsClientModalOpen(false);
   };
 
-  const handleCloseClientModal = () => {
-    setIsClientModalOpen(false);
+  const handleCloseClientModal = (formData) => {
+    if (formData) {
+      // If form data is returned, submit it
+      handleClientSubmit(formData);
+    } else {
+      // If no form data, just close the modal
+      setIsClientModalOpen(false);
+    }
   };
 
   const handleDeleteResource = async (resourceId) => {
@@ -186,10 +225,17 @@ const ClientDetails = () => {
         <div className="flex justify-between items-center border-b border-[#9DA4B3] pb-4">
           <h3 className="text-[24px] text-[#272727]">Client Details</h3>
           <div className="space-x-2">
-            <Button onClick={handleEditClient} className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            <Button 
+              onClick={handleEditClient} 
+              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+            >
               Edit
             </Button>
-            <Button variant="destructive" className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleDeleteClient}>
+            <Button 
+              variant="destructive" 
+              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" 
+              onClick={handleDeleteClient}
+            >
               Delete
             </Button>
           </div>
@@ -253,12 +299,12 @@ const ClientDetails = () => {
           </div>
         </div>
 
-        <div className="border-b border-[#9DA4B3] my-2"></div>
+        <div className=" my-2"></div>
 
         <Table>
-          <TableHeader>
+          <TableHeader className='border-b border-[#9DA4B3]'>
             <TableRow>
-              <TableHead>#</TableHead>
+              
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
               <TableHead>Role</TableHead>
@@ -272,28 +318,34 @@ const ClientDetails = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredResources.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>{r.id}</TableCell>
-                <TableCell>{r.Employee?.EmployeeName || "N/A"}</TableCell>
-                <TableCell>{r.Employee?.EmployeeCode || "N/A"}</TableCell>
-                <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>
-                <TableCell>{r.Employee?.Level?.LevelName || "N/A"}</TableCell>
-                <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
-                <TableCell>{formatDate(r.StartDate)}</TableCell>
-                <TableCell>{formatDate(r.EndDate)}</TableCell>
-                <TableCell>{`${client.BillingCurrency?.CurrencyName || "N/A"} ${r.MonthlyBilling}`}</TableCell>
-                <TableCell className="text-blue-500">{r.Status}</TableCell>
-                <TableCell className="flex gap-2">
-                  <button onClick={() => handleEditResource(r)}>
-                    <Edit className="w-5 h-5 text-blue-500" />
-                  </button>
-                  <button onClick={() => handleDeleteResource(r.id)}>
-                    <Trash2 className="w-5 h-5 text-red-500" />
-                  </button>
-                </TableCell>
+            {filteredResources.length > 0 ? (
+              filteredResources.map((r) => (
+                <TableRow key={r.id}>
+                  
+                  <TableCell>{getEmployeeName(r.Employee)}</TableCell>
+                  <TableCell>{getEmployeeCode(r.Employee)}</TableCell>
+                  <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>
+                  <TableCell>{r.Employee?.Level?.LevelName || "N/A"}</TableCell>
+                  <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
+                  <TableCell>{formatDate(r.StartDate)}</TableCell>
+                  <TableCell>{formatDate(r.EndDate)}</TableCell>
+                  <TableCell>{`${client.BillingCurrency?.CurrencyName || "N/A"} ${r.MonthlyBilling}`}</TableCell>
+                  <TableCell className="text-blue-500">{r.Status}</TableCell>
+                  <TableCell className="flex gap-2">
+                    <button onClick={() => handleEditResource(r)}>
+                      <Edit className="w-5 h-5 text-blue-500" />
+                    </button>
+                    <button onClick={() => handleDeleteResource(r.id)}>
+                      <Trash2 className="w-5 h-5 text-red-500" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={11} className="text-center py-4">No {activeTab.toLowerCase()} resources found</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
@@ -305,12 +357,13 @@ const ClientDetails = () => {
         onSubmit={handleResourceSubmit}
       />
 
-      <ClientModal
-        open={isClientModalOpen}
-        onClose={handleCloseClientModal}
-        initialData={client}
-        onSubmit={handleClientSubmit}
-      />
+      {isClientModalOpen && (
+        <ClientModal
+          open={isClientModalOpen}
+          onClose={handleCloseClientModal}
+          initialData={client}
+        />
+      )}
     </div>
   );
 };

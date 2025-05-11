@@ -117,7 +117,7 @@ const BillingSetup = () => {
       <div className="w-full overflow-x-auto mt-5">
         {selectedClient && (
           <table className="w-full border-collapse bg-white shadow-md">
-            <thead>
+            <thead className='bg-[#EDEFF2]'>
               <tr className="bg-secondary-anti-flash-white text-sm font-bold text-primary-black">
                 <th className="p-2 border-b border-secondary-cadet-gray">Name</th>
                 <th className="p-2 border-b border-secondary-cadet-gray">CTC/M</th>
