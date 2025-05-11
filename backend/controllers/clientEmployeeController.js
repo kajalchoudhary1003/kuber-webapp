@@ -82,10 +82,8 @@ const clientEmployeeController = {
         return res.status(400).json({ error: 'Invalid client ID' });
       }
       const clientEmployees = await clientEmployeeService.getClientEmployeesByClient(clientId);
-      if (!clientEmployees || clientEmployees.length === 0) {
-        return res.status(404).json({ error: 'No resources found for this client' });
-      }
-      res.json(clientEmployees);
+      // Return empty array with 200 status if no resources are found
+      res.json(clientEmployees || []);
     } catch (error) {
       logger.error(`Error fetching client employees for client ${req.params.clientId}: ${error.message}`);
       res.status(error.message.includes('not found') ? 404 : 500).json({ error: error.message });
