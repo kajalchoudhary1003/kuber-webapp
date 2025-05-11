@@ -22,22 +22,22 @@ const clientService = {
   },
 
   async getClientById(id) {
-  try {
-    const client = await Client.findByPk(id, {
-      include: [
-        { model: Organisation, as: 'Organisation' },
-        { model: BankDetail, as: 'BankDetail' },
-        { model: Currency, as: 'BillingCurrency' } // Correct alias
-      ]
-    });
-    if (!client) {
-      throw new Error('Client not found');
+    try {
+      const client = await Client.findByPk(id, {
+        include: [
+          { model: Organisation, as: 'Organisation' },
+          { model: BankDetail, as: 'BankDetail' },
+          { model: Currency, as: 'BillingCurrency' }
+        ]
+      });
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      return client;
+    } catch (error) {
+      throw new Error(`Error fetching client: ${error.message}`);
     }
-    return client;
-  } catch (error) {
-    throw new Error(`Error fetching client: ${error.message}`);
-  }
-},
+  },
 
   async createClient(clientData) {
     try {

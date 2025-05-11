@@ -1,7 +1,9 @@
 const sequelize = require('../db/sequelize');
+const { Op } = require('sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const BillingDetail = require('../models/billingDetailModel');
 const Employee = require('../models/employeeModel');
+const Client = require('../models/clientModel');
 
 const clientEmployeeService = {
   async getAllClientEmployees() {
@@ -14,7 +16,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['EmployeeName', 'EmployeeCode']
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -35,7 +37,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['EmployeeName', 'EmployeeCode']
           }
         ]
       });
@@ -91,9 +93,8 @@ const clientEmployeeService = {
           [Op.or]: [
             { '$Client.ClientName$': { [Op.like]: `%${query}%` } },
             { '$Client.ClientCode$': { [Op.like]: `%${query}%` } },
-            { '$Employee.FirstName$': { [Op.like]: `%${query}%` } }, // Updated
-            { '$Employee.LastName$': { [Op.like]: `%${query}%` } },  // Updated
-            { '$Employee.EmpCode$': { [Op.like]: `%${query}%` } }    // Updated
+            { '$Employee.EmployeeName$': { [Op.like]: `%${query}%` } },
+            { '$Employee.EmployeeCode$': { [Op.like]: `%${query}%` } }
           ]
         },
         include: [
@@ -103,7 +104,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['EmployeeName', 'EmployeeCode']
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -121,7 +122,7 @@ const clientEmployeeService = {
         include: [
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['EmployeeName', 'EmployeeCode']
           }
         ],
         order: [['createdAt', 'DESC']]
@@ -161,7 +162,7 @@ const clientEmployeeService = {
           },
           {
             model: Employee,
-            attributes: ['FirstName', 'LastName', 'EmpCode'] // Updated attributes
+            attributes: ['EmployeeName', 'EmployeeCode']
           }
         ],
         order: [['createdAt', 'DESC']]
