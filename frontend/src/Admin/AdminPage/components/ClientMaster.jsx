@@ -31,21 +31,31 @@ const ClientMaster = () => {
     fetchClients();
   }, []);
 
-  const handleSearch = async (value) => {
-    setQuery(value);
-    try {
-      if (value.trim() === '') {
-        setFilteredClients(clients); // Show all clients if query is empty
-      } else {
-        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(value)}`);
-        if (!response.ok) throw new Error('Failed to search clients');
-        const searchedClients = await response.json();
-        setFilteredClients(searchedClients);
-      }
-    } catch (error) {
-      console.error('Error searching clients:', error);
-      alert('Error searching clients');
+  // New useEffect to handle search filtering on the frontend
+  useEffect(() => {
+    if (query.trim() === '') {
+      setFilteredClients(clients); // Show all clients if query is empty
+    } else {
+      const lowercasedQuery = query.toLowerCase();
+      // Add debug output to see client object structure
+      console.log("Client objects structure:", clients[0]);
+      
+      const filtered = clients.filter(client => {
+        // Check if client exists
+        if (!client) return false;
+        
+        // Convert the client object to a string and search in all properties
+        const clientString = JSON.stringify(client).toLowerCase();
+        return clientString.includes(lowercasedQuery);
+      });
+      
+      setFilteredClients(filtered);
     }
+  }, [query, clients]);
+
+  const handleSearch = (value) => {
+    setQuery(value);
+    // No API call here anymore - filtering is done in the useEffect above
   };
 
   const handleOpenModal = () => {
@@ -124,6 +134,7 @@ const ClientMaster = () => {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-sm"
+                autoComplete="off"
               />
             </div>
             <Button className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>

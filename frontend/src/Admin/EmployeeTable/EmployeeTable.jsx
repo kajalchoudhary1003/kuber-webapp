@@ -1,13 +1,23 @@
 import React from 'react';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import EmployeeTableRow from './EmployeeTableRow';
 
-const EmployeeTable = ({ data, onEdit, onDelete, roles, levels, organisations, fetchRoleById, fetchLevelById, fetchOrganisationById }) => {
+const EmployeeTable = ({
+  data,
+  onEdit,
+  onDelete,
+  roles,
+  levels,
+  organisations,
+  fetchRoleById,
+  fetchLevelById,
+  fetchOrganisationById
+}) => {
   return (
     <Table className="w-full">
       <TableHeader>
         <TableRow className="border-b border-[#9DA4B3]">
-          <TableCell className="py-3 px-1 text-[16px] font-medium">ID</TableCell>
+          {/* Removed ID column */}
           <TableCell className="py-3 px-1 text-[16px] font-medium">Name</TableCell>
           <TableCell className="py-3 px-1 text-[16px] font-medium">Employee Code</TableCell>
           <TableCell className="py-3 px-1 text-[16px] font-medium">Role</TableCell>
