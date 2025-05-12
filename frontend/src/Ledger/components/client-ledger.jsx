@@ -3,24 +3,40 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { DatePicker, ConfigProvider } from "antd"
 import axios from "axios"
+import dayjs from "dayjs"
+
+// Destructure RangePicker from DatePicker
+const { RangePicker } = DatePicker
 
 export default function ClientLedger() {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState("")
   const [selectedPeriod, setSelectedPeriod] = useState("")
   const [showLedger, setShowLedger] = useState(false)
-  const [startDate, setStartDate] = useState(null)
-  const [endDate, setEndDate] = useState(null)
+  const [dateRange, setDateRange] = useState(null)
   const [ledgerEntries, setLedgerEntries] = useState([])
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Custom theme for Ant Design components
+  const antTheme = {
+    token: {
+      colorBorder: '#000000',           // Black border color
+      colorPrimary: '#1677ff',          // Keep primary color as default blue
+      borderRadius: 4,                  // Match your UI border radius
+      colorBgContainer: '#ffffff',      // White background
+      colorTextPlaceholder: 'rgba(0, 0, 0, 0.45)', // Default placeholder color
+    },
+    components: {
+      DatePicker: {
+        activeBorderColor: '#000000',   // Black border when active
+        hoverBorderColor: '#000000',    // Black border on hover
+      }
+    }
+  }
 
   // Fetch clients on component mount
   useEffect(() => {
@@ -40,62 +56,69 @@ export default function ClientLedger() {
     fetchClients()
   }, [])
 
-  // Replace the handleShowLedger function with this:
-const handleShowLedger = async () => {
-  if (selectedClient && 
-      (selectedPeriod !== "custom" || (startDate && endDate))) {
-    try {
-      setLoading(true)
-      
-      // Calculate date range based on selected period
-      let startDateStr = ''
-      let endDateStr = new Date().toISOString().split('T')[0] // Current date
-      
-      if (selectedPeriod === "custom" && startDate && endDate) {
-        startDateStr = format(startDate, 'yyyy-MM-dd')
-        endDateStr = format(endDate, 'yyyy-MM-dd')
-      } else {
-        switch (selectedPeriod) {
-          case "1month":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd')
-            break
-          case "3months":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 3)), 'yyyy-MM-dd')
-            break
-          case "6months":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 6)), 'yyyy-MM-dd')
-            break
-          case "1year":
-            startDateStr = format(new Date(new Date().setFullYear(new Date().getFullYear() - 1)), 'yyyy-MM-dd')
-            break
-          default:
-            break
-        }
-      }
-      
-      // Fetch ledger data from backend - using POST as required by your API
-      const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
-        clientId: selectedClient,
-        startDate: startDateStr,
-        endDate: endDateStr
-      })
-      
-      setLedgerEntries(response.data.entries)
-      setBalance(response.data.balance)
-      setShowLedger(true)
-      setLoading(false)
-    } catch (err) {
-      console.error('Error fetching ledger data:', err)
-      setError('Failed to load ledger data')
-      setLoading(false)
+  // Handle date range change from Ant Design RangePicker
+  const handleDateRangeChange = (dates, dateStrings) => {
+    if (dates) {
+      setDateRange(dates)
+    } else {
+      setDateRange(null)
     }
   }
-}
 
+  const handleShowLedger = async () => {
+    if (selectedClient && 
+        (selectedPeriod !== "custom" || (dateRange && dateRange.length === 2))) {
+      try {
+        setLoading(true)
+        
+        // Calculate date range based on selected period
+        let startDateStr = ''
+        let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
+        
+        if (selectedPeriod === "custom" && dateRange) {
+          startDateStr = dateRange[0].format('YYYY-MM-DD')
+          endDateStr = dateRange[1].format('YYYY-MM-DD')
+        } else {
+          switch (selectedPeriod) {
+            case "1month":
+              startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
+              break
+            case "3months":
+              startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
+              break
+            case "6months":
+              startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
+              break
+            case "1year":
+              startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
+              break
+            default:
+              break
+          }
+        }
+        
+        // Fetch ledger data from backend - using POST as required by your API
+        const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
+          clientId: selectedClient,
+          startDate: startDateStr,
+          endDate: endDateStr
+        })
+        
+        setLedgerEntries(response.data.entries)
+        setBalance(response.data.balance)
+        setShowLedger(true)
+        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching ledger data:', err)
+        setError('Failed to load ledger data')
+        setLoading(false)
+      }
+    }
+  }
 
   const isButtonDisabled = () => {
     if (!selectedClient) return true;
-    if (selectedPeriod === "custom" && (!startDate || !endDate)) return true;
+    if (selectedPeriod === "custom" && (!dateRange || dateRange.length !== 2)) return true;
     return false;
   }
 
@@ -104,24 +127,24 @@ const handleShowLedger = async () => {
       if (!selectedClient) return;
       
       let startDateStr = ''
-      let endDateStr = new Date().toISOString().split('T')[0]
+      let endDateStr = dayjs().format('YYYY-MM-DD')
       
-      if (selectedPeriod === "custom" && startDate && endDate) {
-        startDateStr = format(startDate, 'yyyy-MM-dd')
-        endDateStr = format(endDate, 'yyyy-MM-dd')
+      if (selectedPeriod === "custom" && dateRange) {
+        startDateStr = dateRange[0].format('YYYY-MM-DD')
+        endDateStr = dateRange[1].format('YYYY-MM-DD')
       } else {
         switch (selectedPeriod) {
           case "1month":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd')
+            startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
             break
           case "3months":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 3)), 'yyyy-MM-dd')
+            startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
             break
           case "6months":
-            startDateStr = format(new Date(new Date().setMonth(new Date().getMonth() - 6)), 'yyyy-MM-dd')
+            startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
             break
           case "1year":
-            startDateStr = format(new Date(new Date().setFullYear(new Date().getFullYear() - 1)), 'yyyy-MM-dd')
+            startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
             break
           default:
             break
@@ -151,25 +174,23 @@ const handleShowLedger = async () => {
     }
   }
 
-  // Format date for display
   // Format date for display - with error handling
-const formatDate = (dateString) => {
-  try {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '-';
+      }
+      
+      return dayjs(date).format('DD/MM/YYYY');
+    } catch (err) {
+      console.error('Error formatting date:', dateString, err);
       return '-';
     }
-    
-    return format(date, 'dd/MM/yyyy');
-  } catch (err) {
-    console.error('Error formatting date:', dateString, err);
-    return '-';
   }
-}
-
 
   // Format number with commas
   const formatNumberWithCommas = (number) => {
@@ -217,55 +238,18 @@ const formatDate = (dateString) => {
 
               {selectedPeriod === "custom" && (
                 <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start cursor-pointer text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : "Start date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto bg-white p-0">
-                      <Calendar
-                        className="cursor-pointer"
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "PPP") : "End date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                        disabled={(date) => 
-                          startDate ? date < startDate : false
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  {/* Ant Design RangePicker with custom styling */}
+                  <ConfigProvider theme={antTheme}>
+                    <RangePicker 
+                      onChange={handleDateRangeChange}
+                      style={{ 
+                        width: '360px', 
+                        height: '40px',
+                        borderColor: '#000000' // Inline style for border color
+                      }}
+                      format="DD/MM/YYYY"
+                    />
+                  </ConfigProvider>
                 </div>
               )}
 
@@ -310,31 +294,30 @@ const formatDate = (dateString) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-  {ledgerEntries.length > 0 ? (
-    ledgerEntries.map((entry, index) => (
-      <TableRow key={index} className="border-b border-slate-200">
-        <TableCell className="text-center">{formatDate(entry.Date || entry.date)}</TableCell>
-        <TableCell className="text-center">{entry.type === 'Invoice' || entry.type === 'invoice' ? 'Invoice Raised' : 'Payment Received'}</TableCell>
-        <TableCell className="text-center">
-          {(entry.type === 'Invoice' || entry.type === 'invoice') 
-            ? formatNumberWithCommas(entry.InvoiceRaised || entry.amount) 
-            : '-'}
-        </TableCell>
-        <TableCell className="text-center">
-          {(entry.type === 'Payment' || entry.type === 'payment') 
-            ? formatNumberWithCommas(Math.abs(entry.PaymentReceived || entry.amount)) 
-            : '-'}
-        </TableCell>
-        <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>
-      </TableRow>
-    ))
-  ) : (
-    <TableRow>
-      <TableCell colSpan={5} className="text-center py-4">No ledger entries found for the selected period</TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
+                  {ledgerEntries.length > 0 ? (
+                    ledgerEntries.map((entry, index) => (
+                      <TableRow key={index} className="border-b border-slate-200">
+                        <TableCell className="text-center">{formatDate(entry.Date || entry.date)}</TableCell>
+                        <TableCell className="text-center">{entry.type === 'Invoice' || entry.type === 'invoice' ? 'Invoice Raised' : 'Payment Received'}</TableCell>
+                        <TableCell className="text-center">
+                          {(entry.type === 'Invoice' || entry.type === 'invoice') 
+                            ? formatNumberWithCommas(entry.InvoiceRaised || entry.amount) 
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(entry.type === 'Payment' || entry.type === 'payment') 
+                            ? formatNumberWithCommas(Math.abs(entry.PaymentReceived || entry.amount)) 
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">No ledger entries found for the selected period</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
               </Table>
             </div>
           </CardContent>

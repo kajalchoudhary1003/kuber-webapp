@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
 import axios from "axios"
+import { DatePicker, ConfigProvider } from "antd"
+import dayjs from "dayjs"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,8 +19,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 
 export default function PaymentTracker() {
@@ -28,7 +26,7 @@ export default function PaymentTracker() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedClient, setSelectedClient] = useState(null)
-  const [date, setDate] = useState()
+  const [date, setDate] = useState(null)
   const [amount, setAmount] = useState("")
   const [remark, setRemark] = useState("")
   const [reconciliationNote, setReconciliationNote] = useState("")
@@ -82,6 +80,11 @@ export default function PaymentTracker() {
     fetchClientPayments()
   }, [selectedClient])
 
+  // Handle date change from Ant Design DatePicker
+  const handleDateChange = (date, dateString) => {
+    setDate(date ? date.toDate() : null)
+  }
+
   const handleRecordPayment = async () => {
     if (!selectedClient || !date || !amount) {
       alert("Please select a client, date, and enter an amount")
@@ -107,7 +110,7 @@ export default function PaymentTracker() {
       setClientPayments(response.data.payments || [])
       
       // Reset form
-      setDate(undefined)
+      setDate(null)
       setAmount("")
       setRemark("")
       
@@ -120,13 +123,29 @@ export default function PaymentTracker() {
     }
   }
 
-  // Format date for display
+  // Format date for display using dayjs instead of date-fns
   const formatDisplayDate = (dateString) => {
     try {
-      const date = new Date(dateString)
-      return format(date, "dd/MM/yyyy")
+      return dayjs(dateString).format("DD/MM/YYYY")
     } catch (error) {
       return dateString
+    }
+  }
+
+  // Custom theme for Ant Design components
+  const antTheme = {
+    token: {
+      colorBorder: '#000000',           // Black border color
+      colorPrimary: '#1677ff',          // Keep primary color as default blue
+      borderRadius: 4,                  // Match your UI border radius
+      colorBgContainer: '#ffffff',      // White background
+      colorTextPlaceholder: 'rgba(0, 0, 0, 0.45)', // Default placeholder color
+    },
+    components: {
+      DatePicker: {
+        activeBorderColor: '#000000',   // Black border when active
+        hoverBorderColor: '#000000',    // Black border on hover
+      }
     }
   }
 
@@ -140,7 +159,7 @@ export default function PaymentTracker() {
             <CardTitle>Track the Payment</CardTitle>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                Last Updated on: {format(currentDate, "dd/MM/yyyy")}
+                Last Updated on: {dayjs(currentDate).format("DD/MM/YYYY")}
               </span>
               {loading ? (
                 <div>Loading clients...</div>
@@ -197,20 +216,21 @@ export default function PaymentTracker() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div className="space-y-2">
               <Label htmlFor="date">Received Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "dd/MM/yyyy") : "dd/mm/yyyy"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                </PopoverContent>
-              </Popover>
+              {/* Ant Design DatePicker with custom styling */}
+              <ConfigProvider theme={antTheme}>
+                <DatePicker
+                  id="date"
+                  format="DD/MM/YYYY"
+                  onChange={handleDateChange}
+                  value={date ? dayjs(date) : null}
+                  style={{ 
+                    width: '100%', 
+                    height: '40px',
+                    borderColor: '#000000' // Inline style for border color
+                  }}
+                  placeholder="Select date"
+                />
+              </ConfigProvider>
             </div>
 
             <div className="space-y-2">
