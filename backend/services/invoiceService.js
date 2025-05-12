@@ -210,53 +210,77 @@ async deleteInvoice(id) {
   },
 
   async regenerateInvoice(id) {
+  try {
+    console.log(`Regenerating invoice: invoiceId=${id}`);
+    const invoice = await Invoice.findByPk(id, {
+      include: [
+        {
+          model: Client,
+          attributes: ['ClientName', 'Abbreviation'],
+        },
+      ],
+    });
+    if (!invoice) {
+      console.error(`Invoice not found: invoiceId=${id}`);
+      throw new Error('Invoice not found');
+    }
+
+    // Recalculate total amount for this invoice
+    const monthName = getMonthNameFromNumber(invoice.Month);
+    const billingYear = invoice.Month >= 1 && invoice.Month <= 3 ? parseInt(invoice.Year) + 1 : parseInt(invoice.Year);
+    const billingTotal = await calculateTotalBillingAmount(invoice.ClientID, billingYear, monthName);
+    
+    // Update the invoice with new total if different
+    if (billingTotal !== invoice.TotalAmount) {
+      await invoice.update({ TotalAmount: billingTotal });
+    }
+
+    // Ensure the invoices directory exists
+    const invoiceDir = path.join(__dirname, '../invoices');
+    if (!fs.existsSync(invoiceDir)) {
+      console.log(`Creating invoices directory: ${invoiceDir}`);
+      fs.mkdirSync(invoiceDir, { recursive: true });
+    }
+
+    // Define the PDF file path
+    const invoiceFilePath = path.join(invoiceDir, `${invoice.id}.pdf`);
+    console.log(`Regenerating PDF at: ${invoiceFilePath}`);
+
+    // Delete existing PDF if it exists to ensure a fresh file
+    if (fs.existsSync(invoiceFilePath)) {
+      console.log(`Deleting existing PDF: ${invoiceFilePath}`);
+      fs.unlinkSync(invoiceFilePath);
+    }
+
+    // Generate the new PDF
     try {
-      console.log(`Regenerating invoice: invoiceId=${id}`);
-      const invoice = await Invoice.findByPk(id, {
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'Abbreviation'],
-          },
-        ],
-      });
-      if (!invoice) {
-        console.error(`Invoice not found: invoiceId=${id}`);
-        throw new Error('Invoice not found');
-      }
-
-      // Recalculate total amount for this invoice
-      const monthName = getMonthNameFromNumber(invoice.Month);
-      const billingYear = invoice.Month >= 1 && invoice.Month <= 3 ? parseInt(invoice.Year) + 1 : parseInt(invoice.Year);
-      const billingTotal = await calculateTotalBillingAmount(invoice.ClientID, billingYear, monthName);
-      
-      // Update the invoice with new total
-      if (billingTotal !== invoice.TotalAmount) {
-        await invoice.update({ TotalAmount: billingTotal });
-      }
-
-      const invoiceDir = path.join(__dirname, '../invoices');
-      const invoiceFilePath = path.join(invoiceDir, `${invoice.id}.pdf`);
-      console.log(`Regenerating PDF at: ${invoiceFilePath}`);
       await createInvoicePdf(
         {
           clientId: invoice.ClientID,
           year: invoice.Year,
           month: invoice.Month,
-          totalAmount: billingTotal, // Using recalculated amount
+          totalAmount: billingTotal,
           logoBase64: loadLogo(),
         },
         [],
         invoiceFilePath
       );
-      console.log(`PDF regenerated for invoiceId=${invoice.id}`);
-
-      return invoice;
-    } catch (error) {
-      console.error('Error regenerating invoice:', error);
-      throw new Error(`Error regenerating invoice: ${error.message}`);
+      console.log(`PDF regenerated successfully for invoiceId=${invoice.id}`);
+    } catch (pdfError) {
+      console.error(`Failed to generate PDF for invoiceId=${invoice.id}:`, pdfError);
+      throw new Error(`Failed to generate PDF: ${pdfError.message}`);
     }
-  },
+
+    // Update the PdfPath in the database
+    await invoice.update({ PdfPath: `${invoice.id}.pdf` });
+    console.log(`Updated PdfPath for invoiceId=${invoice.id}`);
+
+    return invoice;
+  } catch (error) {
+    console.error('Error regenerating invoice:', error);
+    throw new Error(`Error regenerating invoice: ${error.message}`);
+  }
+}
 };
 
 // Helper function to calculate total billing amount for a client and month

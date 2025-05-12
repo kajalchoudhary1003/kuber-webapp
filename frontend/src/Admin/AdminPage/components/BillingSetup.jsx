@@ -119,22 +119,22 @@ const BillingSetup = () => {
           <table className="w-full border-collapse bg-white shadow-md">
             <thead className='bg-[#EDEFF2]'>
               <tr className="bg-secondary-anti-flash-white text-sm font-bold text-primary-black">
-                <th className="p-2 border-b border-secondary-cadet-gray text-left">Name</th>
-                <th className="p-2 border-b border-secondary-cadet-gray text-center">CTC/M</th>
+                <th className="p-2 border-b border-secondary-cadet-gray">Name</th>
+                <th className="p-2 border-b border-secondary-cadet-gray">CTC/M</th>
                 {fiscalMonths.map(month => (
-                  <th key={month} className="p-2 border-b border-secondary-cadet-gray text-center">{month}</th>
+                  <th key={month} className="p-2 border-b border-secondary-cadet-gray">{month}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {data.map((item, rowIndex) => (
                 <tr key={item.id} className="text-sm text-primary-black">
-                  <td className="p-2 border-b border-secondary-cadet-gray text-left">{item.name}</td>
-                  <td className="p-2 border-b border-secondary-cadet-gray text-center">{currencyCode}{formatNumberWithCommas(item.ctcMonthly)}</td>
+                  <td className="p-2 border-b border-secondary-cadet-gray">{item.name}</td>
+                  <td className="p-2 border-b border-secondary-cadet-gray">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
                   {fiscalMonths.map(column => (
                     <td
                       key={`${item.id}-${column}`}
-                      className="p-2 border-b border-secondary-cadet-gray cursor-pointer text-center"
+                      className="p-2 border-b border-secondary-cadet-gray cursor-pointer"
                       onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                     >
                       {editIndex.row === rowIndex && editIndex.column === column ? (
@@ -145,7 +145,7 @@ const BillingSetup = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          className="h-8 text-center"
+                          className="h-8"
                           autoFocus
                         />
                       ) : (

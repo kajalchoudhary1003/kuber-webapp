@@ -37,44 +37,54 @@ const currencyExchangeRateService = {
 
   
   async createExchangeRate(data) {
-    try {
-      console.log('Received data:', data);
-      
-      // (Optional) validate currency IDs exist first
-      const fromCurrency = await Currency.findByPk(data.CurrencyFromID);
-      const toCurrency = await Currency.findByPk(data.CurrencyToID);
-  
-      if (!fromCurrency || !toCurrency) {
-        throw new Error('One or both currencies not found');
-      }
-  
-      // Check for existing exchange rate
-      const existing = await CurrencyExchangeRate.findOne({
-        where: {
-          CurrencyFromID: data.CurrencyFromID,
-          CurrencyToID: data.CurrencyToID,
-          Year: data.Year,
-        }
-      });
-  
-      if (existing) {
-        throw new Error('Exchange rate already exists for this currency pair and period');
-      }
-  
-      const rate = await CurrencyExchangeRate.create(data);
-      return rate;
-  
-    } catch (error) {
-      console.error('Full error object:', error);
-      console.error('Validation Error Details:', error.errors || error);
-      if (error.errors) {
-        error.errors.forEach(err => {
-          console.error('Field:', err.path, 'Message:', err.message);
-        });
-      }
-      throw new Error('Error creating exchange rate: ' + error.message);
+  try {
+    console.log('Received data:', data);
+    
+    // Validate currency IDs exist first
+    const fromCurrency = await Currency.findByPk(data.CurrencyFromID);
+    const toCurrency = await Currency.findByPk(data.CurrencyToID);
+
+    if (!fromCurrency || !toCurrency) {
+      throw new Error('One or both currencies not found');
     }
-  },
+
+    // Check for existing exchange rate
+    const existing = await CurrencyExchangeRate.findOne({
+      where: {
+        CurrencyFromID: data.CurrencyFromID,
+        CurrencyToID: data.CurrencyToID,
+        Year: data.Year,
+      }
+    });
+
+    if (existing) {
+      throw new Error('Exchange rate already exists for this currency pair and period');
+    }
+
+    // Create the new exchange rate
+    const rate = await CurrencyExchangeRate.create(data);
+
+    // Fetch the created rate with associated Currency models
+    const createdRate = await CurrencyExchangeRate.findByPk(rate.id, {
+      include: [
+        { model: Currency, as: 'CurrencyFrom' },
+        { model: Currency, as: 'CurrencyTo' }
+      ]
+    });
+
+    return createdRate;
+
+  } catch (error) {
+    console.error('Full error object:', error);
+    console.error('Validation Error Details:', error.errors || error);
+    if (error.errors) {
+      error.errors.forEach(err => {
+        console.error('Field:', err.path, 'Message:', err.message);
+      });
+    }
+    throw new Error('Error creating exchange rate: ' + error.message);
+  }
+},
   
   
 
