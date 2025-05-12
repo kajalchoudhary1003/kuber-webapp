@@ -124,7 +124,7 @@ const ClientMaster = () => {
   };
 
   return (
-    <div className="p-4 min-h-screen">
+    <div className="p-4 ">
       <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-[24px] text-[#272727]">Client Master</h2>

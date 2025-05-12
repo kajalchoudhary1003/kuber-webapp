@@ -89,7 +89,7 @@ const EmployeeCost = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
         <div className="flex justify-between items-center w-full mb-2">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
