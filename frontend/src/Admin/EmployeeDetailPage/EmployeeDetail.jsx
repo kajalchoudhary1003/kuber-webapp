@@ -12,6 +12,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
+import { toast,ToastContainer } from 'react-toastify';
 
 const API_BASE_URL = 'http://localhost:5001/api'; // Update port if different
 
@@ -36,7 +37,7 @@ const formatCurrency = (value, currencyCode = 'INR') => {
   }).format(value);
 };
 
-export const EmployeeDetail = () => {
+const EmployeeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
@@ -145,7 +146,8 @@ export const EmployeeDetail = () => {
 
   const fetchClientAssignments = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/employees/${id}/clients`);
+      // Using client-employees/employee endpoint instead of employees/{id}/clients
+      const response = await axios.get(`${API_BASE_URL}/client-employees/employee/${id}`);
       setClientAssignments(response.data);
       setClientError(null);
     } catch (error) {
@@ -159,18 +161,31 @@ export const EmployeeDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (employee.Status === 'Active') {
-      alert('Active employees cannot be deleted');
-      return;
-    }
-    if (window.confirm('Are you sure you want to delete this employee?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/employees/${id}`);
-        navigate('/admin/employee-master');
-      } catch (error) {
-        console.error('Error deleting employee:', error);
-        setError('Error deleting employee');
+    try {
+      // Check if employee is active
+      if (employee.Status === 'Active') {
+        toast.error('Active employees cannot be deleted');
+        return;
       }
+
+      // Check for active client assignments
+      const hasActiveClients = clientAssignments.some(
+        (assignment) => assignment.Status === 'Active'
+      );
+
+      if (hasActiveClients) {
+        toast.error('Employee cannot be deleted with active clients');
+        return;
+      }
+
+      // Proceed with deletion
+      await axios.delete(`${API_BASE_URL}/employees/${id}`);
+      alert('Employee deleted successfully');
+      navigate('/admin/employee-master');
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      setError('Error deleting employee');
+      alert('Error deleting employee');
     }
   };
 
@@ -308,9 +323,6 @@ export const EmployeeDetail = () => {
               {clientAssignments?.length > 0 ? (
                 clientAssignments.map((clientEmployee, index) => (
                   <TableRow className="border-b border-[#9DA4B3]" key={clientEmployee.id}>
-
-                    
-
                     <TableCell className="py-3 px-1 text-[14px]">
                       {clientEmployee.Client?.ClientName || 'N/A'}
                     </TableCell>
@@ -318,10 +330,10 @@ export const EmployeeDetail = () => {
                       {formatDate(clientEmployee.StartDate)}
                     </TableCell>
                     <TableCell className="py-3 px-1 text-[14px]">
-                      {formatDate(clientEmployee.EndDate)}
+                      {clientEmployee.Status === 'Active' ? 'N/A' : formatDate(clientEmployee.EndDate)}
                     </TableCell>
                     <TableCell className="py-3 px-1 text-[14px]">
-                      {formatCurrency(clientEmployee.MonthlyBilling, 'INR')}
+                      {formatCurrency(clientEmployee.MonthlyBilling, clientEmployee.Client?.BillingCurrency?.CurrencyCode || 'INR')}
                     </TableCell>
                     <TableCell className="py-3 px-1 text-[14px]">
                       {clientEmployee.Status}
@@ -348,8 +360,9 @@ export const EmployeeDetail = () => {
         levels={levels}
         organisations={organisations}
       />
+      <ToastContainer />
     </div>
   );
 };
 
-export default EmployeeDetail;
+export default EmployeeDetail

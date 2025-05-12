@@ -4,6 +4,7 @@ import ClientModal from '@/Modal/EmployeeModal/ClientModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { toast,ToastContainer } from 'react-toastify';
 
 const API_BASE_URL = 'http://localhost:5001/api/clients'; // Adjust if your backend uses a different port
 
@@ -108,20 +109,39 @@ const ClientMaster = () => {
   };
 
   const handleDeleteClient = async (clientId) => {
-    if (window.confirm('Are you sure you want to delete this client? This will also delete all associated resources.')) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/${clientId}`, {
-          method: 'DELETE',
+  try {
+    // Attempt to delete the client directly
+    const response = await fetch(`${API_BASE_URL}/${clientId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Check if the error is due to associated resources
+      if (errorData.error && errorData.error.includes('Client cannot be deleted with active employees')) {
+        toast.error('Client cannot be deleted with active employee association.', {
+          position: 'top-right',
+          autoClose: 3000,
         });
-        if (!response.ok) throw new Error('Failed to delete client');
-        alert('Client and associated resources deleted successfully');
-        await fetchClients(); // Refresh client list
-      } catch (error) {
-        console.error('Error deleting client:', error);
-        alert('An error occurred while deleting the client.');
+      } else {
+        throw new Error(errorData.error || 'Failed to delete client');
       }
+      return;
     }
-  };
+
+    toast.success('Client deleted successfully', {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+    await fetchClients(); // Refresh client list
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    toast.error(`Error: ${error.message}`, {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+  }
+};
 
   return (
     <div className="p-4 ">
@@ -161,7 +181,9 @@ const ClientMaster = () => {
           initialData={selectedClient}
           onSubmit={handleSubmitClient}
         />
+
       </div>
+      <ToastContainer />
     </div>
   );
 };

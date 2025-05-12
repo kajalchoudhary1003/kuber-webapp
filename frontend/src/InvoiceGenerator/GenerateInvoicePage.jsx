@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useYear } from '../contexts/YearContexts';
 
 const fiscalMonths = [
   { label: 'April', value: 4 },
@@ -33,35 +34,7 @@ const GenerateInvoicePage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [allSelected, setAllSelected] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [financialYears, setFinancialYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchFinancialYears = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE}/financial-years`);
-        if (!response.ok) throw new Error(`Failed to fetch years: ${response.status}`);
-        const data = await response.json();
-        const years = data.financialYears.map(year => year.year);
-        setFinancialYears(years);
-        
-        if (years.length > 0) {
-          const latestYear = Math.max(...years);
-          setSelectedYear(latestYear.toString());
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching financial years:', err);
-        alert('Failed to load financial years. Please refresh the page.');
-        setLoading(false);
-      }
-    };
-
-    fetchFinancialYears();
-  }, []);
+  const { selectedYear, loading } = useYear();
 
   const fetchClients = async () => {
     try {
@@ -101,31 +74,31 @@ const GenerateInvoicePage = () => {
       const invoice = generatedInvoices.find((inv) => inv.ClientID === client.id);
       return invoice
         ? {
-            id: invoice.id,
-            clientId: client.id,
-            clientName: client.ClientName,
-            totalAmount: parseFloat(invoice.TotalAmount || 0),
-            currencyCode: invoice.BillingCurrency?.CurrencyCode || '',
-            generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
-            invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
-            year: invoice.Year,
-            month: invoice.Month,
-            status: invoice.Status,
-            pdfPath: invoice.PdfPath,
-          }
+          id: invoice.id,
+          clientId: client.id,
+          clientName: client.ClientName,
+          totalAmount: parseFloat(invoice.TotalAmount || 0),
+          currencyCode: invoice.BillingCurrency?.CurrencyCode || '',
+          generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
+          invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
+          year: invoice.Year,
+          month: invoice.Month,
+          status: invoice.Status,
+          pdfPath: invoice.PdfPath,
+        }
         : {
-            id: null,
-            clientId: client.id,
-            clientName: client.ClientName,
-            totalAmount: 0,
-            currencyCode: '',
-            generatedOn: null,
-            invoicedOn: null,
-            year: null,
-            month: null,
-            status: 'Not generated yet',
-            pdfPath: null,
-          };
+          id: null,
+          clientId: client.id,
+          clientName: client.ClientName,
+          totalAmount: 0,
+          currencyCode: '',
+          generatedOn: null,
+          invoicedOn: null,
+          year: null,
+          month: null,
+          status: 'Not generated yet',
+          pdfPath: null,
+        };
     });
   }, [clients, generatedInvoices]);
 
@@ -162,7 +135,7 @@ const GenerateInvoicePage = () => {
         }
       }
       await fetchGeneratedInvoices();
-      alert('Invoices generated successfully.');
+
     } catch (err) {
       console.error('Generate invoice failed:', err);
       alert(`Error generating invoices: ${err.message}`);
@@ -176,9 +149,7 @@ const GenerateInvoicePage = () => {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to delete ${toDelete.length} invoice(s)?`)) {
-      return;
-    }
+
 
     try {
       for (const inv of toDelete) {
@@ -186,7 +157,7 @@ const GenerateInvoicePage = () => {
         if (!response.ok) throw new Error(`Failed to delete invoice ${inv.id}`);
       }
       await fetchGeneratedInvoices();
-      alert(`${toDelete.length} invoice(s) deleted successfully.`);
+
     } catch (err) {
       console.error('Delete invoice failed:', err);
       alert('Failed to delete invoice(s). Please try again.');
@@ -204,8 +175,8 @@ const GenerateInvoicePage = () => {
         const response = await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
         if (!response.ok) throw new Error(`Failed to mark invoice ${inv.id} as sent`);
       }
-      await fetchGeneratedInvoices();
-      alert('Invoices marked as sent successfully.');
+      await fetchGeneratedInvoices(); // Refresh invoices after marking as sent
+
     } catch (err) {
       console.error('Mark as sent failed:', err);
       alert('Failed to mark invoice(s) as sent. Please try again.');
@@ -231,7 +202,7 @@ const GenerateInvoicePage = () => {
         }
       }
       await fetchGeneratedInvoices();
-      alert(`${toRegenerate.length} invoice(s) regenerated successfully.`);
+
     } catch (err) {
       console.error('Regenerate invoice failed:', err);
       alert('Failed to regenerate invoice(s). Please try again.');
@@ -262,10 +233,27 @@ const GenerateInvoicePage = () => {
     return inv && !inv.id;
   });
 
-  const onlyGeneratedSelected = selectedRows.some((rowId) => {
+  // Check if only generated invoices are selected
+  const hasGeneratedSelected = selectedRows.some((rowId) => {
     const inv = mergedInvoices.find((i) => i.id === rowId);
     return inv && inv.id;
   });
+
+  // Helper function to format date as DD/MM/YY
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+  };
+
+  // Helper function to get full invoice date from month and year
+  const getInvoiceDate = (year, month) => {
+    if (!year || !month) return 'N/A';
+
+    // For formatting consistency, use the 15th of the month
+    const date = new Date(year, month - 1, 15);
+    return formatDate(date);
+  };
 
   if (loading) return <p>Loading...</p>;
 
@@ -276,19 +264,7 @@ const GenerateInvoicePage = () => {
           <h2 className="text-2xl font-normal text-black">
             FY: {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
           </h2>
-          <div className="flex borderitems-center gap-3">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-40 rounded-full border-gray-300">
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent className='bg-white border-none'>
-                {financialYears.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {`${year}-${parseInt(year) + 1}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-3">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-40 rounded-full border-gray-300">
                 <SelectValue placeholder="Select Month" />
@@ -310,32 +286,35 @@ const GenerateInvoicePage = () => {
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-[24px] font-normal text-[#272727]">Generated Invoices</h2>
             <div className="flex gap-3">
-              <Button
-                onClick={handleDelete}
-                disabled={!onlyGeneratedSelected}
-                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Delete
-              </Button>
-              <Button
-                onClick={handleMarkAsSent}
-                disabled={!onlyGeneratedSelected}
-                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Mark as Sent
-              </Button>
-              <Button
-                onClick={handleRegenerate}
-                disabled={!onlyGeneratedSelected}
-                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Re-generate
-              </Button>
+              {hasGeneratedSelected && (
+                <>
+                  <Button
+                    onClick={handleDelete}
+                    className="px-6 py-2 text-[#FF6E65] transition-all duration-300 ease-in-out 
+             hover:bg-[rgba(255,110,101,0.08)] hover:text-[#FF6E65] 
+             disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    onClick={handleMarkAsSent}
+                    className="px-6 py-2 text-[#00C7B5] transition-all duration-300 ease-in-out 
+             hover:bg-[rgba(0,199,181,0.08)] hover:text-[#00C7B5] 
+             disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Mark as Sent to Client
+                  </Button>
+                  <Button
+                    onClick={handleRegenerate}
+                    className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer">
+                    Re-generate
+                  </Button>
+                </>
+              )}
               <Button
                 onClick={handleGenerateInvoice}
                 disabled={!hasNonGeneratedSelected}
-                className="bg-white text-[#048DFF] hover:bg-[#048DFF] hover:text-white border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+                className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer">
                 Generate Invoice(s)
               </Button>
             </div>
@@ -346,7 +325,7 @@ const GenerateInvoicePage = () => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-3 text-center">
-                    <Checkbox 
+                    <Checkbox
                       checked={allSelected}
                       onCheckedChange={handleSelectAll}
                       indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
@@ -356,7 +335,7 @@ const GenerateInvoicePage = () => {
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Total Billing Amount</th>
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Generated On</th>
-                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Month & Year</th>
+                  <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Invoice Date</th>
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Status</th>
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Actions</th>
                 </tr>
@@ -376,14 +355,14 @@ const GenerateInvoicePage = () => {
                       {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
                     </td>
                     <td className="p-3 text-center">
-                      {invoice.generatedOn ? new Date(invoice.generatedOn).toLocaleDateString() : 'N/A'}
+                      {formatDate(invoice.generatedOn)}
                     </td>
                     <td className="p-3 text-center">
-                      {invoice.year && invoice.month
-                        ? `${fiscalMonths.find((m) => m.value === invoice.month)?.label} ${invoice.year}`
-                        : 'N/A'}
+                      {getInvoiceDate(invoice.year, invoice.month)}
                     </td>
-                    <td className="p-3 text-center">{invoice.status}</td>
+                    <td className="p-3 text-center">
+                      {invoice.status}
+                    </td>
                     <td className="p-3 text-center">
                       {invoice.pdfPath ? (
                         <Button

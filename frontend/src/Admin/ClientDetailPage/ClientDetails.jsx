@@ -1,4 +1,3 @@
-// ClientDetails.jsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +5,8 @@ import { Edit, Trash2 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -111,55 +112,55 @@ const ClientDetails = () => {
   };
 
   const handleResourceSubmit = async (payload) => {
-    try {
-      if (payload.delete) {
+  try {
+    if (payload.delete) {
+      const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete resource");
+      }
+      setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+    } else {
+      if (selectedResource && selectedResource.id) {
         const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-          method: "DELETE",
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete resource");
+          throw new Error(errorData.error || "Failed to update resource");
         }
-        setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+        const updatedResource = await response.json();
+        setResources((prev) =>
+          prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
+        );
       } else {
-        if (selectedResource && selectedResource.id) {
-          const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to update resource");
-          }
-          const updatedResource = await response.json();
-          setResources((prev) =>
-            prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
-          );
-        } else {
-          const response = await fetch(`${API_BASE_URL}/client-employees`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, ClientID: id }),
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to create resource");
-          }
-          const newResource = await response.json();
-          setResources((prev) => [...prev, newResource]);
+        const response = await fetch(`${API_BASE_URL}/client-employees`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, ClientID: id }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create resource");
         }
+        const newResource = await response.json();
+        setResources((prev) => [...prev, newResource]);
       }
-      // Refresh resources after update
-      await fetchClientData();
-    } catch (err) {
-      console.error("Error submitting resource:", err.message);
-      alert(`Error: ${err.message}`);
     }
-    setIsResourceModalOpen(false);
-    setSelectedResource(null);
-  };
+    // Refresh resources after update
+    await fetchClientData();
+  } catch (err) {
+    console.error("Error submitting resource:", err.message);
+    alert(`Error: ${err.message}`);
+  }
+  setIsResourceModalOpen(false);
+  setSelectedResource(null);
+};
 
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
@@ -201,49 +202,81 @@ const ClientDetails = () => {
   };
 
   const handleDeleteResource = async (resourceId) => {
-    if (window.confirm("Are you sure you want to delete this resource?")) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete resource");
-        }
-        setResources((prev) => prev.filter((r) => r.id !== resourceId));
-        await fetchClientData();
-      } catch (err) {
-        console.error("Error deleting resource:", err.message);
-        alert(`Error: ${err.message}`);
+  const resource = resources.find((r) => r.id === resourceId);
+  if (resource.Status === "Active") {
+    toast.error("Cannot delete client employee with active status", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    return;
+  }
+
+  if (window.confirm("Are you sure you want to delete this resource?")) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete resource");
       }
+      setResources((prev) => prev.filter((r) => r.id !== resourceId));
+      await fetchClientData();
+      toast.success("Resource deleted successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } catch (err) {
+      console.error("Error deleting resource:", err.message);
+      toast.error(`Error: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  };
+  }
+};
 
   const handleDeleteClient = async () => {
-    if (window.confirm("Are you sure you want to delete this client and all associated resources?")) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
+  if (window.confirm("Are you sure you want to delete this client ?")) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.error && errorData.error.includes("Client cannot be deleted with active employees")) {
+          toast.error("Client cannot be deleted with active employees.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        } else {
           throw new Error(errorData.error || "Failed to delete client");
         }
-        navigate("/admin");
-      } catch (err) {
-        console.error("Error deleting client:", err.message);
-        alert(`Error: ${err.message}`);
+        return;
       }
+      toast.success("Client deleted successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/admin");
+    } catch (err) {
+      console.error("Error deleting client:", err.message);
+      toast.error(`Error: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  };
+  }
+};
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error || !client) return <div className="p-4 text-red-500">Error: {error || "Client not found"}</div>;
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
+      <ToastContainer/>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-blue-900">
           {`${client.ClientName} (${client.Abbreviation})`}
@@ -251,8 +284,8 @@ const ClientDetails = () => {
         <div className="space-x-2">
           <Button
             onClick={() => navigate("/admin")}
-            className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-          >
+            className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+
             Back to Client Master
           </Button>
         </div>
@@ -265,13 +298,14 @@ const ClientDetails = () => {
           <div className="space-x-2">
             <Button
               onClick={handleEditClient}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+
             >
               Edit
             </Button>
             <Button
               variant="destructive"
-              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#FF6E65] cursor-pointer text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
               onClick={handleDeleteClient}
             >
               Delete
@@ -327,20 +361,19 @@ const ClientDetails = () => {
           <div className="flex gap-2">
             <Button
               onClick={() => setActiveTab("Active")}
-              className={activeTab === "Active" ? "border-none text-black" : ""}
+              className={activeTab === "Active" ? "border-none cursor-pointer text-blue-500 shadow-lg" : "cursor-pointer"}
             >
               Active Resources
             </Button>
             <Button
               onClick={() => setActiveTab("Inactive")}
-              className={activeTab === "Inactive" ? "text-black" : ""}
+              className={activeTab === "Inactive" ? "border-none cursor-pointer text-blue-500 shadow-lg" : "cursor-pointer"}
             >
               Inactive Resources
             </Button>
             <Button
               onClick={handleAddResource}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-            >
+               className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Add Resource
             </Button>
           </div>

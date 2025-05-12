@@ -87,33 +87,33 @@ const invoiceService = {
   },
 
   async getGeneratedInvoices(year, month) {
-    try {
-      console.log(`Fetching generated invoices for year=${year}, month=${month}`);
-      const invoices = await Invoice.findAll({
-        where: {
-          Year: year,
-          Month: month,
-          Status: 'Generated',
+  try {
+    console.log(`Fetching generated invoices for year=${year}, month=${month}`);
+    const invoices = await Invoice.findAll({
+      where: {
+        Year: year,
+        Month: month,
+        Status: { [Op.in]: ['Generated', 'Sent to Client'] }, // Updated to include "Sent to Client"
+      },
+      include: [
+        {
+          model: Client,
+          attributes: ['ClientName', 'Abbreviation'],
         },
-        include: [
-          {
-            model: Client,
-            attributes: ['ClientName', 'Abbreviation'],
-          },
-          {
-            model: Currency,
-            as: 'BillingCurrency',
-            attributes: ['CurrencyName', 'CurrencyCode'],
-          },
-        ],
-      });
-      console.log(`Found ${invoices.length} generated invoices`);
-      return invoices;
-    } catch (error) {
-      console.error('Error fetching generated invoices:', error);
-      throw new Error(`Error fetching generated invoices: ${error.message}`);
-    }
-  },
+        {
+          model: Currency,
+          as: 'BillingCurrency',
+          attributes: ['CurrencyName', 'CurrencyCode'],
+        },
+      ],
+    });
+    console.log(`Found ${invoices.length} generated invoices`);
+    return invoices;
+  } catch (error) {
+    console.error('Error fetching generated invoices:', error);
+    throw new Error(`Error fetching generated invoices: ${error.message}`);
+  }
+},
 
   async getInvoiceById(id) {
     try {
@@ -189,25 +189,30 @@ async deleteInvoice(id) {
 },
 
   async markInvoiceAsSent(id) {
-    try {
-      console.log(`Marking invoice as sent: invoiceId=${id}`);
-      const invoice = await Invoice.findByPk(id);
-      if (!invoice) {
-        console.error(`Invoice not found: invoiceId=${id}`);
-        throw new Error('Invoice not found');
-      }
-
-      await invoice.update({
-        Status: 'Sent',
-        InvoicedOn: new Date(),
-      });
-      console.log(`Invoice marked as sent: invoiceId=${id}`);
-      return invoice;
-    } catch (error) {
-      console.error('Error marking invoice as sent:', error);
-      throw new Error(`Error marking invoice as sent: ${error.message}`);
+  try {
+    console.log(`Marking invoice as sent: invoiceId=${id}`);
+    const invoice = await Invoice.findByPk(id);
+    if (!invoice) {
+      console.error(`Invoice not found: invoiceId=${id}`);
+      throw new Error('Invoice not found');
     }
-  },
+
+    if (invoice.Status === 'Sent to Client') {
+      console.log(`Invoice already marked as sent to client: invoiceId=${id}`);
+      return invoice; // No need to update if already sent
+    }
+
+    await invoice.update({
+      Status: 'Sent to Client',
+      InvoicedOn: new Date(),
+    });
+    console.log(`Invoice successfully marked as sent to client: invoiceId=${id}`);
+    return invoice;
+  } catch (error) {
+    console.error('Error marking invoice as sent:', error);
+    throw new Error(`Error marking invoice as sent: ${error.message}`);
+  }
+},
 
   async regenerateInvoice(id) {
   try {
