@@ -3,6 +3,8 @@ const Employee = require('../models/employeeModel');
 const Organisation = require('../models/organisationModel');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
+const Level = require('../models/levelModel'); // Added import for Level model
+const Role = require('../models/roleModel'); // Added import for Role model
 const logger = require('../utils/logger');
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
@@ -60,7 +62,9 @@ const getAllEmployees = async (page = 1, limit = 10, query = '') => {
     const employees = await Employee.findAll({
       where: whereClause,
       include: [
-        { model: Organisation, as: 'Organisation' }
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' }, // Added Level model
+        { model: Role, as: 'Role' }, // Added Role model
       ],
       offset,
       limit
@@ -81,7 +85,9 @@ const getEmployeeById = async (employeeId) => {
   try {
     const employee = await Employee.findByPk(employeeId, {
       include: [
-        { model: Organisation, as: 'Organisation' }
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' }, // Added Level model
+        { model: Role, as: 'Role' }, // Added Role model
       ]
     });
     if (!employee) {
@@ -127,7 +133,9 @@ const searchEmployees = async (query) => {
         ]
       },
       include: [
-        { model: Organisation, as: 'Organisation' }
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' }, // Added Level model
+        { model: Role, as: 'Role' }, // Added Role model
       ]
     });
     return employees;
