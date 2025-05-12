@@ -25,14 +25,12 @@ const invoiceService = {
       }
       console.log(`Client found: ${client.ClientName}`);
 
-      // Get the appropriate month name based on numeric month
       const monthName = getMonthNameFromNumber(month);
       if (!monthName) {
         throw new Error(`Invalid month number: ${month}`);
       }
       
-      // Calculate the appropriate year for the billing data
-      // For months Jan-Mar (1-3), use the previous year, otherwise use the current year
+   
       const billingYear = month >= 1 && month <= 3 ? parseInt(year) + 1 : parseInt(year);
 
       // Calculate total billing amount for this client and month
@@ -44,7 +42,7 @@ const invoiceService = {
         BillingCurrencyID: client.BillingCurrencyID,
         Year: year,
         Month: month,
-        TotalAmount: billingTotal, // Now using the calculated billing total
+        TotalAmount: billingTotal, 
         OrganisationID: client.OrganisationID,
         BankDetailID: client.BankDetailID,
         Status: 'Generated',
@@ -144,31 +142,51 @@ const invoiceService = {
     }
   },
 
-  async deleteInvoice(id) {
-    try {
-      console.log(`Deleting invoice: invoiceId=${id}`);
-      const invoice = await Invoice.findByPk(id);
-      if (!invoice) {
-        console.error(`Invoice not found: invoiceId=${id}`);
-        throw new Error('Invoice not found');
-      }
-
-      if (invoice.PdfPath) {
-        const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
-        if (fs.existsSync(filePath)) {
-          console.log(`Deleting PDF file: ${filePath}`);
-          fs.unlinkSync(filePath);
-        }
-      }
-
-      await invoice.destroy();
-      console.log(`Invoice deleted: invoiceId=${id}`);
-      return { message: 'Invoice deleted successfully' };
-    } catch (error) {
-      console.error('Error deleting invoice:', error);
-      throw new Error(`Error deleting invoice: ${error.message}`);
+  // Updated deleteInvoice function in invoiceService.js
+async deleteInvoice(id) {
+  try {
+    console.log(`Deleting invoice: invoiceId=${id}`);
+    const invoice = await Invoice.findByPk(id);
+    if (!invoice) {
+      console.error(`Invoice not found: invoiceId=${id}`);
+      throw new Error('Invoice not found');
     }
-  },
+    console.log(`Found invoice:`, JSON.stringify(invoice, null, 2));
+
+    if (invoice.PdfPath) {
+      const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
+      console.log(`Checking if file exists at: ${filePath}`);
+      
+      try {
+        if (fs.existsSync(filePath)) {
+          console.log(`File exists. Deleting PDF file: ${filePath}`);
+          fs.unlinkSync(filePath);
+          console.log(`File deleted successfully`);
+        } else {
+          console.log(`File does not exist at path: ${filePath}`);
+        }
+      } catch (fileError) {
+        console.error(`Error handling file: ${fileError.message}`);
+       
+      }
+    } else {
+      console.log(`No PDF path found for invoice ${id}`);
+    }
+
+    try {
+      await invoice.destroy();
+      console.log(`Invoice deleted from database: invoiceId=${id}`);
+    } catch (dbError) {
+      console.error(`Database error deleting invoice: ${dbError.message}`);
+      throw dbError;
+    }
+    
+    return { message: 'Invoice deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting invoice:', error);
+    throw new Error(`Error deleting invoice: ${error.message}`);
+  }
+},
 
   async markInvoiceAsSent(id) {
     try {

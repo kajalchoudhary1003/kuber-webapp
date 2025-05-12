@@ -52,8 +52,10 @@ const OtherSettings = () => {
   const [randomCode, setRandomCode] = useState('');
   const { selectedYear, setSelectedYear } = useYearWithFallback();
 
-  const [backupName, setBackupName] = useState('');
-  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+const [backupFile, setBackupFile] = useState(null);
+const [backupName, setBackupName] = useState('');
+const [restoreMode, setRestoreMode] = useState('file'); // 'file' or 'name'
+const [restoreModalOpen, setRestoreModalOpen] = useState(false);
 
 
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -590,20 +592,53 @@ const OtherSettings = () => {
     setModalOpen(false);
   };
 
-  // Backup database
-  const backupDatabase = async () => {
-    try {
-      const response = await axios.post(BACKUP_API_BASE_URL);
-      if (response.data.success) {
-        alert(`${response.data.message} Backup file: ${response.data.backupFile}`);
+
+
+const backupDatabase = async () => {
+  try {
+    const response = await axios.post(BACKUP_API_BASE_URL);
+    if (response.data.success) {
+      const { backupFile } = response.data;
+      // Fetch the backup file as a blob
+      const downloadUrl = `${BACKUP_API_BASE_URL}/download/${backupFile}`;
+      const fileResponse = await axios.get(downloadUrl, { responseType: 'blob' });
+      const blob = fileResponse.data;
+
+      // Try to use showSaveFilePicker for modern browsers
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: backupFile,
+          types: [
+            {
+              description: 'SQLite Database',
+              accept: { 'application/x-sqlite3': ['.db'] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        alert(`${response.data.message} Backup file saved to selected location.`);
       } else {
-        alert(response.data.message);
+        // Fallback for browsers without showSaveFilePicker
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = backupFile;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        alert(`${response.data.message} Backup file: ${backupFile} has started downloading.`);
       }
-    } catch (error) {
-      console.error('Error during database backup:', error);
-      alert(error.response?.data?.message || 'Failed to backup database.');
+    } else {
+      alert(response.data.message);
     }
-  };
+  } catch (error) {
+    console.error('Error during database backup:', error);
+    alert(error.response?.data?.message || 'Failed to backup database.');
+  }
+};
 
 
   // Open restore modal
@@ -611,28 +646,57 @@ const OtherSettings = () => {
     setRestoreModalOpen(true);
   };
 
-  // Handle restore database
-  const restoreDatabase = async () => {
-    try {
-      if (!backupName) {
-        alert('Please enter a backup name.');
+  
+const restoreDatabase = async () => {
+  try {
+    let response;
+    
+    if (restoreMode === 'file') {
+      if (!backupFile) {
+        alert('Please select a backup file.');
         return;
       }
-      const response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, { backupName });
-      if (response.data.success) {
-        alert(response.data.message);
-      } else {
-        alert(response.data.message);
+      
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('backupFile', backupFile);
+      
+      // Make the API call
+      response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } else {
+      if (!backupName) {
+        alert('Please enter a backup filename.');
+        return;
       }
-      setRestoreModalOpen(false);
-      setBackupName('');
-
-
-    } catch (error) {
-      console.error('Error during database restore:', error);
-      alert(error.response?.data?.message || 'Failed to restore database.');
+      
+      response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, { backupName });
     }
-  };
+    
+    if (response.data.success) {
+      alert(response.data.message);
+      setRestoreModalOpen(false);
+      setBackupFile(null);
+      setBackupName('');
+      
+      // Refresh data after restore
+      fetchLevels();
+      fetchOrganisations();
+      fetchRoles();
+      fetchCurrencies();
+      fetchBankDetails();
+      fetchExchangeRates(selectedYear);
+    } else {
+      alert(response.data.message);
+    }
+  } catch (error) {
+    console.error('Error during database restore:', error);
+    alert(error.response?.data?.message || 'Failed to restore database.');
+  }
+};
 
   // Handle show more years
   const handleShowMoreYears = async (event) => {
@@ -710,36 +774,73 @@ const OtherSettings = () => {
       </div>
 
       {restoreModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs bg-opacity-10">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Restore Database</h3>
+  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs bg-opacity-10">
+    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+      <h3 className="text-lg font-semibold mb-4">Restore Database</h3>
+      
+      <div className="mb-4">
+        <div className="flex gap-4 mb-4">
+          <button 
+            className={`px-4 py-2 rounded-md ${restoreMode === 'file' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setRestoreMode('file')}
+          >
+            Upload File
+          </button>
+          <button 
+            className={`px-4 py-2 rounded-md ${restoreMode === 'name' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setRestoreMode('name')}
+          >
+            Enter Filename
+          </button>
+        </div>
+        
+        {restoreMode === 'file' ? (
+          <div>
+            <input
+              type="file"
+              onChange={(e) => setBackupFile(e.target.files[0])}
+              className="w-full border rounded-md p-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Select your database backup file (.db)
+            </p>
+          </div>
+        ) : (
+          <div>
             <Input
               type="text"
-              placeholder="Enter backup name (e.g., kuber_20250511_123456.db)"
+              placeholder="Enter backup filename (e.g., kuber_20250511_123456.db)"
               value={backupName}
               onChange={(e) => setBackupName(e.target.value)}
-              className="mb-4"
             />
-            <div className="flex justify-end gap-2">
-              <Button
-                onClick={() => {
-                  setRestoreModalOpen(false);
-                  setBackupName('');
-                }}
-                className="bg-gray-300 text-black hover:bg-gray-400 rounded-full"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={restoreDatabase}
-                className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
-              >
-                Restore
-              </Button>
-            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the name of a backup file in the server's backup directory
+            </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      
+      <div className="flex justify-end gap-2">
+        <Button
+          onClick={() => {
+            setRestoreModalOpen(false);
+            setBackupName('');
+            setBackupFile(null);
+          }}
+          className="bg-gray-300 text-black hover:bg-gray-400 rounded-full"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={restoreDatabase}
+          className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+        >
+          Restore
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
 
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
