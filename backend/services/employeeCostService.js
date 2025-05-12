@@ -4,18 +4,28 @@ const Employee = require('../models/employeeModel');
 
 const getEmployeeCostData = async (year) => {
   try {
+    console.log(`Fetching employee costs for year: ${year}`);
+    
     const employeeCosts = await EmployeeCost.findAll({
-      where: { Year: year },
+      where: { Year: parseInt(year, 10) },
       include: [
         {
           model: Employee,
           attributes: ['FirstName', 'LastName'],
-          paranoid: false, // Include soft-deleted employees
+          where: { Status: 'Active' }, // Only include active employees
+          required: true,
         },
       ],
     });
 
-    return employeeCosts.map((cost) => ({
+    console.log(`Found ${employeeCosts.length} employee costs for year ${year}`);
+
+    if (!employeeCosts || employeeCosts.length === 0) {
+      console.log(`No employee costs found for year ${year}`);
+      return [];
+    }
+
+    const formattedData = employeeCosts.map((cost) => ({
       id: cost.id,
       name: `${cost.Employee.FirstName} ${cost.Employee.LastName}`,
       Apr: cost.Apr,
@@ -31,7 +41,11 @@ const getEmployeeCostData = async (year) => {
       Feb: cost.Feb,
       Mar: cost.Mar,
     }));
+
+    console.log('Formatted employee cost data:', formattedData);
+    return formattedData;
   } catch (error) {
+    console.error(`Error fetching employee cost data: ${error.message}`);
     throw new Error(`Error fetching employee cost data: ${error.message}`);
   }
 };

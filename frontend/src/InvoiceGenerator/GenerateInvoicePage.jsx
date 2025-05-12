@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { useYear } from '../contexts/YearContexts';
 
 const fiscalMonths = [
   { label: 'April', value: 4 },
@@ -34,7 +33,35 @@ const GenerateInvoicePage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [allSelected, setAllSelected] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const { selectedYear, loading } = useYear();
+  const [financialYears, setFinancialYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFinancialYears = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE}/financial-years`);
+        if (!response.ok) throw new Error(`Failed to fetch years: ${response.status}`);
+        const data = await response.json();
+        const years = data.financialYears.map(year => year.year);
+        setFinancialYears(years);
+        
+        if (years.length > 0) {
+          const latestYear = Math.max(...years);
+          setSelectedYear(latestYear.toString());
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching financial years:', err);
+        alert('Failed to load financial years. Please refresh the page.');
+        setLoading(false);
+      }
+    };
+
+    fetchFinancialYears();
+  }, []);
 
   const fetchClients = async () => {
     try {
@@ -249,7 +276,19 @@ const GenerateInvoicePage = () => {
           <h2 className="text-2xl font-normal text-black">
             FY: {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex borderitems-center gap-3">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-40 rounded-full border-gray-300">
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent className='bg-white border-none'>
+                {financialYears.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {`${year}-${parseInt(year) + 1}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-40 rounded-full border-gray-300">
                 <SelectValue placeholder="Select Month" />
