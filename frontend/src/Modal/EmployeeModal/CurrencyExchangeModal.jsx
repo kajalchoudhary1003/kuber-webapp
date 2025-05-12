@@ -22,7 +22,12 @@ const CurrencyExchangeModal = ({
   const [currencyFrom, setCurrencyFrom] = useState('');
   const [currencyTo, setCurrencyTo] = useState('');
   const [exchangeRate, setExchangeRate] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({
+    currencyFrom: '',
+    currencyTo: '',
+    exchangeRate: '',
+    general: ''
+  });
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
@@ -34,24 +39,86 @@ const CurrencyExchangeModal = ({
       setCurrencyTo('');
       setExchangeRate('');
     }
-    setError('');
+    setErrors({
+      currencyFrom: '',
+      currencyTo: '',
+      exchangeRate: '',
+      general: ''
+    });
   }, [open, mode, initialData]);
+
+  const handleExchangeRateChange = (e) => {
+    const value = e.target.value;
+    setExchangeRate(value);
+    
+    // Clear error when user starts typing valid input
+    if (value && !isNaN(parseFloat(value)) && parseFloat(value) > 0) {
+      setErrors(prev => ({ ...prev, exchangeRate: '' }));
+    }
+  };
+
+  const handleCurrencyFromChange = (value) => {
+    setCurrencyFrom(value);
+    setErrors(prev => ({ ...prev, currencyFrom: '' }));
+    
+    // Check if same currency is selected
+    if (value === currencyTo) {
+      setErrors(prev => ({ ...prev, general: 'Currency From and Currency To cannot be the same.' }));
+    } else {
+      setErrors(prev => ({ ...prev, general: '' }));
+    }
+  };
+
+  const handleCurrencyToChange = (value) => {
+    setCurrencyTo(value);
+    setErrors(prev => ({ ...prev, currencyTo: '' }));
+    
+    // Check if same currency is selected
+    if (value === currencyFrom) {
+      setErrors(prev => ({ ...prev, general: 'Currency From and Currency To cannot be the same.' }));
+    } else {
+      setErrors(prev => ({ ...prev, general: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      currencyFrom: '',
+      currencyTo: '',
+      exchangeRate: '',
+      general: ''
+    };
+    
+    let isValid = true;
+    
+    if (!currencyFrom) {
+      newErrors.currencyFrom = 'Currency From is required';
+      isValid = false;
+    }
+    
+    if (!currencyTo) {
+      newErrors.currencyTo = 'Currency To is required';
+      isValid = false;
+    }
+    
+    if (!exchangeRate || isNaN(parseFloat(exchangeRate)) || parseFloat(exchangeRate) <= 0) {
+      newErrors.exchangeRate = 'Please enter a valid positive Exchange Rate';
+      isValid = false;
+    }
+    
+    if (currencyFrom && currencyTo && currencyFrom === currencyTo) {
+      newErrors.general = 'Currency From and Currency To cannot be the same';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-
-    // Validate inputs
-    if (!currencyFrom || !currencyTo) {
-      setError('Please select both Currency From and Currency To.');
-      return;
-    }
-    if (!exchangeRate || isNaN(parseFloat(exchangeRate)) || parseFloat(exchangeRate) <= 0) {
-      setError('Please enter a valid positive Exchange Rate.');
-      return;
-    }
-    if (currencyFrom === currencyTo) {
-      setError('Currency From and Currency To cannot be the same.');
+    
+    if (!validateForm()) {
       return;
     }
 
@@ -73,12 +140,18 @@ const CurrencyExchangeModal = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {errors.general && <div className="text-red-500 text-sm">{errors.general}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700">Currency From</label>
-              <Select value={currencyFrom} onValueChange={setCurrencyFrom} required>
-                <SelectTrigger className="w-full">
+              <Select 
+                value={currencyFrom} 
+                onValueChange={handleCurrencyFromChange} 
+                required
+              >
+                <SelectTrigger 
+                  className={`w-full focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.currencyFrom ? 'border-red-500' : ''}`}
+                >
                   <SelectValue placeholder="Currency From" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none shadow-md">
@@ -89,12 +162,21 @@ const CurrencyExchangeModal = ({
                   ))}
                 </SelectContent>
               </Select>
+              {errors.currencyFrom && (
+                <p className="text-red-500 text-sm mt-1">{errors.currencyFrom}</p>
+              )}
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700">Currency To</label>
-              <Select value={currencyTo} onValueChange={setCurrencyTo} required>
-                <SelectTrigger className="w-full">
+              <Select 
+                value={currencyTo} 
+                onValueChange={handleCurrencyToChange} 
+                required
+              >
+                <SelectTrigger 
+                  className={`w-full focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.currencyTo ? 'border-red-500' : ''}`}
+                >
                   <SelectValue placeholder="Currency To" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none shadow-md">
@@ -105,6 +187,9 @@ const CurrencyExchangeModal = ({
                   ))}
                 </SelectContent>
               </Select>
+              {errors.currencyTo && (
+                <p className="text-red-500 text-sm mt-1">{errors.currencyTo}</p>
+              )}
             </div>
           </div>
 
@@ -115,24 +200,24 @@ const CurrencyExchangeModal = ({
               step="0.000001"
               placeholder="Exchange Rate"
               value={exchangeRate}
-              onChange={(e) => setExchangeRate(e.target.value)}
+              onChange={handleExchangeRateChange}
               required
               min="0.000001"
+              className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.exchangeRate ? 'border-red-500' : ''}`}
+              aria-invalid={errors.exchangeRate ? "true" : "false"}
+              aria-describedby={errors.exchangeRate ? "exchange-rate-error" : undefined}
             />
+            {errors.exchangeRate && (
+              <p id="exchange-rate-error" className="text-red-500 text-sm mt-1">
+                {errors.exchangeRate}
+              </p>
+            )}
           </div>
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="border-gray-300 rounded-3xl px-6 py-2"
-            >
-              Cancel
-            </Button>
-            <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer"
             >
               {mode === 'edit' ? 'Update' : 'Create'}
             </Button>

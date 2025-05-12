@@ -11,34 +11,41 @@ import { Button } from "@/components/ui/button";
 
 const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [roleName, setRoleName] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     console.log('RoleModal useEffect:', { mode, initialData });
     if (mode === 'edit' && initialData?.RoleName) {
       setRoleName(initialData.RoleName);
+      setError('');
     } else {
       setRoleName('');
+      setError('');
     }
   }, [open, mode, initialData]);
 
   const handleChange = (e) => {
     setRoleName(e.target.value);
+    // Clear error when user starts typing
+    if (e.target.value.trim()) {
+      setError('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!roleName.trim()) {
-      console.error('Role name is required');
-      alert('Role name is required');
+      setError('Role name is required');
       return;
     }
     try {
       console.log('Submitting role:', { id: initialData?.id, RoleName: roleName });
       await onSubmit({ id: initialData?.id, RoleName: roleName });
+      setError('');
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to submit role. Please try again.');
+      setError('Failed to submit role. Please try again.');
     }
   };
 
@@ -61,22 +68,21 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
               onChange={handleChange}
               required
               placeholder="Enter role name"
-              className="border-gray-300"
+              className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${error ? 'border-red-500' : 'border-gray-300'}`}
+              aria-invalid={error ? "true" : "false"}
+              aria-describedby={error ? "roleName-error" : undefined}
             />
+            {error && (
+              <p id="roleName-error" className="text-red-500 text-sm mt-1">
+                {error}
+              </p>
+            )}
           </div>
 
           <DialogFooter className="flex justify-end pt-4">
             <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="mr-2 rounded-3xl"
-            >
-              Cancel
-            </Button>
-            <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {mode === 'edit' ? 'Update' : 'Create'}
             </Button>

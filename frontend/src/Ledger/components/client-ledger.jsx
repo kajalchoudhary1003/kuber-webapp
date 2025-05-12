@@ -117,7 +117,13 @@ export default function ClientLedger() {
   }
 
   const isButtonDisabled = () => {
+    // Button should be disabled if:
+    // 1. No client is selected
+    // 2. No period is selected
+    // 3. If custom period is selected but date range is not complete
+    
     if (!selectedClient) return true;
+    if (!selectedPeriod) return true;
     if (selectedPeriod === "custom" && (!dateRange || dateRange.length !== 2)) return true;
     return false;
   }
@@ -228,11 +234,11 @@ export default function ClientLedger() {
                   <SelectValue placeholder="Select Period" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
-                  <SelectItem value="1month">Last 1 month</SelectItem>
-                  <SelectItem value="3months">Last 3 months</SelectItem>
-                  <SelectItem value="6months">Last 6 months</SelectItem>
-                  <SelectItem value="1year">Last 1 year</SelectItem>
-                  <SelectItem value="custom">Custom Date Range</SelectItem>
+                  <SelectItem value="1month" className="cursor-pointer">Last 1 month</SelectItem>
+                  <SelectItem value="3months" className="cursor-pointer">Last 3 months</SelectItem>
+                  <SelectItem value="6months" className="cursor-pointer">Last 6 months</SelectItem>
+                  <SelectItem value="1year" className="cursor-pointer">Last 1 year</SelectItem>
+                  <SelectItem value="custom" className="cursor-pointer">Custom Date Range</SelectItem>
                 </SelectContent>
               </Select>
 

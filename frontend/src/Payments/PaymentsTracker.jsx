@@ -145,6 +145,7 @@ export default function PaymentTracker() {
       DatePicker: {
         activeBorderColor: '#000000',   // Black border when active
         hoverBorderColor: '#000000',    // Black border on hover
+        activeShadow: '0 0 0 3px rgb(209 213 219)', // gray-300 ring with width 3
       }
     }
   }
@@ -167,7 +168,7 @@ export default function PaymentTracker() {
                 <div className="text-red-500">{error}</div>
               ) : (
                 <Select onValueChange={setSelectedClient}>
-                  <SelectTrigger className="w-[180px] cursor-pointer">
+                  <SelectTrigger className="w-[180px] cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                     <SelectValue placeholder="Select Client" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
@@ -202,7 +203,7 @@ export default function PaymentTracker() {
               placeholder="Reconciliation Note"
               value={reconciliationNote}
               onChange={(e) => setReconciliationNote(e.target.value)}
-              className="min-h-[80px]"
+              className="min-h-[80px] focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
             />
           </div>
         </CardContent>
@@ -241,7 +242,7 @@ export default function PaymentTracker() {
                   id="amount" 
                   value={amount} 
                   onChange={(e) => setAmount(e.target.value)} 
-                  className="pl-7"
+                  className="pl-7 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
                   type="number"
                   step="0.01" 
                 />
@@ -250,11 +251,17 @@ export default function PaymentTracker() {
 
             <div className="space-y-2">
               <Label htmlFor="remark">Remark</Label>
-              <Input id="remark" placeholder="Remark" value={remark} onChange={(e) => setRemark(e.target.value)} />
+              <Input 
+                id="remark" 
+                placeholder="Remark" 
+                value={remark} 
+                onChange={(e) => setRemark(e.target.value)} 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
             </div>
 
             <Button 
-              className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer" 
+              className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0" 
               onClick={handleRecordPayment}
               disabled={!selectedClient || !date || !amount || submitLoading}
             >
