@@ -27,6 +27,11 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
     Email: '',
     Status: 'Active',
   });
+  
+  const [errors, setErrors] = useState({
+    ContactNumber: '',
+    Email: '',
+  });
 
   useEffect(() => {
     if (open && initialData) {
@@ -43,6 +48,10 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
         Email: initialData.Email || '',
         Status: initialData.Status || 'Active',
       });
+      setErrors({
+        ContactNumber: '',
+        Email: '',
+      });
     } else {
       resetForm();
     }
@@ -58,16 +67,83 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if ((name === 'CTCAnnual' || name === 'ContactNumber') && isNaN(Number(value))) return;
+    
+    if (name === 'CTCAnnual' && isNaN(Number(value))) return;
+    
+    if (name === 'ContactNumber') {
+      // Only allow digits and limit to 10 characters
+      const digitsOnly = value.replace(/\D/g, '');
+      if (digitsOnly.length > 10) return;
+      
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+      
+      // Validate phone number
+      if (digitsOnly.length !== 10 && digitsOnly.length > 0) {
+        setErrors(prev => ({ ...prev, ContactNumber: 'Phone number must be exactly 10 digits' }));
+      } else {
+        setErrors(prev => ({ ...prev, ContactNumber: '' }));
+      }
+      return;
+    }
+    
+    if (name === 'Email') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value) && value.length > 0) {
+        setErrors(prev => ({ ...prev, Email: 'Please enter a valid email address' }));
+      } else {
+        setErrors(prev => ({ ...prev, Email: '' }));
+      }
+      return;
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Final validation before submission
+    const newErrors = {
+      ContactNumber: '',
+      Email: '',
+    };
+    
+    let hasErrors = false;
+    
+    if (formData.ContactNumber.length !== 10) {
+      newErrors.ContactNumber = 'Phone number must be exactly 10 digits';
+      hasErrors = true;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.Email)) {
+      newErrors.Email = 'Please enter a valid email address';
+      hasErrors = true;
+    }
+    
     if (!formData.OrganisationID) {
       alert('Please select an organisation');
       return;
     }
+    
+    if (!formData.RoleID) {
+      alert('Please select a role');
+      return;
+    }
+    
+    if (!formData.LevelID) {
+      alert('Please select a level');
+      return;
+    }
+    
+    if (hasErrors) {
+      setErrors(newErrors);
+      return;
+    }
+    
     try {
       onClose(formData);
     } catch (err) {
@@ -90,6 +166,10 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
       Email: '',
       Status: 'Active',
     });
+    setErrors({
+      ContactNumber: '',
+      Email: '',
+    });
   };
 
   return (
@@ -103,26 +183,45 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
           <div className="space-y-2 flex gap-4">
             <div className="w-full">
               <Label className="mb-2">First Name</Label>
-              <Input name="FirstName" value={formData.FirstName} onChange={handleChange} required />
+              <Input 
+                name="FirstName" 
+                value={formData.FirstName} 
+                onChange={handleChange} 
+                required 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
             </div>
             <div className="w-full">
               <Label className="mb-2">Last Name</Label>
-              <Input name="LastName" value={formData.LastName} onChange={handleChange} required />
+              <Input 
+                name="LastName" 
+                value={formData.LastName} 
+                onChange={handleChange} 
+                required 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
             </div>
           </div>
 
           <div className="flex gap-4">
             <div className="w-full">
               <Label className="mb-2">Employee Code</Label>
-              <Input name="EmpCode" value={formData.EmpCode} onChange={handleChange} required />
+              <Input 
+                name="EmpCode" 
+                value={formData.EmpCode} 
+                onChange={handleChange} 
+                required 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
             </div>
             <div className="w-full">
               <Label className="mb-2">Role</Label>
               <Select
                 value={formData.RoleID}
                 onValueChange={(value) => setFormData({ ...formData, RoleID: value })}
+                required
               >
-                <SelectTrigger>
+                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
@@ -148,8 +247,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               <Select
                 value={formData.LevelID}
                 onValueChange={(value) => setFormData({ ...formData, LevelID: value })}
+                required
               >
-                <SelectTrigger>
+                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue placeholder="Select Level" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
@@ -173,8 +273,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                 value={formData.OrganisationID}
                 onValueChange={(value) => setFormData({ ...formData, OrganisationID: value })}
                 disabled={organisations.length === 0}
+                required
               >
-                <SelectTrigger>
+                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue
                     placeholder={organisations.length === 0 ? 'No organisations available' : 'Select Organisation'}
                   />
@@ -204,11 +305,17 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                 value={formData.CTCAnnual}
                 onChange={handleChange}
                 required
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
               />
             </div>
             <div className="w-full">
               <Label className="mb-2">CTC Monthly (₹)</Label>
-              <Input value={formData.CTCMonthly} readOnly className="opacity-60" />
+              <Input 
+                value={formData.CTCMonthly} 
+                readOnly 
+                required
+                className="opacity-60 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0" 
+              />
             </div>
           </div>
 
@@ -219,13 +326,25 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                 name="ContactNumber"
                 value={formData.ContactNumber}
                 onChange={handleChange}
-                maxLength={10}
                 required
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
               />
+              {errors.ContactNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.ContactNumber}</p>
+              )}
             </div>
             <div className="w-full">
               <Label className="mb-2">Email</Label>
-              <Input name="Email" value={formData.Email} onChange={handleChange} required />
+              <Input 
+                name="Email" 
+                value={formData.Email} 
+                onChange={handleChange} 
+                required 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
+              {errors.Email && (
+                <p className="text-red-500 text-sm mt-1">{errors.Email}</p>
+              )}
             </div>
           </div>
 
@@ -234,8 +353,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
             <Select
               value={formData.Status}
               onValueChange={(value) => setFormData({ ...formData, Status: value })}
+              required
             >
-              <SelectTrigger>
+              <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent className="bg-white border-none">
@@ -248,7 +368,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
           <DialogFooter className="pt-4">
             <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 text-white hover:bg-white cursor-pointer hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {initialData ? 'Update' : 'Create'}
             </Button>
