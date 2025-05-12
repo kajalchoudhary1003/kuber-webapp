@@ -101,29 +101,35 @@ const addFinancialYear = async () => {
     logger.info(`Active employees found: ${activeEmployees.length}`);
 
     // Create employee costs for active employees
-    const employeeCosts = activeEmployees.map(employee => ({
-      EmployeeID: employee.id,
-      Year: parseInt(newFinancialYear, 10),
-      Apr: employee.CTCMonthly,
-      May: employee.CTCMonthly,
-      Jun: employee.CTCMonthly,
-      Jul: employee.CTCMonthly,
-      Aug: employee.CTCMonthly,
-      Sep: employee.CTCMonthly,
-      Oct: employee.CTCMonthly,
-      Nov: employee.CTCMonthly,
-      Dec: employee.CTCMonthly,
-      Jan: employee.CTCMonthly,
-      Feb: employee.CTCMonthly,
-      Mar: employee.CTCMonthly,
-    }));
+    const employeeCosts = activeEmployees.map(employee => {
+      // Get the employee's CTCMonthly value
+      const monthlyCTC = employee.CTCMonthly || 0;
+      logger.info(`Creating employee cost for employee ${employee.id} with monthly CTC: ${monthlyCTC}`);
+      
+      return {
+        EmployeeID: employee.id,
+        Year: parseInt(newFinancialYear, 10),
+        Apr: monthlyCTC,
+        May: monthlyCTC,
+        Jun: monthlyCTC,
+        Jul: monthlyCTC,
+        Aug: monthlyCTC,
+        Sep: monthlyCTC,
+        Oct: monthlyCTC,
+        Nov: monthlyCTC,
+        Dec: monthlyCTC,
+        Jan: monthlyCTC,
+        Feb: monthlyCTC,
+        Mar: monthlyCTC,
+      };
+    });
 
     if (employeeCosts.length > 0) {
-      await EmployeeCost.bulkCreate(employeeCosts, { 
+      const createdCosts = await EmployeeCost.bulkCreate(employeeCosts, { 
         transaction,
         ignoreDuplicates: true // This will skip any duplicates instead of failing
       });
-      logger.info(`Created employee costs for ${employeeCosts.length} employees`);
+      logger.info(`Created employee costs for ${createdCosts.length} employees`);
     }
 
     await transaction.commit();

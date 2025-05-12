@@ -14,27 +14,33 @@ const BillingSetup = () => {
   const [tempValue, setTempValue] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
   const [currencyCode, setCurrencyCode] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const { selectedYear, loading, error } = useYear();
+  const { selectedYear } = useYear();
 
+  // Fetch clients when selectedYear changes
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        setLoading(true);
         if (selectedYear) {
           const response = await axios.get(`${API_BASE_URL}/clients/${selectedYear}`);
           setClients(response.data);
         }
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching clients:', err);
+        setLoading(false);
       }
     };
-    if (selectedYear) fetchClients();
+    fetchClients();
   }, [selectedYear]);
 
+  // Fetch billing data when client or year changes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (selectedClient) {
+        if (selectedClient && selectedYear) {
           const response = await axios.get(`${API_BASE_URL}/data/${selectedClient}/${selectedYear}`);
           setData(response.data);
           if (response.data.length > 0) {
@@ -82,8 +88,7 @@ const BillingSetup = () => {
     }
   };
 
-  if (loading) return <div>Loading financial year...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col rounded-3xl shadow-lg bg-white items-center p-8 px-4">
@@ -108,7 +113,9 @@ const BillingSetup = () => {
               <SelectValue placeholder={selectedYear || 'Select Year'} />
             </SelectTrigger>
             <SelectContent className="bg-white">
-              <SelectItem className="cursor-pointer" value={selectedYear}>{selectedYear}</SelectItem>
+              <SelectItem className="cursor-pointer" value={selectedYear}>
+                {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

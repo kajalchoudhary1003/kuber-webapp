@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useYear } from '../../../contexts/YearContexts';
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -21,6 +22,7 @@ const cache = {
 };
 
 const EmployeeMaster = () => {
+  const { selectedYear } = useYear();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -190,7 +192,7 @@ const EmployeeMaster = () => {
           await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
           toast.success('Employee updated successfully');
         } else {
-          await axios.post(`${API_BASE_URL}/employees`, newEmployee);
+          await axios.post(`${API_BASE_URL}/employees`, { ...newEmployee, year: selectedYear });
           toast.success('Employee created successfully');
         }
         fetchEmployees(page);

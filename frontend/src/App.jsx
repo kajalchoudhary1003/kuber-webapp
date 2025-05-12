@@ -9,7 +9,7 @@ import InvoiceGeneratorPage from './InvoiceGenerator/InvoiceGenerator';
 import AdminPage from './Admin/AdminPage/page/admin';
 import EmployeeDetail from './Admin/EmployeeDetailPage/EmployeeDetail';
 import ClientDetail from './Admin/ClientDetailPage/ClientDetails';
-import { YearProvider } from './contexts/YearContexts'; // ✅ IMPORT YearProvider
+import { YearProvider } from './contexts/YearContexts';
 
 // Sample pages
 const Dashboard = () => <div className="p-6 text-lg font-medium">Dashboard Page</div>;
@@ -19,7 +19,6 @@ const AppContent = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
   const [key, setKey] = useState(0);
 
   useEffect(() => {
@@ -53,11 +52,11 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <YearProvider> {/* ✅ WRAPPED YearProvider */}
+    <YearProvider>
+      <BrowserRouter>
         <AppContent />
-      </YearProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </YearProvider>
   );
 };
 

@@ -3,11 +3,13 @@ const Employee = require('../models/employeeModel');
 const Organisation = require('../models/organisationModel');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
+const EmployeeCost = require('../models/employeeCostModel');
+const FinancialYear = require('../models/financialYearModel');
 const logger = require('../utils/logger');
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
-const createEmployee = async (employeeData) => {
+const createEmployee = async (employeeData, year) => {
   try {
     const existingEmployee = await Employee.findOne({
       where: { EmpCode: employeeData.EmpCode }
@@ -15,7 +17,42 @@ const createEmployee = async (employeeData) => {
     if (existingEmployee) {
       throw new Error('Employee with this code already exists');
     }
+
+    // Create the employee
     const employee = await Employee.create(employeeData);
+
+    // Get all financial years
+    const financialYears = await FinancialYear.findAll({
+      order: [['year', 'DESC']]
+    });
+
+    if (financialYears.length === 0) {
+      throw new Error('No financial years found');
+    }
+
+    // Create employee cost records for all financial years
+    const monthlyCTC = employee.CTCMonthly || 0; // Fallback to 0 if CTCMonthly is not set
+    const employeeCosts = financialYears.map(year => ({
+      EmployeeID: employee.id,
+      Year: parseInt(year.year, 10),
+      Apr: monthlyCTC,
+      May: monthlyCTC,
+      Jun: monthlyCTC,
+      Jul: monthlyCTC,
+      Aug: monthlyCTC,
+      Sep: monthlyCTC,
+      Oct: monthlyCTC,
+      Nov: monthlyCTC,
+      Dec: monthlyCTC,
+      Jan: monthlyCTC,
+      Feb: monthlyCTC,
+      Mar: monthlyCTC
+    }));
+
+    await EmployeeCost.bulkCreate(employeeCosts, {
+      ignoreDuplicates: true // This will skip any duplicates instead of failing
+    });
+
     return employee;
   } catch (error) {
     throw new Error(`Error creating employee: ${error.message}`);

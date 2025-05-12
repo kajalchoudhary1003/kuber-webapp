@@ -26,7 +26,8 @@ const employeeController = {
 
   async createEmployee(req, res) {
     try {
-      const employee = await employeeService.createEmployee(req.body);
+      const { year, ...employeeData } = req.body;
+      const employee = await employeeService.createEmployee(employeeData, year);
       res.status(201).json(employee);
     } catch (error) {
       if (error.message.includes('already exists')) {
