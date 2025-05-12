@@ -3,6 +3,7 @@ const Invoice = require('../models/invoiceModel');
 const Client = require('../models/clientModel');
 const Currency = require('../models/currencyModel');
 const Employee = require('../models/employeeModel');
+const BillingDetail = require('../models/billingDetailModel');
 const { createInvoicePdf, loadLogo } = require('../utils/pdfUtils');
 const path = require('path');
 const fs = require('fs');
@@ -24,12 +25,26 @@ const invoiceService = {
       }
       console.log(`Client found: ${client.ClientName}`);
 
+      // Get the appropriate month name based on numeric month
+      const monthName = getMonthNameFromNumber(month);
+      if (!monthName) {
+        throw new Error(`Invalid month number: ${month}`);
+      }
+      
+      // Calculate the appropriate year for the billing data
+      // For months Jan-Mar (1-3), use the previous year, otherwise use the current year
+      const billingYear = month >= 1 && month <= 3 ? parseInt(year) + 1 : parseInt(year);
+
+      // Calculate total billing amount for this client and month
+      const billingTotal = await calculateTotalBillingAmount(clientId, billingYear, monthName);
+      console.log(`Calculated total billing amount: ${billingTotal}`);
+
       const invoice = await Invoice.create({
         ClientID: client.id,
         BillingCurrencyID: client.BillingCurrencyID,
         Year: year,
         Month: month,
-        TotalAmount: 0, // TODO: Calculate actual total amount if needed
+        TotalAmount: billingTotal, // Now using the calculated billing total
         OrganisationID: client.OrganisationID,
         BankDetailID: client.BankDetailID,
         Status: 'Generated',
@@ -51,7 +66,7 @@ const invoiceService = {
             clientId: client.id,
             year,
             month,
-            totalAmount: 0,
+            totalAmount: billingTotal, // Using calculated amount for PDF as well
             logoBase64: loadLogo(),
           },
           [],
@@ -192,6 +207,16 @@ const invoiceService = {
         throw new Error('Invoice not found');
       }
 
+      // Recalculate total amount for this invoice
+      const monthName = getMonthNameFromNumber(invoice.Month);
+      const billingYear = invoice.Month >= 1 && invoice.Month <= 3 ? parseInt(invoice.Year) + 1 : parseInt(invoice.Year);
+      const billingTotal = await calculateTotalBillingAmount(invoice.ClientID, billingYear, monthName);
+      
+      // Update the invoice with new total
+      if (billingTotal !== invoice.TotalAmount) {
+        await invoice.update({ TotalAmount: billingTotal });
+      }
+
       const invoiceDir = path.join(__dirname, '../invoices');
       const invoiceFilePath = path.join(invoiceDir, `${invoice.id}.pdf`);
       console.log(`Regenerating PDF at: ${invoiceFilePath}`);
@@ -200,7 +225,7 @@ const invoiceService = {
           clientId: invoice.ClientID,
           year: invoice.Year,
           month: invoice.Month,
-          totalAmount: invoice.TotalAmount,
+          totalAmount: billingTotal, // Using recalculated amount
           logoBase64: loadLogo(),
         },
         [],
@@ -215,5 +240,57 @@ const invoiceService = {
     }
   },
 };
+
+// Helper function to calculate total billing amount for a client and month
+async function calculateTotalBillingAmount(clientId, year, monthName) {
+  try {
+    console.log(`Calculating total for clientId=${clientId}, year=${year}, month=${monthName}`);
+    
+    // Find all billing details for this client and year
+    const billingDetails = await BillingDetail.findAll({
+      where: {
+        ClientID: clientId,
+        Year: year
+      }
+    });
+    
+    if (!billingDetails || billingDetails.length === 0) {
+      console.warn(`No billing details found for clientId=${clientId}, year=${year}`);
+      return 0;
+    }
+    
+    // Sum up the amounts for the specified month
+    const total = billingDetails.reduce((sum, detail) => {
+      const monthValue = detail[monthName] || 0;
+      return sum + parseFloat(monthValue);
+    }, 0);
+    
+    console.log(`Total calculated: ${total} for month ${monthName}`);
+    return total;
+  } catch (error) {
+    console.error('Error calculating total billing amount:', error);
+    throw new Error(`Error calculating billing total: ${error.message}`);
+  }
+}
+
+// Helper function to convert month number to name
+function getMonthNameFromNumber(monthNumber) {
+  const fiscalMonthMap = {
+    1: 'Jan', // January
+    2: 'Feb', // February
+    3: 'Mar', // March
+    4: 'Apr', // April
+    5: 'May', // May
+    6: 'Jun', // June
+    7: 'Jul', // July
+    8: 'Aug', // August
+    9: 'Sep', // September
+    10: 'Oct', // October
+    11: 'Nov', // November
+    12: 'Dec', // December
+  };
+  
+  return fiscalMonthMap[monthNumber];
+}
 
 module.exports = invoiceService;
