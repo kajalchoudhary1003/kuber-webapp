@@ -93,8 +93,8 @@ const EmployeeCost = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
+    <div className="">
+      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
         <div className="flex justify-between items-center w-full mb-2">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
           <div className="w-32">
@@ -113,14 +113,14 @@ const EmployeeCost = () => {
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
-        <div className="w-full overflow-x-auto">
+        <div className="md:w-6xl 2xl:w-auto overflow-x-auto">
           {selectedYear && !yearLoading && !loading && data.length > 0 ? (
             <Table className="bg-white shadow-sm w-full table-fixed">
               <TableHeader className="text-[16px] bg-[#EDEFF2]">
                 <TableRow className="border-b border-[#9DA4B3]">
-                  <TableHead className="px-3 py-2 w-[200px]">Name</TableHead>
+                  <TableHead className="px-3 py-2 w-[200px] text-left">Name</TableHead>
                   {fiscalMonths.map((month) => (
-                    <TableHead key={month} className="px-3 py-2 w-[100px]">{month}</TableHead>
+                    <TableHead key={month} className="px-3 py-2 w-[100px] text-center">{month}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -131,16 +131,16 @@ const EmployeeCost = () => {
                     key={item.id}
                     className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
                   >
-                    <TableCell className="px-3 py-2 text-[14px] w-[200px] truncate">
+                    <TableCell className="px-3 py-2 text-[14px] w-[200px] truncate text-left">
                       {item.name}
                     </TableCell>
                     {fiscalMonths.map((column) => (
                       <TableCell
                         key={`${item.id}-${column}`}
-                        className="px-3 py-2 text-[14px] w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+                        className="px-3 py-2 text-[14px] w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
                         onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                       >
-                        <div className="max-w-[100px] whitespace-nowrap">
+                        <div className="max-w-[100px] whitespace-nowrap flex justify-center">
                           {editIndex.row === rowIndex && editIndex.column === column ? (
                             <Input
                               id={`cost-${item.id}-${column}`}
@@ -149,7 +149,7 @@ const EmployeeCost = () => {
                               onChange={handleChange}
                               onBlur={handleBlur}
                               type="number"
-                              className="h-8 text-sm w-full max-w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+                              className="h-8 text-sm w-full max-w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
                               autoFocus
                             />
                           ) : (

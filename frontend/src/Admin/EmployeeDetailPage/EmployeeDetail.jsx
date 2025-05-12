@@ -205,7 +205,7 @@ export const EmployeeDetail = () => {
       <div className="top-bar flex justify-between w-full mb-5">
         <h2 className="text-[24px] text-[#272727]">{`${employee.FirstName} ${employee.LastName}`}</h2>
         <Button
-          className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+          className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
           onClick={handleBack}
         >
           Back to Employee Master
@@ -217,13 +217,13 @@ export const EmployeeDetail = () => {
           <h2 className="text-[24px] text-[#272727]">Employee Details</h2>
           <div className="flex gap-6">
             <Button
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
               onClick={handleEdit}
             >
               Edit
             </Button>
             <Button
-              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#FF6E65] cursor-pointer text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
               onClick={handleDelete}
             >
               Delete

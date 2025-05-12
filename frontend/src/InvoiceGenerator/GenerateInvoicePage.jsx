@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -81,7 +81,7 @@ const GenerateInvoicePage = () => {
       if (!res.ok) throw new Error(`Failed to fetch invoices: ${res.status}`);
       const data = await res.json();
       setGeneratedInvoices(data);
-      console.log("Generated invoices data:", data);
+      console.log('Generated invoices data:', data);
     } catch (err) {
       console.error('Error fetching invoices:', err);
       alert('Failed to fetch invoices. Please try again.');
@@ -95,8 +95,53 @@ const GenerateInvoicePage = () => {
     }
   }, [selectedYear, selectedMonth]);
 
+  // Compute mergedInvoices using useMemo
+  const mergedInvoices = useMemo(() => {
+    return clients.map((client) => {
+      const invoice = generatedInvoices.find((inv) => inv.ClientID === client.id);
+      return invoice
+        ? {
+            id: invoice.id,
+            clientId: client.id,
+            clientName: client.ClientName,
+            totalAmount: parseFloat(invoice.TotalAmount || 0),
+            currencyCode: invoice.BillingCurrency?.CurrencyCode || '',
+            generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
+            invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
+            year: invoice.Year,
+            month: invoice.Month,
+            status: invoice.Status,
+            pdfPath: invoice.PdfPath,
+          }
+        : {
+            id: null,
+            clientId: client.id,
+            clientName: client.ClientName,
+            totalAmount: 0,
+            currencyCode: '',
+            generatedOn: null,
+            invoicedOn: null,
+            year: null,
+            month: null,
+            status: 'Not generated yet',
+            pdfPath: null,
+          };
+    });
+  }, [clients, generatedInvoices]);
+
+  // Auto-select generated invoices
+  useEffect(() => {
+    const generatedInvoiceIds = mergedInvoices
+      .filter((invoice) => invoice.id && invoice.pdfPath)
+      .map((invoice) => invoice.id);
+    setSelectedRows((prev) => {
+      const newSelection = [...new Set([...prev, ...generatedInvoiceIds])];
+      return newSelection;
+    });
+  }, [mergedInvoices]);
+
   const handleGenerateInvoice = async () => {
-    const toGenerate = mergedInvoices.filter(inv => selectedRows.includes(inv.clientId) && !inv.id);
+    const toGenerate = mergedInvoices.filter((inv) => selectedRows.includes(inv.clientId) && !inv.id);
     console.log('Invoices to generate:', toGenerate);
     if (toGenerate.length === 0) {
       alert('No invoices selected to generate.');
@@ -113,10 +158,9 @@ const GenerateInvoicePage = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          // throw new Error(`Failed to generate invoice for ${inv.clientName}: ${errorData.error}`);
+          throw new Error(`Failed to generate invoice for ${inv.clientName}: ${errorData.error}`);
         }
       }
-      setSelectedRows([]);
       await fetchGeneratedInvoices();
       alert('Invoices generated successfully.');
     } catch (err) {
@@ -126,7 +170,7 @@ const GenerateInvoicePage = () => {
   };
 
   const handleDelete = async () => {
-    const toDelete = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
+    const toDelete = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
     if (toDelete.length === 0) {
       alert('No generated invoices selected to delete.');
       return;
@@ -141,7 +185,6 @@ const GenerateInvoicePage = () => {
         const response = await fetch(`${API_BASE}/invoices/delete/${inv.id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error(`Failed to delete invoice ${inv.id}`);
       }
-      setSelectedRows([]);
       await fetchGeneratedInvoices();
       alert(`${toDelete.length} invoice(s) deleted successfully.`);
     } catch (err) {
@@ -151,7 +194,7 @@ const GenerateInvoicePage = () => {
   };
 
   const handleMarkAsSent = async () => {
-    const toMark = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
+    const toMark = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
     if (toMark.length === 0) {
       alert('No generated invoices selected to mark as sent.');
       return;
@@ -161,7 +204,6 @@ const GenerateInvoicePage = () => {
         const response = await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
         if (!response.ok) throw new Error(`Failed to mark invoice ${inv.id} as sent`);
       }
-      setSelectedRows([]);
       await fetchGeneratedInvoices();
       alert('Invoices marked as sent successfully.');
     } catch (err) {
@@ -171,13 +213,11 @@ const GenerateInvoicePage = () => {
   };
 
   const handleRegenerate = async () => {
-    const toRegenerate = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
+    const toRegenerate = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
     if (toRegenerate.length === 0) {
       alert('No generated invoices selected to regenerate.');
       return;
     }
-
-    
 
     try {
       for (const inv of toRegenerate) {
@@ -190,7 +230,6 @@ const GenerateInvoicePage = () => {
           throw new Error(`Failed to regenerate invoice ${inv.id}: ${errorData.error}`);
         }
       }
-      setSelectedRows([]);
       await fetchGeneratedInvoices();
       alert(`${toRegenerate.length} invoice(s) regenerated successfully.`);
     } catch (err) {
@@ -203,48 +242,14 @@ const GenerateInvoicePage = () => {
     window.open(`${API_BASE}/invoices/view/${filePath}`, '_blank');
   };
 
-  const mergedInvoices = clients.map((client) => {
-    const invoice = generatedInvoices.find((inv) => inv.ClientID === client.id);
-    const result = invoice
-      ? {
-          id: invoice.id,
-          clientId: client.id,
-          clientName: client.ClientName,
-          totalAmount: parseFloat(invoice.TotalAmount || 0),
-          currencyCode: invoice.BillingCurrency?.CurrencyCode || '',
-          generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
-          invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
-          year: invoice.Year,
-          month: invoice.Month,
-          status: invoice.Status,
-          pdfPath: invoice.PdfPath,
-        }
-      : {
-          id: null,
-          clientId: client.id,
-          clientName: client.ClientName,
-          totalAmount: 0,
-          currencyCode: '',
-          generatedOn: null,
-          invoicedOn: null,
-          year: null,
-          month: null,
-          status: 'Not generated yet',
-          pdfPath: null,
-        };
-    return result;
-  });
-
   useEffect(() => {
-    setAllSelected(selectedRows.length === mergedInvoices.length);
+    setAllSelected(selectedRows.length === mergedInvoices.length && mergedInvoices.length > 0);
   }, [selectedRows, mergedInvoices]);
 
   const handleRowSelect = (checked, rowId) => {
-    const updated = checked
-      ? [...selectedRows, rowId]
-      : selectedRows.filter((id) => id !== rowId);
-    setSelectedRows(updated);
-    setAllSelected(updated.length === mergedInvoices.length);
+    setSelectedRows((prev) =>
+      checked ? [...prev, rowId] : prev.filter((id) => id !== rowId)
+    );
   };
 
   const handleSelectAll = (checked) => {
@@ -252,13 +257,13 @@ const GenerateInvoicePage = () => {
     setSelectedRows(checked ? mergedInvoices.map((m) => m.id || m.clientId) : []);
   };
 
-  const hasNonGeneratedSelected = selectedRows.some(rowId => {
-    const inv = mergedInvoices.find(i => (i.id || i.clientId) === rowId);
+  const hasNonGeneratedSelected = selectedRows.some((rowId) => {
+    const inv = mergedInvoices.find((i) => (i.id || i.clientId) === rowId);
     return inv && !inv.id;
   });
 
-  const onlyGeneratedSelected = selectedRows.some(rowId => {
-    const inv = mergedInvoices.find(i => i.id === rowId);
+  const onlyGeneratedSelected = selectedRows.some((rowId) => {
+    const inv = mergedInvoices.find((i) => i.id === rowId);
     return inv && inv.id;
   });
 
@@ -288,7 +293,7 @@ const GenerateInvoicePage = () => {
               <SelectTrigger className="w-40 rounded-full border-gray-300">
                 <SelectValue placeholder="Select Month" />
               </SelectTrigger>
-              <SelectContent className='bg-white border-none'>
+              <SelectContent className="bg-white border-none">
                 {fiscalMonths.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
@@ -341,10 +346,11 @@ const GenerateInvoicePage = () => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-3 text-center">
-                    <Checkbox
+                    <Checkbox 
                       checked={allSelected}
                       onCheckedChange={handleSelectAll}
                       indeterminate={selectedRows.length > 0 && selectedRows.length < mergedInvoices.length}
+                      className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 data-[state=checked]:text-white"
                     />
                   </th>
                   <th className="p-3 text-[14px] font-normal text-[#7B7B7B] mb-1">Client</th>
@@ -362,11 +368,12 @@ const GenerateInvoicePage = () => {
                       <Checkbox
                         checked={selectedRows.includes(invoice.id || invoice.clientId)}
                         onCheckedChange={(checked) => handleRowSelect(checked, invoice.id || invoice.clientId)}
+                        className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 data-[state=checked]:text-white"
                       />
                     </td>
                     <td className="p-3 text-center">{invoice.clientName}</td>
                     <td className="p-3 text-center">
-                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'N/A'}
+                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
                     </td>
                     <td className="p-3 text-center">
                       {invoice.generatedOn ? new Date(invoice.generatedOn).toLocaleDateString() : 'N/A'}

@@ -286,7 +286,7 @@ export default function ClientProfitability() {
                 </SelectTrigger>
                 <SelectContent className="bg-white" >
                   {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
+                    <SelectItem key={client.id} className="cursor-pointer" value={client.id.toString()}>
                       {client.ClientName}
                     </SelectItem>
                   ))}
@@ -299,7 +299,7 @@ export default function ClientProfitability() {
                 </SelectTrigger>
                 <SelectContent className="bg-white">
                   {financialYears.map(year => (
-                    <SelectItem key={year} value={year}>
+                    <SelectItem key={year} className="cursor-pointer" value={year}>
                       {formatYear(year)}
                     </SelectItem>
                   ))}

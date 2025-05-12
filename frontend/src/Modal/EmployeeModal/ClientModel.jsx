@@ -174,7 +174,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
             >
               <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder="Select Billing Currency" />
+                <SelectValue placeholder=" Billing Currency" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {currencies.map((currency) => (
@@ -193,7 +193,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               onValueChange={(val) => handleSelectChange('BankDetailID', val)}
             >
               <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder="Select Bank Detail" />
+                <SelectValue placeholder=" Bank Detail" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {bankDetails.map((bank) => (
@@ -212,7 +212,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               onValueChange={(val) => handleSelectChange('OrganisationID', val)}
             >
               <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder="Select Organisation" />
+                <SelectValue placeholder=" Payee" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {organisations.map((org) => (

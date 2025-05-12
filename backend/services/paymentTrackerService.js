@@ -105,7 +105,7 @@ const getLastThreePaymentsByClient = async (ClientID) => {
       },
     ],
     order: [['ReceivedDate', 'DESC'], ['createdAt', 'DESC']],
-    limit: 3,
+    // limit: 3,
   });
 
   const currency = payments.length > 0 ? payments[0].Client.BillingCurrency : null;

@@ -67,7 +67,10 @@ const ClientDetails = () => {
 
   const filteredResources = resources.filter((r) => r.Status === activeTab);
 
-  const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : "N/A");
+  const formatDate = (date, status) => {
+  if (status === "Active") return "N/A"; // Return "N/A" for Active resources
+  return date ? new Date(date).toISOString().split("T")[0] : "N/A";
+};
 
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
@@ -92,7 +95,7 @@ const ClientDetails = () => {
   // Helper function to format billing
   const formatBilling = (billing, currency) => {
     if (!billing) return "N/A";
-    const currencyName = currency?.CurrencyName || currency?.CurrencyCode || "INR";
+    const currencyName =  currency?.CurrencyCode || "INR";
     return `${currencyName} ${parseFloat(billing).toFixed(2)}`;
   };
 
@@ -370,7 +373,7 @@ const ClientDetails = () => {
                   <TableCell>{r.Employee?.Level?.LevelName || "N/A"}</TableCell>
                   <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
                   <TableCell>{formatDate(r.StartDate)}</TableCell>
-                  <TableCell>{formatDate(r.EndDate)}</TableCell>
+                  <TableCell>{formatDate(r.EndDate, r.Status)}</TableCell>
                   <TableCell>{formatBilling(r.MonthlyBilling, r.Client?.BillingCurrency)}</TableCell>
                   <TableCell className="text-blue-500">{r.Status}</TableCell>
                   <TableCell className="flex gap-2">

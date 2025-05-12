@@ -137,7 +137,7 @@ const BillingSetup = () => {
               {data.map((item, rowIndex) => (
                 <tr key={item.id} className="text-sm text-primary-black">
                   <td className="p-2 border-b border-secondary-cadet-gray">{item.name}</td>
-                  <td className="p-2 border-b border-secondary-cadet-gray">{currencyCode}{formatNumberWithCommas(item.ctcMonthly)}</td>
+                  <td className="p-2 border-b border-secondary-cadet-gray">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
                   {fiscalMonths.map(column => (
                     <td
                       key={`${item.id}-${column}`}

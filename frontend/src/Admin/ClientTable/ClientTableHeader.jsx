@@ -8,7 +8,7 @@ const ClientTableHeade = () => (
     <TableCell className="py-3 px-1">Email</TableCell>
     <TableCell className="py-3 px-1">Reg. Address</TableCell>
     <TableCell className="py-3 px-1">Billing Currency</TableCell>
-    <TableCell className="py-3 px-1">Actions</TableCell>
+    <TableCell className="py-3 px-1 text-center">Actions</TableCell>
   </TableRow>
 );
 
