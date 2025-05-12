@@ -742,7 +742,7 @@ const OtherSettings = () => {
       )}
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Employee Levels</h2>
             <Button
@@ -753,6 +753,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {employeeLevels.length > 0 ? (
+            <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -768,14 +769,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
                         onClick={(event) => handleEditEmployeeLevel(level, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500  cursor-pointer hover:text-red-500 mx-4"
                         title="Delete"
                         onClick={() => deleteLevel(level.id)}
                       >
@@ -786,12 +787,13 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No levels available.</p>
           )}
         </div>
 
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Employee Roles</h2>
             <Button
@@ -802,6 +804,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {employeeRoles.length > 0 ? (
+             <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -817,14 +820,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
                         onClick={(event) => handleEditEmployeeRole(role, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500 cursor-pointer hover:text-red-500 mx-4"
                         title="Delete"
                         onClick={() => deleteRole(role.id)}
                       >
@@ -835,6 +838,7 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No roles available.</p>
           )}
@@ -842,7 +846,7 @@ const OtherSettings = () => {
       </div>
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Organisations</h2>
             <Button
@@ -853,6 +857,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {organisations.length > 0 ? (
+             <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -876,14 +881,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
                         onClick={(event) => handleEditOrganisation(org, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500 hover:text-red-500 cursor-pointer mx-4"
                         title="Delete"
                         onClick={() => deleteOrganisation(org.id)}
                       >
@@ -894,6 +899,7 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No organisations available.</p>
           )}
@@ -901,7 +907,7 @@ const OtherSettings = () => {
       </div>
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Bank Details</h2>
             <Button
@@ -912,6 +918,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {bankDetails.length > 0 ? (
+             <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -939,14 +946,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
                         onClick={(event) => handleEditBankDetail(detail, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500 hover:text-red-500 cursor-pointer mx-4"
                         title="Delete"
                         onClick={() => deleteBankDetail(detail.id)}
                       >
@@ -957,6 +964,7 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No bank details available.</p>
           )}
@@ -964,7 +972,7 @@ const OtherSettings = () => {
       </div>
 
       <div className="flex justify-between w-full gap-5">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px]">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Currencies</h2>
             <Button
@@ -975,6 +983,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {currencies.length > 0 ? (
+             <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -994,14 +1003,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
                         onClick={(event) => handleEditCurrency(currency, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500 hover:text-red-500 cursor-pointer mx-4"
                         title="Delete"
                         onClick={() => deleteCurrency(currency.id)}
                       >
@@ -1012,11 +1021,12 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No currencies available.</p>
           )}
         </div>
-        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-semibold">Currency Exchange Rate</h2>
             <Button
@@ -1027,6 +1037,7 @@ const OtherSettings = () => {
             </Button>
           </div>
           {exchangeRates.length > 0 ? (
+             <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
@@ -1050,14 +1061,14 @@ const OtherSettings = () => {
                     </TableCell>
                     <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
                       <button
-                        className="text-gray-500 hover:text-blue-500 mx-1"
+                        className="text-gray-500 hover:text-blue-500 mx-4 cursor-pointer"
                         title="Edit"
                         onClick={(event) => handleEditExchangeRate(rate, event)}
                       >
                         <Edit size={20} />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-red-500 mx-1"
+                        className="text-gray-500 hover:text-red-500 mx-4 cursor-pointer"
                         title="Delete"
                         onClick={() => deleteExchangeRate(rate.id)}
                       >
@@ -1068,6 +1079,7 @@ const OtherSettings = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-center text-sm text-gray-500">No exchange rates available.</p>
           )}

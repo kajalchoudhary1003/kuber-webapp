@@ -96,7 +96,7 @@ const EmployeeTableRow = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-blue-600 mr-2"
+            className="text-gray-500 cursor-pointer hover:text-blue-600 mr-2"
             title="View Employee"
             onClick={handleViewClick}
           >
@@ -105,7 +105,7 @@ const EmployeeTableRow = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-teal-500 mr-2"
+            className="text-gray-500 cursor-pointer hover:text-teal-500 mr-2"
             title="Edit Employee"
             onClick={() => onEdit(data)}
           >
@@ -114,7 +114,7 @@ const EmployeeTableRow = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-red-500"
+            className="text-gray-500 cursor-pointer hover:text-red-500"
             title="Delete Employee"
             onClick={handleDeleteClick}
           >

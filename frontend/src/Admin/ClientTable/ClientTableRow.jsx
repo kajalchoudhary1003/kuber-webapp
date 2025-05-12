@@ -31,7 +31,7 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-gray-500 hover:text-blue-500 mr-2"
+          className="text-gray-500 cursor-pointer hover:text-blue-500 mr-2"
           title="View Client"
           onClick={handleViewClick}
         >
@@ -40,7 +40,7 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-gray-500 hover:text-teal-500 mr-2"
+          className="text-gray-500 cursor-pointer hover:text-teal-500 mr-2"
           title="Edit Client"
           onClick={handleEditClick}
         >
@@ -49,7 +49,7 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-gray-500 hover:text-red-500"
+          className="text-gray-500 cursor-pointer hover:text-red-500"
           title="Delete Client"
           onClick={handleDeleteClick}
         >
