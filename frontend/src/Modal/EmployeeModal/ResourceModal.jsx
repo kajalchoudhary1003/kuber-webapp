@@ -36,23 +36,19 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const API_BASE_URL = 'http://localhost:5001/api';
 
-  // Fetch employees when modal opens
   useEffect(() => {
     if (open) {
       fetchEmployees();
-      
-      // Initialize form with today's date for new resources
       if (!initialData) {
         const today = new Date().toISOString().split('T')[0];
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          startDate: today
+          startDate: today,
         }));
       }
     }
   }, [open]);
 
-  // Fetch employees from API
   const fetchEmployees = async () => {
     try {
       setLoading(true);
@@ -61,7 +57,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         throw new Error('Failed to fetch employees');
       }
       const data = await response.json();
-      console.log('Fetched employees:', data);
       setEmployeeOptions(Array.isArray(data.employees) ? data.employees : data);
       setLoading(false);
     } catch (err) {
@@ -71,14 +66,12 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     }
   };
 
-  // Search for employees when searchTerm changes
   useEffect(() => {
     if (searchTerm && searchTerm.length >= 2) {
       searchEmployees(searchTerm);
     }
   }, [searchTerm]);
 
-  // Search employees from API
   const searchEmployees = async (query) => {
     try {
       setLoading(true);
@@ -87,7 +80,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         throw new Error('Failed to search employees');
       }
       const data = await response.json();
-      console.log('Search results:', data);
       setEmployeeOptions(data);
       setLoading(false);
     } catch (err) {
@@ -96,20 +88,15 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     }
   };
 
-  // Initialize form with existing data if editing
   useEffect(() => {
     if (initialData) {
       const formatDate = (date) =>
-        date && !isNaN(new Date(date))
-          ? new Date(date).toISOString().split('T')[0]
-          : '';
+        date && !isNaN(new Date(date)) ? new Date(date).toISOString().split('T')[0] : '';
 
       const employee = initialData.Employee || {};
-      const name = employee.FirstName && employee.LastName 
+      const name = employee.FirstName && employee.LastName
         ? `${employee.FirstName} ${employee.LastName}`.trim()
         : '';
-
-      console.log('Initial employee data:', employee);
 
       setFormData({
         empCode: employee.EmpCode || '',
@@ -126,7 +113,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       setSelectedEmployee({
         id: employee.id,
         name: name,
-        EmpCode: employee.EmpCode
+        EmpCode: employee.EmpCode,
       });
       setSearchTerm(name);
     } else {
@@ -136,7 +123,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const resetForm = () => {
     const today = new Date().toISOString().split('T')[0];
-    
     setFormData({
       empCode: '',
       role: '',
@@ -148,7 +134,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
       status: 'Active',
       EmployeeID: null,
     });
-    
     setSelectedEmployee(null);
     setSearchTerm('');
     setError(null);
@@ -157,53 +142,82 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const handleEmployeeChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
-    if (!employeeOptions.some(emp => 
-      `${emp.FirstName || ''} ${emp.LastName || ''}`.trim().toLowerCase() === value.trim().toLowerCase()
-    )) {
+    if (
+      !employeeOptions.some((emp) =>
+        `${emp.FirstName || ''} ${emp.LastName || ''}`.trim().toLowerCase() === value.trim().toLowerCase()
+      )
+    ) {
       setSelectedEmployee(null);
     }
   };
 
-  const handleEmployeeSelection = (employee) => {
+  const handleEmployeeSelection = async (employee) => {
     const fullName = `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
-    console.log('Selected employee:', employee);
-    
     setSearchTerm(fullName);
     setSelectedEmployee({
       id: employee.id,
       name: fullName,
-      EmpCode: employee.EmpCode
+      EmpCode: employee.EmpCode,
     });
-    
-    setFormData(prev => ({
-      ...prev,
-      empCode: employee.EmpCode || '',
-      role: employee.Role?.RoleName || 'Unknown',
-      level: employee.Level?.LevelName || 'Unknown',
-      organization: employee.Organisation?.Abbreviation || 'Unknown',
-      EmployeeID: employee.id
-    }));
-    
-    setError(null);
+
+    // Check if employee is already assigned to this client
+    try {
+      const clientId = initialData?.ClientID;
+      if (clientId && employee.id && !initialData?.id) { // Skip for editing existing resource
+        const response = await fetch(`${API_BASE_URL}/client-employees/client/${clientId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch client assignments');
+        }
+        const assignments = await response.json();
+        const isAssigned = assignments.some(
+          (assignment) => assignment.EmployeeID === employee.id && !assignment.deletedAt
+        );
+        if (isAssigned) {
+          setError('This employee is already assigned to this client.');
+          setSelectedEmployee(null);
+          setSearchTerm('');
+          setFormData((prev) => ({
+            ...prev,
+            empCode: '',
+            role: '',
+            level: '',
+            organization: '',
+            EmployeeID: null,
+          }));
+          return;
+        }
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        empCode: employee.EmpCode || '',
+        role: employee.Role?.RoleName || 'Unknown',
+        level: employee.Level?.LevelName || 'Unknown',
+        organization: employee.Organisation?.Abbreviation || 'Unknown',
+        EmployeeID: employee.id,
+      }));
+      setError(null);
+    } catch (err) {
+      console.error('Error checking employee assignment:', err);
+      setError('Failed to verify employee assignment. Please try again.');
+    }
   };
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
+    if (name === 'status') {
+      const endDate = value === 'Inactive' ? new Date().toISOString().split('T')[0] : '';
+      setFormData((prev) => ({
+        ...prev,
+        status: value,
+        endDate,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
-  if (name === "status") {
-    const endDate = value === "Inactive" ? new Date().toISOString().split("T")[0] : "";
-    setFormData(prev => ({
-      ...prev,
-      status: value,
-      endDate, // Clear or set endDate based on status
-    }));
-  } else {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }
-};
-
-  const handleSubmit = (e) => {
+ const handleSubmit = (e) => {
   e.preventDefault();
   console.log("Submitting form:", formData);
 
@@ -226,7 +240,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     EmployeeID: formData.EmployeeID,
     ClientID: initialData?.ClientID || null,
     StartDate: formData.startDate,
-    EndDate: formData.status === "Active" ? null : formData.endDate || null, // Set EndDate to null for Active
+    EndDate: formData.status === "Active" ? null : formData.endDate || new Date().toISOString().split("T")[0], // Ensure EndDate is set for Inactive
     MonthlyBilling: Number(formData.billingMonthly),
     Status: formData.status,
     isInactiveUpdate: initialData && initialData.Status === "Active" && formData.status === "Inactive",
@@ -235,40 +249,24 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   console.log("Submitting payload:", payload);
   onSubmit(payload, () => {
     if (payload.isInactiveUpdate) {
-      console.log("Resource updated successfully");
+      console.log("Resource updated to Inactive successfully");
     }
   });
 };
-
-  const handleDelete = () => {
-    if (formData.status === 'Active') {
-      setError('Resource cannot be deleted in active state. Please set status to Inactive first.');
-      return;
-    }
-
-    const payload = {
-      EmployeeID: formData.EmployeeID,
-      delete: true,
-    };
-
-    console.log('Delete payload:', payload);
-    onSubmit(payload, () => {
-      console.log('Resource deleted successfully');
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl p-6 rounded-2xl shadow-lg border-none bg-white">
         <DialogHeader className="flex items-start border-b border-[#9DA4B3] mb-3">
-          <DialogTitle className="text-left min-w-[120px]">{initialData ? 'Edit Resource' : 'Add Resource'}</DialogTitle>
+          <DialogTitle className="text-left min-w-[120px]">
+            {initialData ? 'Edit Resource' : 'Add Resource'}
+          </DialogTitle>
         </DialogHeader>
 
         {loading && <p>Loading employees...</p>}
         {error && <p className="text-red-500 p-2 bg-red-50 rounded">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Name & Emp Code */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Name</Label>
@@ -299,14 +297,11 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
                 )}
               </div>
             </div>
-
             <div className="w-full">
               <Label>Emp. Code</Label>
               <Input name="empCode" value={formData.empCode} readOnly />
             </div>
           </div>
-
-          {/* Role & Level */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Role</Label>
@@ -317,14 +312,10 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               <Input name="level" value={formData.level} readOnly />
             </div>
           </div>
-
-          {/* Organization */}
           <div>
             <Label>Organization</Label>
             <Input name="organization" value={formData.organization} readOnly />
           </div>
-
-          {/* Start Date & Billing */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Start Date*</Label>
@@ -349,27 +340,22 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               />
             </div>
           </div>
-
-          {/* Status & End Date */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Status</Label>
-              <Select 
+              <Select
                 value={formData.status}
-                onValueChange={(val) =>
-                  handleChange({ target: { name: 'status', value: val } })
-                }
+                onValueChange={(val) => handleChange({ target: { name: 'status', value: val } })}
               >
                 <SelectTrigger className="w-full h-12 text-base">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className='bg-white border-none'>
+                <SelectContent className="bg-white border-none">
                   <SelectItem value="Active">Active</SelectItem>
                   <SelectItem value="Inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             {formData.status === 'Inactive' && (
               <div className="w-full">
                 <Label>End Date</Label>
@@ -382,15 +368,8 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               </div>
             )}
           </div>
-
-          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2">
-
-            
-            <Button 
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-            >
+            <Button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white">
               {initialData ? 'Update' : 'Add'}
             </Button>
           </div>

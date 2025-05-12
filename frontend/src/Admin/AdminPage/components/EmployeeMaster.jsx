@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useYear } from '../../../contexts/YearContexts';
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -22,7 +21,6 @@ const cache = {
 };
 
 const EmployeeMaster = () => {
-  const { selectedYear } = useYear();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -80,30 +78,32 @@ const EmployeeMaster = () => {
   };
 
   const fetchClientAssignmentsForEmployees = async (employees) => {
-    const assignments = {};
-    const errors = {};
-    await Promise.all(
-      employees.map(async (employee) => {
-        try {
-          const response = await axios.get(`${API_BASE_URL}/employees/${employee.id}/clients`);
-          assignments[employee.id] = response.data;
-        } catch (err) {
-          console.error(`Error fetching clients for employee ${employee.id}:`, {
-            message: err.message,
-            status: err.response?.status,
-            data: err.response?.data,
-            url: `${API_BASE_URL}/employees/${employee.id}/clients`,
-          });
-          assignments[employee.id] = [];
-          errors[employee.id] = err.response?.status === 404
-            ? 'Client assignments not found'
-            : `Error: ${err.message} (Status: ${err.response?.status})`;
-        }
-      })
-    );
-    setClientAssignments(assignments);
-    setClientErrors(errors);
-  };
+  const assignments = {};
+  const errors = {};
+  await Promise.all(
+    employees.map(async (employee) => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/employees/${employee.id}/clients`);
+        // Filter only active assignments
+        const activeAssignments = response.data.filter((assignment) => assignment.Status === 'Active');
+        assignments[employee.id] = activeAssignments;
+      } catch (err) {
+        console.error(`Error fetching clients for employee ${employee.id}:`, {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+          url: `${API_BASE_URL}/employees/${employee.id}/clients`,
+        });
+        assignments[employee.id] = [];
+        errors[employee.id] = err.response?.status === 404
+          ? 'Client assignments not found'
+          : `Error: ${err.message} (Status: ${err.response?.status})`;
+      }
+    })
+  );
+  setClientAssignments(assignments);
+  setClientErrors(errors);
+};
 
   const fetchRolesLevelsOrgs = async () => {
     try {
@@ -192,7 +192,7 @@ const EmployeeMaster = () => {
           await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
           toast.success('Employee updated successfully');
         } else {
-          await axios.post(`${API_BASE_URL}/employees`, { ...newEmployee, year: selectedYear });
+          await axios.post(`${API_BASE_URL}/employees`, newEmployee);
           toast.success('Employee created successfully');
         }
         fetchEmployees(page);
@@ -268,25 +268,24 @@ const EmployeeMaster = () => {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
-      fetchEmployees(page);
-      toast.success('Employee deleted successfully');
-    } catch (err) {
-      console.error('Error deleting employee:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      });
-      const errorMessage = err.response?.data?.error || 'Error deleting employee';
-      setError(errorMessage);
-      if (errorMessage === 'Active employees cannot be deleted') {
-        toast.error('Active employees cannot be deleted');
-      } else {
-        toast.error(errorMessage);
-      }
+  try {
+    await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
+    fetchEmployees(page);
+    toast.success('Employee deleted successfully');
+  } catch (err) {
+    console.error('Error deleting employee:', {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status,
+    });
+    const errorMessage = err.response?.data?.error || 'Error deleting employee';
+    if (errorMessage === 'Cannot delete employee with active client assignments') { 
+      toast.error('Employee cannot be deleted with active clients'); 
+    } else {
+      toast.error(errorMessage);
     }
-  };
+  }
+};
 
   // Helper function to check if a value contains the search query
   const valueContainsQuery = (value, query) => {

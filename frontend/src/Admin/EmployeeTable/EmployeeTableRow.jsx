@@ -77,17 +77,17 @@ const EmployeeTableRow = ({
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{roleName}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{levelName}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{orgAbbreviation}</TableCell>
-      <TableCell className="py-3 px-1 text-center w-[180px] whitespace-normal break-words">
-        {clientError ? (
-          <span className="text-red-500">{clientError}</span>
-        ) : clientAssignments[data.id]?.length > 0 ? (
-          clientAssignments[data.id]
-            .map((assignment) => assignment.Client?.ClientName || 'N/A')
-            .join(', ')
-        ) : (
-          'None'
-        )}
-      </TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">
+  {clientError ? (
+    <span className="text-red-500">{clientError}</span> // Optional: display error for debugging
+  ) : clientAssignments[data.id]?.length > 0 ? (
+    clientAssignments[data.id]
+      .map((assignment) => assignment.Client?.ClientName || 'N/A')
+      .join(', ')
+  ) : (
+    'N/A' // Display "N/A" when no active assignments
+  )}
+</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{formatCurrency(data.CTCAnnual)}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{formatCurrency(data.CTCMonthly)}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[100px] whitespace-normal">{data.Status || 'N/A'}</TableCell>
