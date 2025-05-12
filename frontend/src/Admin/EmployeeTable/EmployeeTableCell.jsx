@@ -1,8 +1,7 @@
 import React from 'react';
-// import './TableCell.scss';
 
-const TableCell = ({ children }) => (
-  <td className="table-cell">{children}</td>
+const TableCell = ({ children, className = "" }) => (
+  <td className={`table-cell text-center whitespace-normal break-words ${className}`}>{children}</td>
 );
 
 export default TableCell;

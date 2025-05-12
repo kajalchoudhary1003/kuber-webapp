@@ -248,7 +248,7 @@ const ClientDetails = () => {
         <div className="space-x-2">
           <Button
             onClick={() => navigate("/admin")}
-            className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+            className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
           >
             Back to Client Master
           </Button>
@@ -262,13 +262,13 @@ const ClientDetails = () => {
           <div className="space-x-2">
             <Button
               onClick={handleEditClient}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Edit
             </Button>
             <Button
               variant="destructive"
-              className="bg-[#FF6E65] text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#FF6E65] cursor-pointer text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
               onClick={handleDeleteClient}
             >
               Delete
@@ -324,19 +324,19 @@ const ClientDetails = () => {
           <div className="flex gap-2">
             <Button
               onClick={() => setActiveTab("Active")}
-              className={activeTab === "Active" ? "border-none text-black" : ""}
+              className={activeTab === "Active" ? "border-none cursor-pointer text-blue-500 shadow-lg" : "cursor-pointer"}
             >
               Active Resources
             </Button>
             <Button
               onClick={() => setActiveTab("Inactive")}
-              className={activeTab === "Inactive" ? "text-black" : ""}
+              className={activeTab === "Inactive" ? "border-none cursor-pointer text-blue-500 shadow-lg" : "cursor-pointer"}
             >
               Inactive Resources
             </Button>
             <Button
               onClick={handleAddResource}
-              className="bg-[#048DFF] text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add Resource
             </Button>

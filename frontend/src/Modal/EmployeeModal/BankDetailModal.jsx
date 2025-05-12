@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,6 +13,13 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     IFSC: '',
   });
 
+  const [errors, setErrors] = useState({
+    BankName: '',
+    AccountNumber: '',
+    SwiftCode: '',
+    IFSC: '',
+  });
+
   useEffect(() => {
     if (open && initialData) {
       setFormData({
@@ -22,6 +28,12 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
         AccountNumber: initialData.AccountNumber || '',
         SwiftCode: initialData.SwiftCode || '',
         IFSC: initialData.IFSC || '',
+      });
+      setErrors({
+        BankName: '',
+        AccountNumber: '',
+        SwiftCode: '',
+        IFSC: '',
       });
     } else {
       resetForm();
@@ -34,10 +46,57 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
       ...prevData,
       [name]: value,
     }));
+
+    // Clear error when user starts typing
+    if (value.trim()) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      BankName: '',
+      AccountNumber: '',
+      SwiftCode: '',
+      IFSC: '',
+    };
+    
+    let isValid = true;
+    
+    if (!formData.BankName.trim()) {
+      newErrors.BankName = 'Bank name is required';
+      isValid = false;
+    }
+    
+    if (!formData.AccountNumber.trim()) {
+      newErrors.AccountNumber = 'Account number is required';
+      isValid = false;
+    }
+    
+    if (!formData.SwiftCode.trim()) {
+      newErrors.SwiftCode = 'Swift code is required';
+      isValid = false;
+    }
+    
+    if (!formData.IFSC.trim()) {
+      newErrors.IFSC = 'IFSC code is required';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     onSubmit(formData);
     onClose(formData);
   };
@@ -45,6 +104,12 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const resetForm = () => {
     setFormData({
       id: null,
+      BankName: '',
+      AccountNumber: '',
+      SwiftCode: '',
+      IFSC: '',
+    });
+    setErrors({
       BankName: '',
       AccountNumber: '',
       SwiftCode: '',
@@ -62,45 +127,81 @@ const BankDetailModal = ({ open, onClose, mode, initialData, onSubmit }) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex gap-4">
-            <Input
-              placeholder="Bank Name"
-              name="BankName"
-              value={formData.BankName}
-              onChange={handleChange}
-              required
-              className="flex-1"
-            />
-            <Input
-              placeholder="Account Number"
-              name="AccountNumber"
-              value={formData.AccountNumber}
-              onChange={handleChange}
-              required
-              className="flex-1"
-            />
+            <div className="flex-1">
+              <Input
+                placeholder="Bank Name"
+                name="BankName"
+                value={formData.BankName}
+                onChange={handleChange}
+                required
+                className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.BankName ? 'border-red-500' : ''}`}
+                aria-invalid={errors.BankName ? "true" : "false"}
+                aria-describedby={errors.BankName ? "bank-name-error" : undefined}
+              />
+              {errors.BankName && (
+                <p id="bank-name-error" className="text-red-500 text-sm mt-1">
+                  {errors.BankName}
+                </p>
+              )}
+            </div>
+            <div className="flex-1">
+              <Input
+                placeholder="Account Number"
+                name="AccountNumber"
+                value={formData.AccountNumber}
+                onChange={handleChange}
+                required
+                className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.AccountNumber ? 'border-red-500' : ''}`}
+                aria-invalid={errors.AccountNumber ? "true" : "false"}
+                aria-describedby={errors.AccountNumber ? "account-number-error" : undefined}
+              />
+              {errors.AccountNumber && (
+                <p id="account-number-error" className="text-red-500 text-sm mt-1">
+                  {errors.AccountNumber}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex gap-4">
-            <Input
-              placeholder="Swift Code"
-              name="SwiftCode"
-              value={formData.SwiftCode}
-              onChange={handleChange}
-              required
-              className="flex-1"
-            />
-            <Input
-              placeholder="IFSC Code"
-              name="IFSC"
-              value={formData.IFSC}
-              onChange={handleChange}
-              required
-              className="flex-1"
-            />
+            <div className="flex-1">
+              <Input
+                placeholder="Swift Code"
+                name="SwiftCode"
+                value={formData.SwiftCode}
+                onChange={handleChange}
+                required
+                className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.SwiftCode ? 'border-red-500' : ''}`}
+                aria-invalid={errors.SwiftCode ? "true" : "false"}
+                aria-describedby={errors.SwiftCode ? "swift-code-error" : undefined}
+              />
+              {errors.SwiftCode && (
+                <p id="swift-code-error" className="text-red-500 text-sm mt-1">
+                  {errors.SwiftCode}
+                </p>
+              )}
+            </div>
+            <div className="flex-1">
+              <Input
+                placeholder="IFSC Code"
+                name="IFSC"
+                value={formData.IFSC}
+                onChange={handleChange}
+                required
+                className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.IFSC ? 'border-red-500' : ''}`}
+                aria-invalid={errors.IFSC ? "true" : "false"}
+                aria-describedby={errors.IFSC ? "ifsc-code-error" : undefined}
+              />
+              {errors.IFSC && (
+                <p id="ifsc-code-error" className="text-red-500 text-sm mt-1">
+                  {errors.IFSC}
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter className="mt-6 flex justify-end">
             <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer"
             >
               {mode === 'edit' ? 'Update Bank Detail' : 'Add Bank Detail'}
             </Button>

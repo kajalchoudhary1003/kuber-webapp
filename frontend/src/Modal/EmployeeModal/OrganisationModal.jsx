@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 
 const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
   const [organisationName, setOrganisationName] = useState('');
   const [abbreviation, setAbbreviation] = useState('');
   const [regNumber, setRegNumber] = useState('');
+  const [errors, setErrors] = useState({
+    organisationName: '',
+    abbreviation: '',
+    regNumber: ''
+  });
 
   // Reset form when modal opens or mode/initialData changes
   useEffect(() => {
@@ -21,6 +25,11 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
         setAbbreviation('');
         setRegNumber('');
       }
+      setErrors({
+        organisationName: '',
+        abbreviation: '',
+        regNumber: ''
+      });
     }
   }, [open, mode, initialData]);
 
@@ -29,20 +38,62 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     switch (name) {
       case 'OrganisationName':
         setOrganisationName(value);
+        if (value.trim()) {
+          setErrors(prev => ({ ...prev, organisationName: '' }));
+        }
         break;
       case 'Abbreviation':
         setAbbreviation(value);
+        if (value.trim()) {
+          setErrors(prev => ({ ...prev, abbreviation: '' }));
+        }
         break;
       case 'RegNumber':
         setRegNumber(value);
+        if (value.trim()) {
+          setErrors(prev => ({ ...prev, regNumber: '' }));
+        }
         break;
       default:
         break;
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {
+      organisationName: '',
+      abbreviation: '',
+      regNumber: ''
+    };
+    
+    let isValid = true;
+    
+    if (!organisationName.trim()) {
+      newErrors.organisationName = 'Organisation name is required';
+      isValid = false;
+    }
+    
+    if (!abbreviation.trim()) {
+      newErrors.abbreviation = 'Abbreviation is required';
+      isValid = false;
+    }
+    
+    if (!regNumber.trim()) {
+      newErrors.regNumber = 'Registration number is required';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     try {
       const formData = {
         id: initialData?.id, // Include id for edit mode
@@ -64,8 +115,6 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
           <DialogTitle className="text-lg font-normal">
             {mode === 'edit' ? 'Edit Organisation' : 'Create Organisation'}
           </DialogTitle>
-          
-        
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -81,8 +130,15 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
               value={organisationName}
               onChange={handleChange}
               required
-              className="mt-1"
+              className={`mt-1 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.organisationName ? 'border-red-500' : ''}`}
+              aria-invalid={errors.organisationName ? "true" : "false"}
+              aria-describedby={errors.organisationName ? "org-name-error" : undefined}
             />
+            {errors.organisationName && (
+              <p id="org-name-error" className="text-red-500 text-sm mt-1">
+                {errors.organisationName}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="Abbreviation" className="text-sm font-medium">
@@ -96,8 +152,15 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
               value={abbreviation}
               onChange={handleChange}
               required
-              className="mt-1"
+              className={`mt-1 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.abbreviation ? 'border-red-500' : ''}`}
+              aria-invalid={errors.abbreviation ? "true" : "false"}
+              aria-describedby={errors.abbreviation ? "abbreviation-error" : undefined}
             />
+            {errors.abbreviation && (
+              <p id="abbreviation-error" className="text-red-500 text-sm mt-1">
+                {errors.abbreviation}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="RegNumber" className="text-sm font-medium">
@@ -111,20 +174,20 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
               value={regNumber}
               onChange={handleChange}
               required
-              className="mt-1"
+              className={`mt-1 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.regNumber ? 'border-red-500' : ''}`}
+              aria-invalid={errors.regNumber ? "true" : "false"}
+              aria-describedby={errors.regNumber ? "reg-number-error" : undefined}
             />
+            {errors.regNumber && (
+              <p id="reg-number-error" className="text-red-500 text-sm mt-1">
+                {errors.regNumber}
+              </p>
+            )}
           </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-200 text-black hover:bg-gray-300 rounded-3xl px-6 py-2"
-            >
-              Cancel
-            </Button>
+          <div className="flex justify-end">
             <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {mode === 'edit' ? 'Update Organisation' : 'Create Organisation'}
             </Button>

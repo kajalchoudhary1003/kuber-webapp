@@ -20,9 +20,24 @@ export default function Ledger() {
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex justify-end mb-6">
           <TabsList>
-            <TabsTrigger value="overview" className="cursor-pointer">Overview</TabsTrigger>
-            <TabsTrigger value="client-ledger" className="cursor-pointer">Client Ledger</TabsTrigger>
-            <TabsTrigger value="client-profitability" className="cursor-pointer">Client Profitability Report</TabsTrigger>
+            <TabsTrigger 
+              value="overview" 
+              className={`cursor-pointer ${activeTab === "overview" ? "text-blue-500 shadow-lg" : ""}`}
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="client-ledger" 
+              className={`cursor-pointer ${activeTab === "client-ledger" ? "text-blue-500 shadow-lg" : ""}`}
+            >
+              Client Ledger
+            </TabsTrigger>
+            <TabsTrigger 
+              value="client-profitability" 
+              className={`cursor-pointer ${activeTab === "client-profitability" ? "text-blue-500 shadow-lg" : ""}`}
+            >
+              Client Profitability Report
+            </TabsTrigger>
           </TabsList>
         </div>
 

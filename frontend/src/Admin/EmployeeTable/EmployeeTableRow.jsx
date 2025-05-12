@@ -72,14 +72,14 @@ const EmployeeTableRow = ({
 
   return (
     <TableRow className="hover:bg-blue-50">
-      <TableCell className="py-3 px-1">{`${data.FirstName} ${data.LastName}`}</TableCell>
-      <TableCell className="py-3 px-1">{data.EmpCode || 'N/A'}</TableCell>
-      <TableCell className="py-3 px-1">{roleName}</TableCell>
-      <TableCell className="py-3 px-1">{levelName}</TableCell>
-      <TableCell className="py-3 px-1">{orgAbbreviation}</TableCell>
-      <TableCell className="py-3 px-1">
+      <TableCell className="py-3 px-1 text-center w-[150px] whitespace-normal">{`${data.FirstName} ${data.LastName}`}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{data.EmpCode || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{roleName}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{levelName}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{orgAbbreviation}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[180px] whitespace-normal break-words">
         {clientError ? (
-          <span className="text-red-500">{clientError}</span> // Optional: display error for debugging
+          <span className="text-red-500">{clientError}</span>
         ) : clientAssignments[data.id]?.length > 0 ? (
           clientAssignments[data.id]
             .map((assignment) => assignment.Client?.ClientName || 'N/A')
@@ -88,37 +88,39 @@ const EmployeeTableRow = ({
           'None'
         )}
       </TableCell>
-      <TableCell className="py-3 px-1">{formatCurrency(data.CTCAnnual)}</TableCell>
-      <TableCell className="py-3 px-1">{formatCurrency(data.CTCMonthly)}</TableCell>
-      <TableCell className="py-3 px-1">{data.Status || 'N/A'}</TableCell>
-      <TableCell className="py-3 px-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-500 hover:text-blue-600 mr-2"
-          title="View Employee"
-          onClick={handleViewClick}
-        >
-          <Eye className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-500 hover:text-teal-500 mr-2"
-          title="Edit Employee"
-          onClick={() => onEdit(data)}
-        >
-          <Edit className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-500 hover:text-red-500"
-          title="Delete Employee"
-          onClick={handleDeleteClick}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{formatCurrency(data.CTCAnnual)}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{formatCurrency(data.CTCMonthly)}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[100px] whitespace-normal">{data.Status || 'N/A'}</TableCell>
+      <TableCell className="py-3 px-1 text-center w-[120px]">
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-500 cursor-pointer hover:text-blue-600 mr-2"
+            title="View Employee"
+            onClick={handleViewClick}
+          >
+            <Eye className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-500 cursor-pointer hover:text-teal-500 mr-2"
+            title="Edit Employee"
+            onClick={() => onEdit(data)}
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-500 cursor-pointer hover:text-red-500"
+            title="Delete Employee"
+            onClick={handleDeleteClick}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );

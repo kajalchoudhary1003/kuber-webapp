@@ -343,7 +343,7 @@ const EmployeeMaster = () => {
   if (error) return <div className="text-center text-red-500 py-10">Error: {error}</div>;
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <h2 className="text-[24px] text-[#272727]">Employee Master</h2>
