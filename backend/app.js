@@ -33,7 +33,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(fileUpload());
+
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  createParentPath: true
+}));
 
 // Routes
 app.use('/api/backup', backupRoutes);

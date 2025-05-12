@@ -123,17 +123,6 @@ const GenerateInvoicePage = () => {
     }
   };
 
-  const handleDownload = async () => {
-    const toDownload = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
-    if (toDownload.length === 0) {
-      alert('No generated invoices selected to download.');
-      return;
-    }
-    for (const inv of toDownload) {
-      window.open(`${API_BASE}/invoices/download/${inv.id}`, '_blank');
-    }
-  };
-
   const handleMarkAsSent = async () => {
     const toMark = mergedInvoices.filter(inv => selectedRows.includes(inv.id) && inv.pdfPath);
     if (toMark.length === 0) {
@@ -161,9 +150,7 @@ const GenerateInvoicePage = () => {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to regenerate ${toRegenerate.length} invoice(s)?`)) {
-      return;
-    }
+    
 
     try {
       for (const inv of toRegenerate) {
