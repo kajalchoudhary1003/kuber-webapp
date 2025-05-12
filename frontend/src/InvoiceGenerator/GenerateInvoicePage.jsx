@@ -54,6 +54,7 @@ const GenerateInvoicePage = () => {
       if (!res.ok) throw new Error(`Failed to fetch invoices: ${res.status}`);
       const data = await res.json();
       setGeneratedInvoices(data);
+      console.log("Generated invoices data:", data);
     } catch (err) {
       console.error('Error fetching invoices:', err);
       alert('Failed to fetch invoices. Please try again.');
@@ -85,7 +86,7 @@ const GenerateInvoicePage = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(`Failed to generate invoice for ${inv.clientName}: ${errorData.error}`);
+          // throw new Error(`Failed to generate invoice for ${inv.clientName}: ${errorData.error}`);
         }
       }
       setSelectedRows([]);
@@ -195,8 +196,8 @@ const GenerateInvoicePage = () => {
           id: invoice.id,
           clientId: client.id,
           clientName: client.ClientName,
-          totalAmount: invoice.TotalAmount,
-          currencyCode: invoice.Currency?.CurrencyCode || '',
+          totalAmount: parseFloat(invoice.TotalAmount || 0),
+          currencyCode: invoice.BillingCurrency?.CurrencyCode || '',
           generatedOn: invoice.GeneratedOn ? new Date(invoice.GeneratedOn) : null,
           invoicedOn: invoice.InvoicedOn ? new Date(invoice.InvoicedOn) : null,
           year: invoice.Year,
@@ -217,7 +218,6 @@ const GenerateInvoicePage = () => {
           status: 'Not generated yet',
           pdfPath: null,
         };
-    console.log('Merged invoice for client:', client.ClientName, { year: result.year, month: result.month });
     return result;
   });
 
@@ -243,12 +243,10 @@ const GenerateInvoicePage = () => {
     return inv && !inv.id;
   });
 
-  const onlyGeneratedSelected = selectedRows.every(rowId => {
+  const onlyGeneratedSelected = selectedRows.some(rowId => {
     const inv = mergedInvoices.find(i => i.id === rowId);
     return inv && inv.id;
   });
-
-  console.log('hasNonGeneratedSelected:', hasNonGeneratedSelected);
 
   if (loading) return <p>Loading...</p>;
 
@@ -342,7 +340,7 @@ const GenerateInvoicePage = () => {
                     </td>
                     <td className="p-3 text-center">{invoice.clientName}</td>
                     <td className="p-3 text-center">
-                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString()}` : 'N/A'}
+                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'N/A'}
                     </td>
                     <td className="p-3 text-center">
                       {invoice.generatedOn ? new Date(invoice.generatedOn).toLocaleDateString() : 'N/A'}
