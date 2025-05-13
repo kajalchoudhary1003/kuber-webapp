@@ -158,29 +158,43 @@ const deleteEmployee = async (employeeId) => {
   }
 };
 
-const searchEmployees = async (query) => {
+const searchEmployees = async (query, page = 1, limit = 10) => {
   try {
+    const offset = (page - 1) * limit;
+    const whereClause = {
+      [Op.or]: [
+        { FirstName: { [Op.like]: `%${query}%` } },
+        { LastName: { [Op.like]: `%${query}%` } },
+        { EmpCode: { [Op.like]: `%${query}%` } },
+        { Email: { [Op.like]: `%${query}%` } },
+      ],
+    };
+
     const employees = await Employee.findAll({
-      where: {
-        [Op.or]: [
-          { FirstName: { [Op.like]: `%${query}%` } },
-          { LastName: { [Op.like]: `%${query}%` } },
-          { EmpCode: { [Op.like]: `%${query}%` } },
-          { Email: { [Op.like]: `%${query}%` } }
-        ]
-      },
+      where: whereClause,
       include: [
         { model: Organisation, as: 'Organisation' },
-        { model: Level, as: 'Level' }, // Added Level model
-        { model: Role, as: 'Role' }, // Added Role model
-      ]
+
+        { model: Level, as: 'Level' },
+        { model: Role, as: 'Role' },
+      ],
+      offset,
+      limit,
+
+     
+
     });
-    return employees;
+
+    const total = await Employee.count({ where: whereClause });
+
+    return {
+      employees,
+      total,
+    };
   } catch (error) {
     throw new Error(`Error searching employees: ${error.message}`);
   }
 };
-
 const getEmployeeClients = async (id) => {
   try {
     const employee = await Employee.findByPk(id);

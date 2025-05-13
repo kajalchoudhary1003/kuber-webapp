@@ -4,9 +4,15 @@ const logger = require('../utils/logger');
 const employeeController = {
   async getAllEmployees(req, res) {
     try {
-      const employees = await employeeService.getAllEmployees();
+      const { page = 1, limit = 10, q = '' } = req.query;
+      const employees = await employeeService.getAllEmployees(
+        parseInt(page),
+        parseInt(limit),
+        q
+      );
       res.json(employees);
     } catch (error) {
+      logger.error('Error fetching employees:', error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -69,13 +75,14 @@ const employeeController = {
   },
 
   async searchEmployees(req, res) {
-    try {
-      const employees = await employeeService.searchEmployees(req.query.q);
-      res.json(employees);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  try {
+    const { q, page = 1, limit = 10 } = req.query;
+    const employees = await employeeService.searchEmployees(q, parseInt(page), parseInt(limit));
+    res.json(employees);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+},
 
   async getEmployeeClients(req, res) {
     try {
@@ -88,7 +95,7 @@ const employeeController = {
         res.status(500).json({ error: error.message });
       }
     }
-  }
+  },
 };
 
 module.exports = employeeController;

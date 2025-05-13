@@ -5,7 +5,9 @@ import { Edit, Trash2 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
-import { toast, ToastContainer } from "react-toastify";
+
+import { ToastContainer, toast } from "react-toastify";
+
 import "react-toastify/dist/ReactToastify.css";
 
 const ClientDetails = () => {
@@ -69,9 +71,11 @@ const ClientDetails = () => {
   const filteredResources = resources.filter((r) => r.Status === activeTab);
 
   const formatDate = (date, status) => {
-  if (status === "Active") return "N/A"; // Return "N/A" for Active resources
-  return date ? new Date(date).toISOString().split("T")[0] : "N/A";
-};
+
+    if (status === "Active") return "N/A"; // Return "N/A" for Active resources
+    return date ? new Date(date).toISOString().split("T")[0] : "N/A";
+  };
+
 
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
@@ -134,23 +138,50 @@ const ClientDetails = () => {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to update resource");
         }
-        const updatedResource = await response.json();
-        setResources((prev) =>
-          prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
-        );
+
+        setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+        toast.success("Resource deleted successfully");
       } else {
-        const response = await fetch(`${API_BASE_URL}/client-employees`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, ClientID: id }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create resource");
+        if (selectedResource && selectedResource.id) {
+          const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update resource");
+          }
+          const updatedResource = await response.json();
+          setResources((prev) =>
+            prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
+          );
+          toast.success("Resource updated successfully");
+        } else {
+          const response = await fetch(`${API_BASE_URL}/client-employees`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, ClientID: id }),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to create resource");
+          }
+          const newResource = await response.json();
+          setResources((prev) => [...prev, newResource]);
+          toast.success("Resource added successfully");
+
         }
         const newResource = await response.json();
         setResources((prev) => [...prev, newResource]);
       }
+
+      // Refresh resources after update
+      await fetchClientData();
+    } catch (err) {
+      console.error("Error submitting resource:", err.message);
+      toast.error(`Error: ${err.message}`);
+
     }
     // Refresh resources after update
     await fetchClientData();
@@ -185,10 +216,10 @@ const ClientDetails = () => {
         throw new Error(errorData.error || "Failed to update client");
       }
       await fetchClientData();
-      alert("Client updated successfully!");
+      toast.success("Client updated successfully");
     } catch (err) {
       console.error("Error updating client:", err);
-      alert(`Error updating client: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
     setIsClientModalOpen(false);
   };
@@ -202,24 +233,30 @@ const ClientDetails = () => {
   };
 
   const handleDeleteResource = async (resourceId) => {
-  const resource = resources.find((r) => r.id === resourceId);
-  if (resource.Status === "Active") {
-    toast.error("Cannot delete client employee with active status", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-    return;
-  }
 
-  if (window.confirm("Are you sure you want to delete this resource?")) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete resource");
+    const resource = resources.find((r) => r.id === resourceId);
+    if (resource.Status === "Active") {
+      toast.error("Cannot delete client employee with active status");
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to delete this resource?")) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete resource");
+        }
+        setResources((prev) => prev.filter((r) => r.id !== resourceId));
+        await fetchClientData();
+        toast.success("Resource deleted successfully");
+      } catch (err) {
+        console.error("Error deleting resource:", err.message);
+        toast.error(`Error: ${err.message}`);
+
       }
       setResources((prev) => prev.filter((r) => r.id !== resourceId));
       await fetchClientData();
@@ -238,23 +275,28 @@ const ClientDetails = () => {
 };
 
   const handleDeleteClient = async () => {
-  if (window.confirm("Are you sure you want to delete this client ?")) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.error && errorData.error.includes("Client cannot be deleted with active employees")) {
-          toast.error("Client cannot be deleted with active employees.", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        } else {
-          throw new Error(errorData.error || "Failed to delete client");
+
+    if (window.confirm("Are you sure you want to delete this client ?")) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.error && errorData.error.includes("Client cannot be deleted with active employees")) {
+            toast.error("Client cannot be deleted with active employees.");
+          } else {
+            throw new Error(errorData.error || "Failed to delete client");
+          }
+          return;
         }
-        return;
+        toast.success("Client deleted successfully");
+        navigate("/admin");
+      } catch (err) {
+        console.error("Error deleting client:", err.message);
+        toast.error(`Error: ${err.message}`);
+
       }
       toast.success("Client deleted successfully", {
         position: "top-right",
@@ -276,7 +318,21 @@ const ClientDetails = () => {
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
-      <ToastContainer/>
+
+      {/* This is the correct placement for ToastContainer - at the root level */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-blue-900">
           {`${client.ClientName} (${client.Abbreviation})`}
@@ -357,7 +413,7 @@ const ClientDetails = () => {
       {/* Resources Assigned */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
         <div className="flex justify-between items-center pb-4">
-          <h3 className="text-[24px] text-[#272727]">Resources Assigned</h3>
+          <h3 className="text-[24px] text-[#272727] ">Resources Assigned</h3>
           <div className="flex gap-2">
             <Button
               onClick={() => setActiveTab("Active")}
@@ -373,7 +429,9 @@ const ClientDetails = () => {
             </Button>
             <Button
               onClick={handleAddResource}
-               className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+
+              className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+
               Add Resource
             </Button>
           </div>
@@ -382,8 +440,8 @@ const ClientDetails = () => {
         <div className="my-2"></div>
 
         <Table>
-          <TableHeader className="border-b border-[#9DA4B3]">
-            <TableRow>
+          <TableHeader >
+            <TableRow className='border-b border-[#9DA4B3]'>
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
               <TableHead>Role</TableHead>
@@ -399,7 +457,7 @@ const ClientDetails = () => {
           <TableBody>
             {filteredResources.length > 0 ? (
               filteredResources.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow className='border-b border-[#9DA4B3]' key={r.id}>
                   <TableCell>{getEmployeeName(r.Employee)}</TableCell>
                   <TableCell>{getEmployeeCode(r.Employee)}</TableCell>
                   <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>

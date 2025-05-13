@@ -63,7 +63,6 @@ const EmployeeCost = () => {
       const month = editIndex.column;
       const amount = parseFloat(tempValue);
 
-      // Update backend
       const response = await fetch(`http://localhost:5001/api/employee-cost/${employeeId}`, {
         method: 'PATCH',
         headers: {
@@ -76,7 +75,6 @@ const EmployeeCost = () => {
         throw new Error('Failed to update employee cost');
       }
 
-      // Update local state
       newData[editIndex.row][editIndex.column] = amount;
       setData(newData);
       setEditIndex({ row: -1, column: '' });
@@ -94,10 +92,12 @@ const EmployeeCost = () => {
 
   return (
     <div className="">
-      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
-        <div className="flex justify-between items-center w-full mb-2">
+      <div className="w-full max-w-[1400px] bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex justify-between items-center w-full mb-4">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
-          <div className="w-32">
+
+          <div className="min-w-[120px]">
+
             <Select disabled value={selectedYear}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Year" />
@@ -113,14 +113,16 @@ const EmployeeCost = () => {
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
-        <div className="md:w-6xl 2xl:w-auto overflow-x-auto">
+
+        <div className="w-full overflow-x-auto">
           {selectedYear && !yearLoading && !loading && data.length > 0 ? (
-            <Table className="bg-white shadow-sm w-full table-fixed">
-              <TableHeader className="text-[16px] bg-[#EDEFF2]">
+            <Table className="w-full border-collapse bg-white shadow-sm">
+              <TableHeader className="bg-[#EDEFF2]">
+
                 <TableRow className="border-b border-[#9DA4B3]">
-                  <TableHead className="px-3 py-2 w-[200px] text-left">Name</TableHead>
+                  <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
                   {fiscalMonths.map((month) => (
-                    <TableHead key={month} className="px-3 py-2 w-[100px] text-center">{month}</TableHead>
+                    <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -131,16 +133,16 @@ const EmployeeCost = () => {
                     key={item.id}
                     className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
                   >
-                    <TableCell className="px-3 py-2 text-[14px] w-[200px] truncate text-left">
+                    <TableCell className="p-3 text-[14px] min-w-[200px] truncate text-left">
                       {item.name}
                     </TableCell>
                     {fiscalMonths.map((column) => (
                       <TableCell
                         key={`${item.id}-${column}`}
-                        className="px-3 py-2 text-[14px] w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
+                        className="p-3 text-[14px] min-w-[100px] text-center"
                         onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                       >
-                        <div className="max-w-[100px] whitespace-nowrap flex justify-center">
+                        <div className="whitespace-nowrap flex justify-center">
                           {editIndex.row === rowIndex && editIndex.column === column ? (
                             <Input
                               id={`cost-${item.id}-${column}`}
@@ -149,7 +151,7 @@ const EmployeeCost = () => {
                               onChange={handleChange}
                               onBlur={handleBlur}
                               type="number"
-                              className="h-8 text-sm w-full max-w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
+                              className="h-8 text-sm w-full max-w-[100px] text-center"
                               autoFocus
                             />
                           ) : (

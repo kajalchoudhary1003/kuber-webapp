@@ -30,8 +30,8 @@ const OrderHeader = () => {
   const activeTab = getActiveTab();
 
   return (
-    <header className="px-8 py-4 flex items-center justify-between">
-      <h1 className="text-2xl font-normal text-black">Admin</h1>
+    <header className="px-8 py-6 pb-0 flex items-center justify-between">
+      <h1 className="text-3xl font-normal text-black">Admin</h1>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="gap-4">
           <TabsTrigger 

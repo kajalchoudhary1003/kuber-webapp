@@ -1,4 +1,3 @@
-// EmployeeDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -10,16 +9,19 @@ import {
   TableBody,
   TableRow,
   TableHead,
-  TableCell,
+  TableCell
 } from '@/components/ui/table';
-import { toast,ToastContainer } from 'react-toastify';
 
-const API_BASE_URL = 'http://localhost:5001/api'; // Update port if different
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
+const API_BASE_URL = 'http://localhost:5001/api';
 
 const cache = {
   roles: {},
   levels: {},
-  organisations: {},
+  organisations: {}
 };
 
 const formatDate = (date) => {
@@ -33,7 +35,7 @@ const formatCurrency = (value, currencyCode = 'INR') => {
     style: 'currency',
     currency: currencyCode,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(value);
 };
 
@@ -95,7 +97,7 @@ const EmployeeDetail = () => {
       const [rolesRes, levelsRes, orgsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/roles`),
         axios.get(`${API_BASE_URL}/levels`),
-        axios.get(`${API_BASE_URL}/organisations`),
+        axios.get(`${API_BASE_URL}/organisations`)
       ]);
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
@@ -146,7 +148,7 @@ const EmployeeDetail = () => {
 
   const fetchClientAssignments = async () => {
     try {
-      // Using client-employees/employee endpoint instead of employees/{id}/clients
+
       const response = await axios.get(`${API_BASE_URL}/client-employees/employee/${id}`);
       setClientAssignments(response.data);
       setClientError(null);
@@ -162,13 +164,13 @@ const EmployeeDetail = () => {
 
   const handleDelete = async () => {
     try {
-      // Check if employee is active
+
       if (employee.Status === 'Active') {
         toast.error('Active employees cannot be deleted');
         return;
       }
 
-      // Check for active client assignments
+
       const hasActiveClients = clientAssignments.some(
         (assignment) => assignment.Status === 'Active'
       );
@@ -178,14 +180,17 @@ const EmployeeDetail = () => {
         return;
       }
 
-      // Proceed with deletion
+
       await axios.delete(`${API_BASE_URL}/employees/${id}`);
-      alert('Employee deleted successfully');
+      toast.success('Employee deleted successfully');
+
       navigate('/admin/employee-master');
     } catch (error) {
       console.error('Error deleting employee:', error);
       setError('Error deleting employee');
-      alert('Error deleting employee');
+
+      toast.error('Error deleting employee');
+
     }
   };
 
@@ -197,13 +202,19 @@ const EmployeeDetail = () => {
     setEditModalOpen(false);
     if (updatedData) {
       try {
-        await axios.put(`${API_BASE_URL}/employees/${id}`, updatedData);
+        console.log('Updating employee with data:', updatedData);
+        const response = await axios.put(`${API_BASE_URL}/employees/${id}`, updatedData);
+        console.log('Update response:', response.data);
+        toast.success('Employee updated successfully');
         fetchEmployee();
         fetchClientAssignments();
       } catch (error) {
-        console.error('Error updating employee:', error);
+        console.error('Error updating employee:', error.response?.status, error.message);
         setError('Error updating employee');
+        toast.error(`Error updating employee: ${error.message}`);
       }
+    } else {
+      console.log('No updated data provided');
     }
   };
 
@@ -306,22 +317,19 @@ const EmployeeDetail = () => {
         {clientError ? (
           <div className="text-center text-red-500 py-4">{clientError}</div>
         ) : (
-
           <Table className="w-full border-b border-[#9DA4B3]">
-            <TableHeader className='bg-[#EDEFF2] border-b border-[#9DA4B3]'>
-              <TableRow className='border-b border-[#9DA4B3]'>
-                
-                <TableCell className="py-3 px-1  font-medium text-[16px]">Client Name</TableCell>
+            <TableHeader className="bg-[#EDEFF2] border-b border-[#9DA4B3]">
+              <TableRow className="border-b border-[#9DA4B3]">
+                <TableCell className="py-3 px-1 font-medium text-[16px]">Client Name</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Start Date</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">End Date</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Billing Rate</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Status</TableCell>
-
               </TableRow>
             </TableHeader>
             <TableBody>
               {clientAssignments?.length > 0 ? (
-                clientAssignments.map((clientEmployee, index) => (
+                clientAssignments.map((clientEmployee) => (
                   <TableRow className="border-b border-[#9DA4B3]" key={clientEmployee.id}>
                     <TableCell className="py-3 px-1 text-[14px]">
                       {clientEmployee.Client?.ClientName || 'N/A'}
@@ -342,7 +350,7 @@ const EmployeeDetail = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-3 px-1 text-center text-[14px]">
+                  <TableCell colSpan={5} className="py-3 px-1 text-center text-[14px]">
                     No client assignments found.
                   </TableCell>
                 </TableRow>
@@ -360,7 +368,9 @@ const EmployeeDetail = () => {
         levels={levels}
         organisations={organisations}
       />
-      <ToastContainer />
+
+      <ToastContainer position="top-right" autoClose={3000} />
+
     </div>
   );
 };

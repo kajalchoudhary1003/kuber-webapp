@@ -123,25 +123,30 @@ const BillingSetup = () => {
 
       <div className="w-full overflow-x-auto mt-5">
         {selectedClient && (
-          <table className="w-full border-collapse bg-white shadow-md">
-            <thead className='bg-[#EDEFF2]'>
-              <tr className="bg-secondary-anti-flash-white text-sm font-bold text-primary-black">
-                <th className="p-2 border-b border-secondary-cadet-gray">Name</th>
-                <th className="p-2 border-b border-secondary-cadet-gray">CTC/M</th>
+
+          <table className="w-full border-collapse items-center bg-white shadow-md">
+            <thead >
+              <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
+                <th className="p-2 border-b border-[#9DA4B3]">Name</th>
+                <th className="p-2 border-b border-[#9DA4B3]">CTC/M</th>
                 {fiscalMonths.map(month => (
-                  <th key={month} className="p-2 border-b border-secondary-cadet-gray">{month}</th>
+                  <th key={month} className="p-2 border-b border-[#9DA4B3]">{month}</th>
+
                 ))}
               </tr>
             </thead>
             <tbody>
               {data.map((item, rowIndex) => (
-                <tr key={item.id} className="text-sm text-primary-black">
-                  <td className="p-2 border-b border-secondary-cadet-gray">{item.name}</td>
-                  <td className="p-2 border-b border-secondary-cadet-gray">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
+
+                <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
+                  <td className="p-3  border-b border-[#9DA4B3]">{item.name}</td>
+                  <td className="p-3 border-b border-[#9DA4B3]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
                   {fiscalMonths.map(column => (
                     <td
                       key={`${item.id}-${column}`}
-                      className="p-2 border-b border-secondary-cadet-gray cursor-pointer"
+                      className="p-2 border-b border-[#9DA4B3]"
+
+
                       onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                     >
                       {editIndex.row === rowIndex && editIndex.column === column ? (
