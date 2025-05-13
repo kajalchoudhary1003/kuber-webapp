@@ -33,34 +33,54 @@ const OrderHeader = () => {
     <header className="px-8 py-6 pb-0 flex items-center justify-between">
       <h1 className="text-3xl font-normal text-black">Admin</h1>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="gap-4">
+        <TabsList className="bg-transparent border-0 shadow-none gap-4">
           <TabsTrigger 
             value="employee-master" 
-            className={`cursor-pointer ${activeTab === 'employee-master' ? 'shadow-lg text-blue-500' : ''}`}
+            className={`cursor-pointer text-md pb-5 bg-transparent border-0 shadow-none px-4 relative ${
+              activeTab === 'employee-master' 
+                ? "text-blue-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Employee Master
           </TabsTrigger>
           <TabsTrigger 
             value="employee-cost" 
-            className={`cursor-pointer ${activeTab === 'employee-cost' ? 'shadow-lg text-blue-500' : ''}`}
+            className={`cursor-pointer text-md pb-5 bg-transparent border-0 shadow-none px-4 relative ${
+              activeTab === 'employee-cost' 
+                ? "text-blue-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Employee Cost
           </TabsTrigger>
           <TabsTrigger 
             value="client-master" 
-            className={`cursor-pointer ${activeTab === 'client-master' ? 'shadow-lg text-blue-500' : ''}`}
+            className={`cursor-pointer text-md pb-5 bg-transparent border-0 shadow-none px-4 relative ${
+              activeTab === 'client-master' 
+                ? "text-blue-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Client Master
           </TabsTrigger>
           <TabsTrigger 
             value="billing-setup" 
-            className={`cursor-pointer ${activeTab === 'billing-setup' ? 'shadow-lg text-blue-500' : ''}`}
+            className={`cursor-pointer text-md pb-5 bg-transparent border-0 shadow-none px-4 relative ${
+              activeTab === 'billing-setup' 
+                ? "text-blue-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Billing Setup
           </TabsTrigger>
           <TabsTrigger 
             value="other-settings" 
-            className={`cursor-pointer ${activeTab === 'other-settings' ? 'shadow-lg text-blue-500' : ''}`}
+            className={`cursor-pointer text-md pb-5 bg-transparent border-0 shadow-none px-4 relative ${
+              activeTab === 'other-settings' 
+                ? "text-blue-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Other Settings
           </TabsTrigger>

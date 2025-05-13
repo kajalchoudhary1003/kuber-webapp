@@ -152,12 +152,12 @@ export default function PaymentTracker() {
 
   return (
     <div className="p-6 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Payment Tracker</h1>
+      <h1 className="text-3xl mb-6">Payment Tracker</h1>
 
-      <Card className="mb-6 bg-white border-0 shadow-md">
+      <Card className="mb-6 bg-white rounded-3xl border-0 shadow-md">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
-            <CardTitle>Track the Payment</CardTitle>
+            <CardTitle className="text-xl font-normal">Track the Payment</CardTitle>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
                 Last Updated on: {dayjs(currentDate).format("DD/MM/YYYY")}
@@ -192,10 +192,10 @@ export default function PaymentTracker() {
         </CardHeader>
       </Card>
 
-      <Card className="mb-6 bg-white border-0 shadow-md">
+      <Card className="mb-6 bg-white rounded-3xl border-0 shadow-md">
         <CardContent className="p-6">
-          <div className="flex items-center gap-6">
-            <Label htmlFor="reconciliation" className="text-lg font-semibold whitespace-nowrap">
+          <div className="flex items-center gap-36">
+            <Label htmlFor="reconciliation" className="text-xl font-normal whitespace-nowrap">
               Reconciliation Note
             </Label>
             <Textarea
@@ -209,108 +209,115 @@ export default function PaymentTracker() {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 bg-white border-0 shadow-md">
-        <CardHeader>
-          <CardTitle>Record New Payment</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-            <div className="space-y-2">
-              <Label htmlFor="date">Received Date</Label>
-              {/* Ant Design DatePicker with custom styling */}
-              <ConfigProvider theme={antTheme}>
-                <DatePicker
-                  id="date"
-                  format="DD/MM/YYYY"
-                  onChange={handleDateChange}
-                  value={date ? dayjs(date) : null}
-                  style={{ 
-                    width: '100%', 
-                    height: '40px',
-                    borderColor: '#000000' // Inline style for border color
-                  }}
-                  placeholder="Select date"
-                />
-              </ConfigProvider>
-            </div>
+      <Card className="mb-6 bg-white border-0 rounded-3xl shadow-md">
+  <CardContent className="p-6">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+      <div className="space-y-2">
+        <h3 className="text-xl">Record New Payment</h3>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="date">Received Date</Label>
+        {/* Ant Design DatePicker with custom styling */}
+        <ConfigProvider theme={antTheme}>
+          <DatePicker
+            id="date"
+            format="DD/MM/YYYY"
+            onChange={handleDateChange}
+            value={date ? dayjs(date) : null}
+            style={{ 
+              width: '100%', 
+              height: '35px',
+              borderColor: '#000000' // Inline style for border color
+            }}
+            placeholder="Select date"
+          />
+        </ConfigProvider>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
-                <Input 
-                  id="amount" 
-                  value={amount} 
-                  onChange={(e) => setAmount(e.target.value)} 
-                  className="pl-7 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
-                  type="number"
-                  step="0.01" 
-                />
-              </div>
-            </div>
+      <div className="space-y-2">
+        <Label htmlFor="amount">Amount</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
+          <Input 
+            id="amount" 
+            value={amount} 
+            onChange={(e) => setAmount(e.target.value)} 
+            className="pl-7 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+            type="number"
+            step="0.01" 
+          />
+        </div>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="remark">Remark</Label>
-              <Input 
-                id="remark" 
-                placeholder="Remark" 
-                value={remark} 
-                onChange={(e) => setRemark(e.target.value)} 
-                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
-              />
-            </div>
+      <div className="space-y-2">
+        <Label htmlFor="remark">Remark</Label>
+        <Input 
+          id="remark" 
+          placeholder="Remark" 
+          value={remark} 
+          onChange={(e) => setRemark(e.target.value)} 
+          className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+        />
+      </div>
 
-            <Button 
-              className="bg-blue-500 hover:bg-blue-500/90 text-white rounded-full h-10 cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0" 
-              onClick={handleRecordPayment}
-              disabled={!selectedClient || !date || !amount || submitLoading}
-            >
-              {submitLoading ? "Recording..." : "Record Payment"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Button 
+  className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full h-10 cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 transition-all duration-300" 
+  onClick={handleRecordPayment}
+  disabled={!selectedClient || !date || !amount || submitLoading}
+>
+  {submitLoading ? "Recording..." : "Record Payment"}
+</Button>
 
-      {selectedClient && (
-        <Card className="bg-white border-0 shadow-md">
-          <CardContent className="px-4">
-            <div className="overflow-hidden rounded-md border border-slate-400">
-              <Table>
-                <TableHeader className="bg-slate-200">
-                  <TableRow>
-                    <TableHead className="w-[200px] text-center">Date</TableHead>
-                    <TableHead className="w-[200px] text-center">Amount</TableHead>
-                    <TableHead className="text-center">Remark</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paymentLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4">Loading payments...</TableCell>
-                    </TableRow>
-                  ) : paymentError ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4 text-red-500">{paymentError}</TableCell>
-                    </TableRow>
-                  ) : clientPayments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4">No payment records found for this client</TableCell>
-                    </TableRow>
-                  ) : (
-                    clientPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
-                        <TableCell className="text-center">£{parseFloat(payment.Amount).toFixed(2)}</TableCell>
-                        <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+    </div>
+  </CardContent>
+</Card>
+
+
+
+{selectedClient && (
+  <Card className="bg-white border-0 rounded-3xl shadow-md">
+    <CardContent className="px-4">
+      <div className="overflow-hidden rounded-md border border-gray-300">
+        <Table className="[&_thead_tr]:border-b-0 [&_thead]:border-b-0">
+          <TableHeader className="bg-slate-200 !border-b-0">
+            <TableRow className="!border-b-0">
+              <TableHead className="w-[200px] text-center">Date</TableHead>
+              <TableHead className="w-[200px] text-center">Amount</TableHead>
+              <TableHead className="text-center">Remark</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paymentLoading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">Loading payments...</TableCell>
+              </TableRow>
+            ) : paymentError ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4 text-red-500">{paymentError}</TableCell>
+              </TableRow>
+            ) : clientPayments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">No payment records found for this client</TableCell>
+              </TableRow>
+            ) : (
+              clientPayments.map((payment) => (
+                <TableRow key={payment.id} className="border-t border-gray-300">
+                  <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
+                  <TableCell className="text-center">£{parseFloat(payment.Amount).toFixed(2)}</TableCell>
+                  <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+
+
     </div>
   )
 }

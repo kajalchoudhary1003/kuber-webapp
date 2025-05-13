@@ -274,10 +274,10 @@ export default function ClientProfitability() {
         pauseOnHover
       />
       
-      <Card className="bg-white border-0 shadow-md">
+      <Card className="bg-white rounded-3xl border-0 shadow-md">
         <CardContent className="pt-6 pb-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Profitability Report</h2>
+            <h2 className="text-xl ">Profitability Report</h2>
 
             <div className="flex items-center gap-4">
               <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -307,12 +307,13 @@ export default function ClientProfitability() {
               </Select>
 
               <Button 
-                className="bg-blue-500 hover:bg-blue-500/90 text-white cursor-pointer rounded-full"
-                disabled={!selectedClient || !selectedYear || loading}
-                onClick={handleShowReport}
-              >
-                {loading ? "Loading..." : "Show Profitability Report"}
-              </Button>
+  className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full cursor-pointer transition-all duration-300"
+  disabled={!selectedClient || !selectedYear || loading}
+  onClick={handleShowReport}
+>
+  {loading ? "Loading..." : "Show Profitability Report"}
+</Button>
+
             </div>
           </div>
           
@@ -328,9 +329,9 @@ export default function ClientProfitability() {
       {showReport && profitabilityData && profitabilityData.monthlyData && profitabilityData.yearlyData && (
         <>
           {/* Monthly Profitability Chart - Employee contributions by month */}
-          <Card className="bg-white border-0 shadow-md">
+          <Card className="bg-white border-0 rounded-3xl shadow-md">
             <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">
+              <h3 className="text-xl  mb-4">
                 Monthly Employee Profitability for {getClientName()} - {formatYear(selectedYear)}
               </h3>
               <div className="w-full h-80">
@@ -340,9 +341,9 @@ export default function ClientProfitability() {
           </Card>
 
           {/* Yearly Profitability Chart - Top 5 employees and Others */}
-          <Card className="bg-white border-0 shadow-md">
+          <Card className="bg-white border-0 rounded-3xl shadow-md">
             <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">
+              <h3 className="text-xl  mb-4">
                 Yearly Employee Profitability for {getClientName()} - {formatYear(selectedYear)}
               </h3>
               <div className="w-full h-80">
