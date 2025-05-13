@@ -108,16 +108,9 @@ const BillingSetup = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedYear} disabled>
-            <SelectTrigger className="cursor-pointer min-w-[120px]">
-              <SelectValue placeholder={selectedYear || 'Select Year'} />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              <SelectItem className="cursor-pointer" value={selectedYear}>
-                {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="min-w-[120px] flex items-center text-sm text-[#272727] bg-[#9DA4B3] px-3 py-2 rounded opacity-50 cursor-not-allowed">
+            {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
+          </div>
         </div>
       </div>
 
@@ -125,51 +118,51 @@ const BillingSetup = () => {
         {selectedClient && (
           <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
 
-          <table className="w-full border-collapse items-center bg-white shadow-md">
-            <thead >
-              <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
-                <th className="p-2 border-b border-[#9DA4B3]">Name</th>
-                <th className="p-2 border-b border-[#9DA4B3]">CTC/M</th>
-                {fiscalMonths.map(month => (
-                  <th key={month} className="p-2 border-b border-[#9DA4B3]">{month}</th>
+            <table className="w-full border-collapse items-center bg-white shadow-md">
+              <thead >
+                <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
+                  <th className="p-2 border-b border-[#9DA4B3]">Name</th>
+                  <th className="p-2 border-b border-[#9DA4B3]">CTC/M</th>
+                  {fiscalMonths.map(month => (
+                    <th key={month} className="p-2 border-b border-[#9DA4B3]">{month}</th>
 
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, rowIndex) => (
-
-                <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
-                  <td className="p-3  border-b border-[#9DA4B3]">{item.name}</td>
-                  <td className="p-3 border-b border-[#9DA4B3]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
-                  {fiscalMonths.map(column => (
-                    <td
-                      key={`${item.id}-${column}`}
-                      className="p-2 border-b border-[#9DA4B3]"
-
-
-                      onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
-                    >
-                      {editIndex.row === rowIndex && editIndex.column === column ? (
-                        <Input
-                          value={tempValue}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="h-8"
-                          autoFocus
-                        />
-                      ) : (
-                        `${currencyCode}${formatNumberWithCommas(item[column])}`
-                      )}
-                    </td>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((item, rowIndex) => (
+
+                  <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
+                    <td className="p-3  border-b border-[#9DA4B3]">{item.name}</td>
+                    <td className="p-3 border-b border-[#9DA4B3]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
+                    {fiscalMonths.map(column => (
+                      <td
+                        key={`${item.id}-${column}`}
+                        className="p-2 border-b border-[#9DA4B3]"
+
+
+                        onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
+                      >
+                        {editIndex.row === rowIndex && editIndex.column === column ? (
+                          <Input
+                            value={tempValue}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="h-8"
+                            autoFocus
+                          />
+                        ) : (
+                          `${currencyCode}${formatNumberWithCommas(item[column])}`
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

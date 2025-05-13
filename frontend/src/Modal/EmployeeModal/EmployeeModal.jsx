@@ -368,7 +368,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
           <DialogFooter className="pt-4">
             <Button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white cursor-pointer hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 shadow-md text-white hover:bg-white cursor-pointer hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {initialData ? 'Update' : 'Create'}
             </Button>

@@ -186,7 +186,7 @@ const ClientMaster = () => {
                 autoComplete="off"
               />
             </div>
-            <Button className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
+            <Button className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
           </div>
         </div>
 

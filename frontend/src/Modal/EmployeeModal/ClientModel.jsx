@@ -227,7 +227,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
           <DialogFooter className="col-span-2 mt-4">
             <button
               type="submit"
-              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 shadow-md text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {initialData?.id ? 'Update Client' : 'Add Client'}
             </button>

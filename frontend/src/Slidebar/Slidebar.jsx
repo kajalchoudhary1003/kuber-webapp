@@ -157,7 +157,7 @@ export function AppSidebar() {
                   asChild
                   isActive={isActive}
                   className={clsx(
-                    "hover:bg-[#E6F2FF] py-6 transition-colors relative",
+                    "hover:bg-[#EDEFF2] py-6 transition-colors relative",
                     isActive && "bg-[#E6F2FF] py-6"
                   )}
                 >

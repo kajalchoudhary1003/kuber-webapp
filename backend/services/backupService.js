@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
@@ -50,29 +49,14 @@ const backupDatabase = async () => {
   }
 };
 
-
 const restoreDatabase = async (backupData) => {
   try {
-   
-    let backupFile;
-    
-    if (backupData.tempFilePath) {
-      
-      backupFile = backupData.tempFilePath;
-    } else if (typeof backupData === 'string') {
-     
-      const backupDir = path.join(__dirname, '../backups');
-      backupFile = path.join(backupDir, backupData);
-      
-      if (!fs.existsSync(backupFile)) {
-        logger.error('Backup file does not exist.', { backupFile });
-        return { success: false, message: 'Backup file does not exist.' };
-      }
-    } else {
-      logger.error('Invalid backup data provided.');
-      return { success: false, message: 'Invalid backup data provided' };
+    if (!backupData.tempFilePath) {
+      logger.error('Invalid backup file provided.');
+      return { success: false, message: 'Invalid backup file provided' };
     }
 
+    const backupFile = backupData.tempFilePath;
     const dbPath = path.join(__dirname, '../database/database.sqlite');
     const dbDir = path.dirname(dbPath);
 
@@ -81,14 +65,12 @@ const restoreDatabase = async (backupData) => {
       logger.info('Created database directory.', { dbDir });
     }
 
-
     const timestamp = getFormattedTimestamp();
     const autoBackupPath = path.join(path.dirname(dbPath), `pre_restore_${timestamp}.db`);
     if (fs.existsSync(dbPath)) {
       fs.copyFileSync(dbPath, autoBackupPath);
       logger.info('Created automatic backup before restore.', { autoBackupPath });
     }
-
 
     fs.copyFileSync(backupFile, dbPath);
     fs.chmodSync(dbPath, 0o666);
