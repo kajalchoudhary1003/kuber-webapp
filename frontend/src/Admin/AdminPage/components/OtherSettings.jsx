@@ -819,10 +819,10 @@ const restoreDatabase = async () => {
               <TableBody>
                 {employeeLevels.map((level) => (
                   <TableRow key={level.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3] ">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {level.LevelName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       <button
                         className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
@@ -870,10 +870,10 @@ const restoreDatabase = async () => {
               <TableBody>
                 {employeeRoles.map((role) => (
                   <TableRow key={role.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {role.RoleName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       <button
                         className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
@@ -925,16 +925,16 @@ const restoreDatabase = async () => {
               <TableBody>
                 {organisations.map((org) => (
                   <TableRow key={org.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {org.OrganisationName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {org.Abbreviation}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {org.RegNumber}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -987,19 +987,19 @@ const restoreDatabase = async () => {
               <TableBody>
                 {bankDetails.map((detail) => (
                   <TableRow key={detail.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {detail.BankName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {detail.AccountNumber}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {detail.SwiftCode}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {detail.IFSC}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -1050,13 +1050,13 @@ const restoreDatabase = async () => {
               <TableBody>
                 {currencies.map((currency) => (
                   <TableRow key={currency.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-gray-300">
                       {currency.CurrencyCode}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-gray-300">
                       {currency.CurrencyName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-gray-300">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -1105,16 +1105,16 @@ const restoreDatabase = async () => {
               <TableBody>
                 {exchangeRates.map((rate) => (
                   <TableRow key={rate.id}>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {rate.CurrencyFrom?.CurrencyName || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {rate.CurrencyTo?.CurrencyName || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       {parseFloat(rate.Rate).toFixed(6)}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
+                    <TableCell className="text-center text-sm text-black border-b border-[#EDEFF2]">
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-4 cursor-pointer"
                         title="Edit"

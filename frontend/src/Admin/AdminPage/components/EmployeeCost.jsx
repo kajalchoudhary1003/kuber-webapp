@@ -118,7 +118,7 @@ const EmployeeCost = () => {
             <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
               <Table className="shadow-sm" style={{ width: '100%' }}>
                 <TableHeader className="bg-[#EDEFF2]">
-                  <TableRow className="border-b border-[#9DA4B3]">
+                  <TableRow className="border-b border-[#EDEFF2]">
                     <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
                     {fiscalMonths.map((month) => (
                       <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
@@ -130,7 +130,7 @@ const EmployeeCost = () => {
                   {data.map((item, rowIndex) => (
                     <TableRow
                       key={item.id}
-                      className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
+                      className="text-sm text-black border-b border-[#EDEFF2] hover:bg-[#E6F2FF] transition-colors duration-200"
                     >
                       <TableCell className="p-3 text-[14px] min-w-[200px] truncate text-left">
                         {item.name}

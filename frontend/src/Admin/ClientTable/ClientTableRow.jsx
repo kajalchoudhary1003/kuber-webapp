@@ -20,7 +20,7 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
   };
 
   return (
-    <TableRow className="hover:bg-blue-50 border-b border-[#9DA4B3]">
+    <TableRow className="hover:bg-blue-50 border-b border-[#EDEFF2]">
       {/* Removed the ID cell */}
       <TableCell className="py-3 px-1">{data.ClientName}</TableCell>
       <TableCell className="py-3 px-1">{data.ContactPerson}</TableCell>

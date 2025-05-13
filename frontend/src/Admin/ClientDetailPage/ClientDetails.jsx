@@ -322,7 +322,7 @@ const ClientDetails = () => {
 
       {/* Client Details */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
-        <div className="flex justify-between items-center border-b border-[#9DA4B3] pb-4">
+        <div className="flex justify-between items-center border-b border-[#EDEFF2] pb-4">
           <h3 className="text-[24px] text-[#272727]">Client Details</h3>
           <div className="space-x-2">
             <Button
@@ -361,7 +361,7 @@ const ClientDetails = () => {
           </div>
         </div>
 
-        <div className="border-b border-[#9DA4B3] my-2"></div>
+        <div className="border-b border-[#EDEFF2] my-2"></div>
 
         <div className="grid grid-cols-4 gap-4">
           <div>
@@ -414,7 +414,7 @@ const ClientDetails = () => {
 
         <Table>
           <TableHeader >
-            <TableRow className='border-b border-[#9DA4B3]'>
+          <TableRow className='border-b border-[#EDEFF2]'>
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
               <TableHead>Role</TableHead>
@@ -430,7 +430,7 @@ const ClientDetails = () => {
           <TableBody>
             {filteredResources.length > 0 ? (
               filteredResources.map((r) => (
-                <TableRow className='border-b border-[#9DA4B3]' key={r.id}>
+                <TableRow className='border-b border-[#EDEFF2]' key={r.id}>
                   <TableCell>{getEmployeeName(r.Employee)}</TableCell>
                   <TableCell>{getEmployeeCode(r.Employee)}</TableCell>
                   <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>
