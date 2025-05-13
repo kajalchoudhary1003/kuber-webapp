@@ -53,10 +53,7 @@ const OtherSettings = () => {
   const { selectedYear, setSelectedYear } = useYearWithFallback();
 
 const [backupFile, setBackupFile] = useState(null);
-const [backupName, setBackupName] = useState('');
-const [restoreMode, setRestoreMode] = useState('file'); // 'file' or 'name'
 const [restoreModalOpen, setRestoreModalOpen] = useState(false);
-
 
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleModalMode, setRoleModalMode] = useState('create');
@@ -649,38 +646,26 @@ const backupDatabase = async () => {
   
 const restoreDatabase = async () => {
   try {
-    let response;
-    
-    if (restoreMode === 'file') {
-      if (!backupFile) {
-        alert('Please select a backup file.');
-        return;
-      }
-      
-      // Create form data for file upload
-      const formData = new FormData();
-      formData.append('backupFile', backupFile);
-      
-      // Make the API call
-      response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-    } else {
-      if (!backupName) {
-        alert('Please enter a backup filename.');
-        return;
-      }
-      
-      response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, { backupName });
+    if (!backupFile) {
+      alert('Please select a backup file.');
+      return;
     }
+    
+    // Create form data for file upload
+    const formData = new FormData();
+    formData.append('backupFile', backupFile);
+    
+    // Make the API call
+    const response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     
     if (response.data.success) {
       alert(response.data.message);
       setRestoreModalOpen(false);
       setBackupFile(null);
-      setBackupName('');
       
       // Refresh data after restore
       fetchLevels();
@@ -763,10 +748,10 @@ const restoreDatabase = async () => {
         <div className="flex justify-between items-center w-full mb-0">
           <h2 className="text-xl font-normal">Backup and Restore</h2>
           <div className="flex gap-2.5">
-            <Button onClick={backupDatabase} className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            <Button onClick={backupDatabase} className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Backup Database
             </Button>
-            <Button onClick={openRestoreModal} className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            <Button onClick={openRestoreModal} className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Restore Database
             </Button>
           </div>
@@ -779,52 +764,21 @@ const restoreDatabase = async () => {
       <h3 className="text-lg font-normal mb-4">Restore Database</h3>
       
       <div className="mb-4">
-        <div className="flex gap-4 mb-4">
-          <button 
-            className={`px-4 py-2 rounded-md ${restoreMode === 'file' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => setRestoreMode('file')}
-          >
-            Upload File
-          </button>
-          <button 
-            className={`px-4 py-2 rounded-md ${restoreMode === 'name' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => setRestoreMode('name')}
-          >
-            Enter Filename
-          </button>
-        </div>
-        
-        {restoreMode === 'file' ? (
-          <div>
-            <input
-              type="file"
-              onChange={(e) => setBackupFile(e.target.files[0])}
-              className="w-full border rounded-md p-2"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Select your database backup file (.db)
-            </p>
-          </div>
-        ) : (
-          <div>
-            <Input
-              type="text"
-              placeholder="Enter backup filename (e.g., kuber_20250511_123456.db)"
-              value={backupName}
-              onChange={(e) => setBackupName(e.target.value)}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Enter the name of a backup file in the server's backup directory
-            </p>
-          </div>
-        )}
+        <input
+          type="file"
+          onChange={(e) => setBackupFile(e.target.files[0])}
+          className="w-full border rounded-md p-2"
+          accept=".db"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Select your database backup file (.db)
+        </p>
       </div>
       
       <div className="flex justify-end gap-2">
         <Button
           onClick={() => {
             setRestoreModalOpen(false);
-            setBackupName('');
             setBackupFile(null);
           }}
           className="bg-gray-300 text-black hover:bg-gray-400 rounded-full"
@@ -848,7 +802,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Employee Levels</h2>
             <Button
               onClick={handleAddEmployeeLevel}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Level
             </Button>
@@ -899,7 +853,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Employee Roles</h2>
             <Button
               onClick={handleAddEmployeeRole}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Role
             </Button>
@@ -952,7 +906,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Organisations</h2>
             <Button
               onClick={handleAddOrganisation}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Organisation
             </Button>
@@ -1013,7 +967,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Bank Details</h2>
             <Button
               onClick={handleAddBankDetail}
-             className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+             className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Bank Detail
             </Button>
@@ -1078,7 +1032,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Currencies</h2>
             <Button
               onClick={handleAddCurrency}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Currency
             </Button>
@@ -1132,7 +1086,7 @@ const restoreDatabase = async () => {
             <h2 className="text-xl font-normal">Currency Exchange Rate</h2>
             <Button
               onClick={handleAddExchangeRate}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Exchange Rate
             </Button>

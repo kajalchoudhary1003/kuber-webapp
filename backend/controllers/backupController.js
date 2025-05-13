@@ -43,31 +43,20 @@ exports.downloadBackup = async (req, res) => {
 // POST /api/restore
 exports.restoreDatabase = async (req, res) => {
   try {
-    // Check if we have a file upload
-    if (req.files && req.files.backupFile) {
-      const backupFile = req.files.backupFile;
-      const result = await restoreDatabase(backupFile);
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-      return res.json(result);
+    if (!req.files || !req.files.backupFile) {
+      logger.error('No backup file provided.');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please upload a backup file' 
+      });
     }
     
-    // Check if we have a filename in the request body
-    if (req.body && req.body.backupName) {
-      const result = await restoreDatabase(req.body.backupName);
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-      return res.json(result);
+    const backupFile = req.files.backupFile;
+    const result = await restoreDatabase(backupFile);
+    if (!result.success) {
+      return res.status(400).json(result);
     }
-    
-    // If we get here, we have neither a file nor a filename
-    logger.error('No backup file or backup name provided.');
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Please either upload a backup file or provide a backup filename' 
-    });
+    return res.json(result);
     
   } catch (error) {
     logger.error('Error during database restore:', { error: error.message, stack: error.stack });

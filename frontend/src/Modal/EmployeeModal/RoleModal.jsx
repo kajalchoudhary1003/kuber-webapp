@@ -82,7 +82,7 @@ const RoleModal = ({ open, onClose, mode, initialData, onSubmit }) => {
           <DialogFooter className="flex justify-end pt-4">
             <Button
               type="submit"
-              className="bg-blue-500 cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 shadow-md cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {mode === 'edit' ? 'Update' : 'Create'}
             </Button>

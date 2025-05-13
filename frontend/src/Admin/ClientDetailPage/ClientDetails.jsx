@@ -116,74 +116,64 @@ const ClientDetails = () => {
   };
 
   const handleResourceSubmit = async (payload) => {
-    try {
-      if (payload.delete) {
+  try {
+    if (payload.delete) {
+      const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete resource");
+      }
+      setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+      toast.success("Resource deleted successfully");
+      alert("Resource deleted successfully");
+    } else {
+      if (selectedResource && selectedResource.id) {
+        // Update existing resource
         const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-          method: "DELETE",
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete resource");
+          throw new Error(errorData.error || "Failed to update resource");
         }
-        setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+        const updatedResource = await response.json();
+        setResources((prev) =>
+          prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
+        );
+        toast.success("Resource updated successfully");
+        alert("Resource updated successfully"); // Alert for resource update
       } else {
-        if (selectedResource && selectedResource.id) {
-          const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to update resource");
-          }
-  
-          setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
-          toast.success("Resource deleted successfully");
-        } else {
-          if (selectedResource && selectedResource.id) {
-            const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || "Failed to update resource");
-            }
-            const updatedResource = await response.json();
-            setResources((prev) =>
-              prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
-            );
-            toast.success("Resource updated successfully");
-          } else {
-            const response = await fetch(`${API_BASE_URL}/client-employees`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...payload, ClientID: id }),
-            });
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || "Failed to create resource");
-            }
-            const newResource = await response.json();
-            setResources((prev) => [...prev, newResource]);
-            toast.success("Resource added successfully");
-          }
+        // Create new resource
+        const response = await fetch(`${API_BASE_URL}/client-employees`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, ClientID: id }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create resource");
         }
+        const newResource = await response.json();
+        setResources((prev) => [...prev, newResource]);
+        toast.success("Resource created successfully");
+        alert("Resource created successfully"); // Alert for resource creation
       }
-      
-      // Refresh resources after update
-      await fetchClientData();
-    } catch (err) {
-      console.error("Error submitting resource:", err.message);
-      toast.error(`Error: ${err.message}`);
     }
-    setIsResourceModalOpen(false);
-    setSelectedResource(null);
-  };
-  
+
+    // Refresh resources after update
+    await fetchClientData();
+  } catch (err) {
+    console.error("Error submitting resource:", err.message);
+    toast.error(`Error: ${err.message}`);
+  }
+  setIsResourceModalOpen(false);
+  setSelectedResource(null);
+};
 
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
@@ -209,6 +199,7 @@ const ClientDetails = () => {
       }
       await fetchClientData();
       toast.success("Client updated successfully");
+      alert('Client updated successfully');
     } catch (err) {
       console.error("Error updating client:", err);
       toast.error(`Error: ${err.message}`);
@@ -316,13 +307,13 @@ const ClientDetails = () => {
       
 
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-blue-900">
+        <h2 className="text-2xl font-normal text-black">
           {`${client.ClientName} (${client.Abbreviation})`}
         </h2>
         <div className="space-x-2">
           <Button
             onClick={() => navigate("/admin")}
-            className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+            className="bg-[#048DFF] cursor-pointer shadow-md text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
 
             Back to Client Master
           </Button>
@@ -336,14 +327,14 @@ const ClientDetails = () => {
           <div className="space-x-2">
             <Button
               onClick={handleEditClient}
-              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#048DFF] cursor-pointer shadow-md text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
 
             >
               Edit
             </Button>
             <Button
               variant="destructive"
-              className="bg-[#FF6E65] cursor-pointer text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
+              className="bg-[#FF6E65] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#FF6E65] hover:border-red-500 border-2 border-[#FF6E65] rounded-3xl px-6 py-2 transition-all"
               onClick={handleDeleteClient}
             >
               Delete
@@ -412,7 +403,7 @@ const ClientDetails = () => {
             <Button
               onClick={handleAddResource}
 
-              className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+              className="bg-[#048DFF] shadow-md  text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
 
               Add Resource
             </Button>

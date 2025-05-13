@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button"; // Import Button component
 import { useYear } from '../../../contexts/YearContexts';
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
@@ -13,6 +13,9 @@ const EmployeeCost = () => {
   const [tempValue, setTempValue] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Derive fiscal year range (e.g., "2025-2026")
+  const fiscalYearRange = selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -97,15 +100,12 @@ const EmployeeCost = () => {
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
 
           <div className="min-w-[120px]">
-
-            <Select disabled value={selectedYear}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={selectedYear}>{selectedYear}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button
+              disabled
+              className="w-full bg-[#9DA4B3] text-black rounded-xl h-10 text-sm"
+            >
+              {fiscalYearRange}
+            </Button>
           </div>
         </div>
 
@@ -113,58 +113,56 @@ const EmployeeCost = () => {
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
-
-        <div className="md:w-[1020px]  2xl:w-full">
+        <div className="md:w-[1020px] 2xl:w-full">
           {selectedYear && !yearLoading && !loading && data.length > 0 ? (
             <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
-            <Table className="   shadow-sm" style={{ width: '100%' }}>
-              <TableHeader className="bg-[#EDEFF2]">
-
-                <TableRow className="border-b border-[#9DA4B3]">
-                  <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
-                  {fiscalMonths.map((month) => (
-                    <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {data.map((item, rowIndex) => (
-                  <TableRow
-                    key={item.id}
-                    className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
-                  >
-                    <TableCell className="p-3 text-[14px] min-w-[200px] truncate text-left">
-                      {item.name}
-                    </TableCell>
-                    {fiscalMonths.map((column) => (
-                      <TableCell
-                        key={`${item.id}-${column}`}
-                        className="p-3 text-[14px] min-w-[100px] text-center"
-                        onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
-                      >
-                        <div className="whitespace-nowrap flex justify-center">
-                          {editIndex.row === rowIndex && editIndex.column === column ? (
-                            <Input
-                              id={`cost-${item.id}-${column}`}
-                              name={`cost-${item.id}-${column}`}
-                              value={tempValue}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              type="number"
-                              className="h-8 text-sm w-full max-w-[100px] text-center"
-                              autoFocus
-                            />
-                          ) : (
-                            formatCurrency(item[column])
-                          )}
-                        </div>
-                      </TableCell>
+              <Table className="shadow-sm" style={{ width: '100%' }}>
+                <TableHeader className="bg-[#EDEFF2]">
+                  <TableRow className="border-b border-[#9DA4B3]">
+                    <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
+                    {fiscalMonths.map((month) => (
+                      <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
                     ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+
+                <TableBody>
+                  {data.map((item, rowIndex) => (
+                    <TableRow
+                      key={item.id}
+                      className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
+                    >
+                      <TableCell className="p-3 text-[14px] min-w-[200px] truncate text-left">
+                        {item.name}
+                      </TableCell>
+                      {fiscalMonths.map((column) => (
+                        <TableCell
+                          key={`${item.id}-${column}`}
+                          className="p-3 text-[14px] min-w-[100px] text-center"
+                          onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
+                        >
+                          <div className="whitespace-nowrap flex justify-center">
+                            {editIndex.row === rowIndex && editIndex.column === column ? (
+                              <Input
+                                id={`cost-${item.id}-${column}`}
+                                name={`cost-${item.id}-${column}`}
+                                value={tempValue}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                type="number"
+                                className="h-8 text-sm w-full max-w-[100px] text-center"
+                                autoFocus
+                              />
+                            ) : (
+                              formatCurrency(item[column])
+                            )}
+                          </div>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <div className="text-center py-4 text-gray-500">

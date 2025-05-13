@@ -187,7 +187,7 @@ const OrganisationModal = ({ open, onClose, mode, initialData, onSubmit }) => {
           <div className="flex justify-end">
             <Button
               type="submit"
-              className="bg-blue-500 cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 shadow-md cursor-pointer text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {mode === 'edit' ? 'Update Organisation' : 'Create Organisation'}
             </Button>
