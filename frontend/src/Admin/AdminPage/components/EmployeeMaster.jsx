@@ -82,6 +82,7 @@ const EmployeeMaster = () => {
   };
 
   const fetchClientAssignmentsForEmployees = async (employees) => {
+
     const assignments = {};
     const errors = {};
     await Promise.all(
@@ -107,6 +108,7 @@ const EmployeeMaster = () => {
     setClientAssignments(assignments);
     setClientErrors(errors);
   };
+
 
   const fetchRolesLevelsOrgs = async () => {
     try {
@@ -319,6 +321,7 @@ const EmployeeMaster = () => {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
+
     try {
       await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
       toast.success('Employee deleted successfully');
@@ -336,8 +339,10 @@ const EmployeeMaster = () => {
       } else {
         toast.error(errorMessage);
       }
+
     }
-  };
+  }
+};
 
   // Custom render function for Pagination to show only current page
   const paginationItemRender = (page, type, originalElement) => {

@@ -4,8 +4,10 @@ import ClientModal from '@/Modal/EmployeeModal/ClientModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 
 const API_BASE_URL = 'http://localhost:5001/api/clients'; // Adjust if your backend uses a different port
 
@@ -131,6 +133,7 @@ const ClientMaster = () => {
   };
 
   const handleDeleteClient = async (clientId) => {
+
     try {
       // Attempt to delete the client directly
       const response = await fetch(`${API_BASE_URL}/${clientId}`, {
@@ -162,8 +165,22 @@ const ClientMaster = () => {
         position: 'top-right',
         autoClose: 3000,
       });
+
     }
-  };
+
+    toast.success('Client deleted successfully', {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+    await fetchClients(); // Refresh client list
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    toast.error(`Error: ${error.message}`, {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+  }
+};
 
   return (
     <div className=" ">

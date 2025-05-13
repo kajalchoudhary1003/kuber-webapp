@@ -95,7 +95,9 @@ const EmployeeCost = () => {
       <div className="w-full max-w-[1400px] bg-white rounded-3xl shadow-lg p-6">
         <div className="flex justify-between items-center w-full mb-4">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
+
           <div className="min-w-[120px]">
+
             <Select disabled value={selectedYear}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Year" />
@@ -111,10 +113,12 @@ const EmployeeCost = () => {
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
+
         <div className="w-full overflow-x-auto">
           {selectedYear && !yearLoading && !loading && data.length > 0 ? (
             <Table className="w-full border-collapse bg-white shadow-sm">
               <TableHeader className="bg-[#EDEFF2]">
+
                 <TableRow className="border-b border-[#9DA4B3]">
                   <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
                   {fiscalMonths.map((month) => (

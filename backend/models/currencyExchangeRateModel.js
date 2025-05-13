@@ -25,7 +25,7 @@ const CurrencyExchangeRate = sequelize.define('CurrencyExchangeRate', {
     },
   },
   Rate: {
-    type: DataTypes.DECIMAL(18, 6),
+    type: DataTypes.DECIMAL(18),
     allowNull: false,
   },
   Year: {

@@ -11,8 +11,10 @@ import {
   TableHead,
   TableCell
 } from '@/components/ui/table';
+
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -146,6 +148,7 @@ const EmployeeDetail = () => {
 
   const fetchClientAssignments = async () => {
     try {
+
       const response = await axios.get(`${API_BASE_URL}/client-employees/employee/${id}`);
       setClientAssignments(response.data);
       setClientError(null);
@@ -161,10 +164,12 @@ const EmployeeDetail = () => {
 
   const handleDelete = async () => {
     try {
+
       if (employee.Status === 'Active') {
         toast.error('Active employees cannot be deleted');
         return;
       }
+
 
       const hasActiveClients = clientAssignments.some(
         (assignment) => assignment.Status === 'Active'
@@ -175,13 +180,17 @@ const EmployeeDetail = () => {
         return;
       }
 
+
       await axios.delete(`${API_BASE_URL}/employees/${id}`);
       toast.success('Employee deleted successfully');
+
       navigate('/admin/employee-master');
     } catch (error) {
       console.error('Error deleting employee:', error);
       setError('Error deleting employee');
+
       toast.error('Error deleting employee');
+
     }
   };
 
@@ -359,9 +368,11 @@ const EmployeeDetail = () => {
         levels={levels}
         organisations={organisations}
       />
+
       <ToastContainer position="top-right" autoClose={3000} />
+
     </div>
   );
 };
 
-export default EmployeeDetail;
+export default EmployeeDetail

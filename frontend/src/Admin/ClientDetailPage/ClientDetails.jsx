@@ -5,7 +5,9 @@ import { Edit, Trash2 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
+
 import { ToastContainer, toast } from "react-toastify";
+
 import "react-toastify/dist/ReactToastify.css";
 
 const ClientDetails = () => {
@@ -69,9 +71,11 @@ const ClientDetails = () => {
   const filteredResources = resources.filter((r) => r.Status === activeTab);
 
   const formatDate = (date, status) => {
+
     if (status === "Active") return "N/A"; // Return "N/A" for Active resources
     return date ? new Date(date).toISOString().split("T")[0] : "N/A";
   };
+
 
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
@@ -112,16 +116,29 @@ const ClientDetails = () => {
   };
 
   const handleResourceSubmit = async (payload) => {
-    try {
-      if (payload.delete) {
+  try {
+    if (payload.delete) {
+      const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete resource");
+      }
+      setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+    } else {
+      if (selectedResource && selectedResource.id) {
         const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-          method: "DELETE",
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete resource");
+          throw new Error(errorData.error || "Failed to update resource");
         }
+
         setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
         toast.success("Resource deleted successfully");
       } else {
@@ -153,17 +170,28 @@ const ClientDetails = () => {
           const newResource = await response.json();
           setResources((prev) => [...prev, newResource]);
           toast.success("Resource added successfully");
+
         }
+        const newResource = await response.json();
+        setResources((prev) => [...prev, newResource]);
       }
+
       // Refresh resources after update
       await fetchClientData();
     } catch (err) {
       console.error("Error submitting resource:", err.message);
       toast.error(`Error: ${err.message}`);
+
     }
-    setIsResourceModalOpen(false);
-    setSelectedResource(null);
-  };
+    // Refresh resources after update
+    await fetchClientData();
+  } catch (err) {
+    console.error("Error submitting resource:", err.message);
+    alert(`Error: ${err.message}`);
+  }
+  setIsResourceModalOpen(false);
+  setSelectedResource(null);
+};
 
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
@@ -205,6 +233,7 @@ const ClientDetails = () => {
   };
 
   const handleDeleteResource = async (resourceId) => {
+
     const resource = resources.find((r) => r.id === resourceId);
     if (resource.Status === "Active") {
       toast.error("Cannot delete client employee with active status");
@@ -227,11 +256,26 @@ const ClientDetails = () => {
       } catch (err) {
         console.error("Error deleting resource:", err.message);
         toast.error(`Error: ${err.message}`);
+
       }
+      setResources((prev) => prev.filter((r) => r.id !== resourceId));
+      await fetchClientData();
+      toast.success("Resource deleted successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } catch (err) {
+      console.error("Error deleting resource:", err.message);
+      toast.error(`Error: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  };
+  }
+};
 
   const handleDeleteClient = async () => {
+
     if (window.confirm("Are you sure you want to delete this client ?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
@@ -252,15 +296,29 @@ const ClientDetails = () => {
       } catch (err) {
         console.error("Error deleting client:", err.message);
         toast.error(`Error: ${err.message}`);
+
       }
+      toast.success("Client deleted successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/admin");
+    } catch (err) {
+      console.error("Error deleting client:", err.message);
+      toast.error(`Error: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  };
+  }
+};
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error || !client) return <div className="p-4 text-red-500">Error: {error || "Client not found"}</div>;
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
+
       {/* This is the correct placement for ToastContainer - at the root level */}
       <ToastContainer 
         position="top-right"
@@ -274,6 +332,7 @@ const ClientDetails = () => {
         pauseOnHover
       />
       
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-blue-900">
           {`${client.ClientName} (${client.Abbreviation})`}
@@ -282,6 +341,7 @@ const ClientDetails = () => {
           <Button
             onClick={() => navigate("/admin")}
             className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+
             Back to Client Master
           </Button>
         </div>
@@ -295,6 +355,7 @@ const ClientDetails = () => {
             <Button
               onClick={handleEditClient}
               className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
+
             >
               Edit
             </Button>
@@ -368,7 +429,9 @@ const ClientDetails = () => {
             </Button>
             <Button
               onClick={handleAddResource}
+
               className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+
               Add Resource
             </Button>
           </div>

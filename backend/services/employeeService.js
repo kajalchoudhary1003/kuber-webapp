@@ -174,11 +174,15 @@ const searchEmployees = async (query, page = 1, limit = 10) => {
       where: whereClause,
       include: [
         { model: Organisation, as: 'Organisation' },
+
         { model: Level, as: 'Level' },
         { model: Role, as: 'Role' },
       ],
       offset,
       limit,
+
+     
+
     });
 
     const total = await Employee.count({ where: whereClause });

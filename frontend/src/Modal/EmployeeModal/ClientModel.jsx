@@ -24,9 +24,6 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const [currencies, setCurrencies] = useState([]);
   const [organisations, setOrganisations] = useState([]);
   const [bankDetails, setBankDetails] = useState([]);
-  const [errors, setErrors] = useState({
-    Email: '',
-  });
 
   const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -85,16 +82,6 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Email validation
-    if (name === 'Email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value) && value.length > 0) {
-        setErrors(prev => ({ ...prev, Email: 'Please enter a valid email address' }));
-      } else {
-        setErrors(prev => ({ ...prev, Email: '' }));
-      }
-    }
   };
 
   const handleSelectChange = (field, value) => {
@@ -104,37 +91,6 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate all required fields
-    if (!formData.ClientName || !formData.Abbreviation || !formData.ContactPerson || 
-        !formData.Email || !formData.RegisteredAddress) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    
-    // Validate dropdown selections
-    if (!formData.BillingCurrencyID) {
-      alert('Please select a Billing Currency');
-      return;
-    }
-    
-    if (!formData.OrganisationID) {
-      alert('Please select an Organisation');
-      return;
-    }
-    
-    if (!formData.BankDetailID) {
-      alert('Please select a Bank Detail');
-      return;
-    }
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.Email)) {
-      setErrors(prev => ({ ...prev, Email: 'Please enter a valid email address' }));
-      return;
-    }
-    
     console.log("Submitting form data:", formData);
     
     // Pass the formData to the parent component
@@ -151,9 +107,6 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
       BillingCurrencyID: '',
       OrganisationID: '',
       BankDetailID: '',
-    });
-    setErrors({
-      Email: '',
     });
   };
 
@@ -175,7 +128,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             value={formData.ClientName}
             onChange={handleChange}
             required
-            className="col-span-1 p-2 border rounded focus:outline-none focus:ring-3 focus:ring-gray-300"
+            className="col-span-1 p-2 border rounded"
           />
           <input
             type="text"
@@ -184,7 +137,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             value={formData.Abbreviation}
             onChange={handleChange}
             required
-            className="col-span-1 p-2 border rounded focus:outline-none focus:ring-3 focus:ring-gray-300"
+            className="col-span-1 p-2 border rounded"
           />
           <input
             type="text"
@@ -193,22 +146,17 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             value={formData.ContactPerson}
             onChange={handleChange}
             required
-            className="col-span-1 p-2 border rounded focus:outline-none focus:ring-3 focus:ring-gray-300"
+            className="col-span-1 p-2 border rounded"
           />
-          <div className="col-span-1">
-            <input
-              type="email"
-              placeholder="Email *"
-              name="Email"
-              value={formData.Email}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border rounded focus:outline-none focus:ring-3 focus:ring-gray-300"
-            />
-            {errors.Email && (
-              <p className="text-red-500 text-sm mt-1">{errors.Email}</p>
-            )}
-          </div>
+          <input
+            type="email"
+            placeholder="Email *"
+            name="Email"
+            value={formData.Email}
+            onChange={handleChange}
+            required
+            className="col-span-1 p-2 border rounded"
+          />
           <input
             type="text"
             placeholder="Registered Address *"
@@ -216,7 +164,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             value={formData.RegisteredAddress}
             onChange={handleChange}
             required
-            className="col-span-2 p-2 border rounded focus:outline-none focus:ring-3 focus:ring-gray-300"
+            className="col-span-2 p-2 border rounded"
           />
 
           {/* Billing Currency Select */}
@@ -224,10 +172,9 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             <Select
               value={formData.BillingCurrencyID || ""}
               onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
-              required
             >
-              <SelectTrigger className="w-full p-2 border rounded focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                <SelectValue placeholder="Select Billing Currency *" />
+              <SelectTrigger className="w-full p-2 border rounded">
+                <SelectValue placeholder=" Billing Currency" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {currencies.map((currency) => (
@@ -244,10 +191,9 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             <Select
               value={formData.BankDetailID || ""}
               onValueChange={(val) => handleSelectChange('BankDetailID', val)}
-              required
             >
-              <SelectTrigger className="w-full p-2 border rounded focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                <SelectValue placeholder="Select Bank Detail *" />
+              <SelectTrigger className="w-full p-2 border rounded">
+                <SelectValue placeholder=" Bank Detail" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {bankDetails.map((bank) => (
@@ -264,10 +210,9 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             <Select
               value={formData.OrganisationID || ""}
               onValueChange={(val) => handleSelectChange('OrganisationID', val)}
-              required
             >
-              <SelectTrigger className="w-full p-2 border rounded focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                <SelectValue placeholder="Select Organisation *" />
+              <SelectTrigger className="w-full p-2 border rounded">
+                <SelectValue placeholder=" Payee" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {organisations.map((org) => (
@@ -282,7 +227,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
           <DialogFooter className="col-span-2 mt-4">
             <button
               type="submit"
-              className="bg-blue-500 text-white cursor-pointer hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
+              className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all"
             >
               {initialData?.id ? 'Update Client' : 'Add Client'}
             </button>
