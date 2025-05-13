@@ -116,31 +116,17 @@ const ClientDetails = () => {
   };
 
   const handleResourceSubmit = async (payload) => {
-  try {
-    if (payload.delete) {
-      const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete resource");
-      }
-      setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
-    } else {
-      if (selectedResource && selectedResource.id) {
+    try {
+      if (payload.delete) {
         const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-          method: "PUT",
+          method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to update resource");
+          throw new Error(errorData.error || "Failed to delete resource");
         }
-
         setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
-        toast.success("Resource deleted successfully");
       } else {
         if (selectedResource && selectedResource.id) {
           const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
@@ -152,46 +138,52 @@ const ClientDetails = () => {
             const errorData = await response.json();
             throw new Error(errorData.error || "Failed to update resource");
           }
-          const updatedResource = await response.json();
-          setResources((prev) =>
-            prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
-          );
-          toast.success("Resource updated successfully");
+  
+          setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+          toast.success("Resource deleted successfully");
         } else {
-          const response = await fetch(`${API_BASE_URL}/client-employees`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, ClientID: id }),
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to create resource");
+          if (selectedResource && selectedResource.id) {
+            const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || "Failed to update resource");
+            }
+            const updatedResource = await response.json();
+            setResources((prev) =>
+              prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
+            );
+            toast.success("Resource updated successfully");
+          } else {
+            const response = await fetch(`${API_BASE_URL}/client-employees`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...payload, ClientID: id }),
+            });
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || "Failed to create resource");
+            }
+            const newResource = await response.json();
+            setResources((prev) => [...prev, newResource]);
+            toast.success("Resource added successfully");
           }
-          const newResource = await response.json();
-          setResources((prev) => [...prev, newResource]);
-          toast.success("Resource added successfully");
-
         }
-        const newResource = await response.json();
-        setResources((prev) => [...prev, newResource]);
       }
-
+      
       // Refresh resources after update
       await fetchClientData();
     } catch (err) {
       console.error("Error submitting resource:", err.message);
       toast.error(`Error: ${err.message}`);
-
     }
-    // Refresh resources after update
-    await fetchClientData();
-  } catch (err) {
-    console.error("Error submitting resource:", err.message);
-    alert(`Error: ${err.message}`);
-  }
-  setIsResourceModalOpen(false);
-  setSelectedResource(null);
-};
+    setIsResourceModalOpen(false);
+    setSelectedResource(null);
+  };
+  
 
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
@@ -233,55 +225,50 @@ const ClientDetails = () => {
   };
 
   const handleDeleteResource = async (resourceId) => {
-
     const resource = resources.find((r) => r.id === resourceId);
+    
     if (resource.Status === "Active") {
       toast.error("Cannot delete client employee with active status");
       return;
     }
-
+    
     if (window.confirm("Are you sure you want to delete this resource?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
+        
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to delete resource");
         }
+        
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
         await fetchClientData();
-        toast.success("Resource deleted successfully");
+        toast.success("Resource deleted successfully", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } catch (err) {
         console.error("Error deleting resource:", err.message);
-        toast.error(`Error: ${err.message}`);
-
+        toast.error(`Error: ${err.message}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
-      setResources((prev) => prev.filter((r) => r.id !== resourceId));
-      await fetchClientData();
-      toast.success("Resource deleted successfully", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    } catch (err) {
-      console.error("Error deleting resource:", err.message);
-      toast.error(`Error: ${err.message}`, {
-        position: "top-right",
-        autoClose: 3000,
-      });
     }
-  }
-};
+  };
+  
 
   const handleDeleteClient = async () => {
-
-    if (window.confirm("Are you sure you want to delete this client ?")) {
+    if (window.confirm("Are you sure you want to delete this client?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
+        
         if (!response.ok) {
           const errorData = await response.json();
           if (errorData.error && errorData.error.includes("Client cannot be deleted with active employees")) {
@@ -291,27 +278,22 @@ const ClientDetails = () => {
           }
           return;
         }
-        toast.success("Client deleted successfully");
+        
+        toast.success("Client deleted successfully", {
+          position: "top-right",
+          autoClose: 3000,
+        });
         navigate("/admin");
       } catch (err) {
         console.error("Error deleting client:", err.message);
-        toast.error(`Error: ${err.message}`);
-
+        toast.error(`Error: ${err.message}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
-      toast.success("Client deleted successfully", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      navigate("/admin");
-    } catch (err) {
-      console.error("Error deleting client:", err.message);
-      toast.error(`Error: ${err.message}`, {
-        position: "top-right",
-        autoClose: 3000,
-      });
     }
-  }
-};
+  };
+  
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error || !client) return <div className="p-4 text-red-500">Error: {error || "Client not found"}</div>;
