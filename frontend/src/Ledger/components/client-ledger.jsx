@@ -7,15 +7,13 @@ import { DatePicker, ConfigProvider } from "antd"
 import axios from "axios"
 import dayjs from "dayjs"
 
-// Destructure RangePicker from DatePicker
-const { RangePicker } = DatePicker
-
 export default function ClientLedger() {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState("")
   const [selectedPeriod, setSelectedPeriod] = useState("")
   const [showLedger, setShowLedger] = useState(false)
-  const [dateRange, setDateRange] = useState(null)
+  const [startDate, setStartDate] = useState(null)
+  const [endDate, setEndDate] = useState(null)
   const [ledgerEntries, setLedgerEntries] = useState([])
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -56,18 +54,19 @@ export default function ClientLedger() {
     fetchClients()
   }, [])
 
-  // Handle date range change from Ant Design RangePicker
-  const handleDateRangeChange = (dates, dateStrings) => {
-    if (dates) {
-      setDateRange(dates)
-    } else {
-      setDateRange(null)
-    }
+  // Handle start date change
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+  }
+
+  // Handle end date change
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
   }
 
   const handleShowLedger = async () => {
     if (selectedClient && 
-        (selectedPeriod !== "custom" || (dateRange && dateRange.length === 2))) {
+        (selectedPeriod !== "custom" || (startDate && endDate))) {
       try {
         setLoading(true)
         
@@ -75,9 +74,9 @@ export default function ClientLedger() {
         let startDateStr = ''
         let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
         
-        if (selectedPeriod === "custom" && dateRange) {
-          startDateStr = dateRange[0].format('YYYY-MM-DD')
-          endDateStr = dateRange[1].format('YYYY-MM-DD')
+        if (selectedPeriod === "custom" && startDate && endDate) {
+          startDateStr = dayjs(startDate).format('YYYY-MM-DD')
+          endDateStr = dayjs(endDate).format('YYYY-MM-DD')
         } else {
           switch (selectedPeriod) {
             case "1month":
@@ -124,7 +123,7 @@ export default function ClientLedger() {
     
     if (!selectedClient) return true;
     if (!selectedPeriod) return true;
-    if (selectedPeriod === "custom" && (!dateRange || dateRange.length !== 2)) return true;
+    if (selectedPeriod === "custom" && (!startDate || !endDate)) return true;
     return false;
   }
 
@@ -135,9 +134,9 @@ export default function ClientLedger() {
       let startDateStr = ''
       let endDateStr = dayjs().format('YYYY-MM-DD')
       
-      if (selectedPeriod === "custom" && dateRange) {
-        startDateStr = dateRange[0].format('YYYY-MM-DD')
-        endDateStr = dateRange[1].format('YYYY-MM-DD')
+      if (selectedPeriod === "custom" && startDate && endDate) {
+        startDateStr = dayjs(startDate).format('YYYY-MM-DD')
+        endDateStr = dayjs(endDate).format('YYYY-MM-DD')
       } else {
         switch (selectedPeriod) {
           case "1month":
@@ -206,10 +205,10 @@ export default function ClientLedger() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white border-0 shadow-md">
+      <Card className="bg-white border-0 rounded-3xl shadow-md">
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Client Ledger</h2>
+            <h2 className="text-xl">Client Ledger</h2>
 
             <div className="flex items-center gap-4">
               <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -244,28 +243,42 @@ export default function ClientLedger() {
 
               {selectedPeriod === "custom" && (
                 <div className="flex gap-2">
-                  {/* Ant Design RangePicker with custom styling */}
+                  {/* Two separate DatePickers for start and end dates */}
                   <ConfigProvider theme={antTheme}>
-                    <RangePicker 
-                      onChange={handleDateRangeChange}
-                      style={{ 
-                        width: '360px', 
-                        height: '40px',
-                        borderColor: '#000000' // Inline style for border color
-                      }}
+                    <DatePicker 
+                      placeholder="Start Date"
+                      onChange={handleStartDateChange}
+                      value={startDate ? dayjs(startDate) : null}
                       format="DD/MM/YYYY"
+                      style={{ 
+                        width: '160px', 
+                        height: '35px',
+                        borderColor: '#000000'
+                      }}
+                    />
+                    <DatePicker 
+                      placeholder="End Date"
+                      onChange={handleEndDateChange}
+                      value={endDate ? dayjs(endDate) : null}
+                      format="DD/MM/YYYY"
+                      style={{ 
+                        width: '160px', 
+                        height: '35px',
+                        borderColor: '#000000'
+                      }}
                     />
                   </ConfigProvider>
                 </div>
               )}
 
-              <Button 
-                className="bg-blue-500 cursor-pointer hover:bg-blue-500/90 text-white rounded-full" 
-                disabled={isButtonDisabled() || loading}
-                onClick={handleShowLedger}
-              >
-                {loading ? "Loading..." : "Show Ledger"}
-              </Button>
+<Button 
+  className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full cursor-pointer transition-all duration-300" 
+  disabled={isButtonDisabled() || loading}
+  onClick={handleShowLedger}
+>
+  {loading ? "Loading..." : "Show Ledger"}
+</Button>
+
             </div>
           </div>
           
@@ -276,10 +289,10 @@ export default function ClientLedger() {
       </Card>
 
       {showLedger && (
-        <Card className="bg-white border-0 shadow-md">
+        <Card className="bg-white border-0 rounded-3xl shadow-md">
           <CardContent className="p-0">
             <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-medium">Ledger</h3>
+              <h3 className="text-xl ">Ledger</h3>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Balance: {formatNumberWithCommas(balance)}</span>
                 <Button variant="outline" size="sm" onClick={handleDownload}>
@@ -289,8 +302,8 @@ export default function ClientLedger() {
             </div>
 
             <div className="border border-slate-200 rounded-lg overflow-hidden m-4">
-              <Table>
-                <TableHeader className="bg-slate-200">
+              <Table className="[&_thead_tr]:border-b-0 [&_thead]:border-b-0">
+                <TableHeader className="bg-slate-200 !border-b-0">
                   <TableRow>
                     <TableHead className="text-center">Date</TableHead>
                     <TableHead className="text-center">Particulars</TableHead>
