@@ -5,12 +5,12 @@ const PdfPrinter = require('pdfmake');
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const loadFonts = () => ({
-  Roboto: {
+  Helvetica: {
     normal: 'Helvetica',
     bold: 'Helvetica-Bold',
     italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique'
-  }
+    bolditalics: 'Helvetica-BoldOblique',
+  },
 });
 
 const loadLogo = () => {
@@ -19,147 +19,161 @@ const loadLogo = () => {
     if (fs.existsSync(logoPath)) {
       return fs.readFileSync(logoPath, 'base64');
     }
-    return ''; // Return empty string if logo doesn't exist
-  } catch (error) {
     console.warn('Logo file not found, using empty logo');
+    return '';
+  } catch (error) {
+    console.warn('Error loading logo:', error.message);
     return '';
   }
 };
 
 const createInvoicePdf = async (invoiceData, employeeDetails, invoiceFilePath) => {
-  const { clientId, year, month, totalAmount, logoBase64 } = invoiceData;
+  const { clientId, year, month, totalAmount, logoBase64, clientName, clientAddress, bankDetails, currencyCode } = invoiceData;
+
+  if (!clientName) {
+    console.warn(`clientName is missing or empty for clientId=${clientId}, using fallback 'Unknown Client'`);
+  }
+
+  // Calculate dates
+  const invoiceDate = new Date();
+  const dueDate = new Date(invoiceDate);
+  dueDate.setDate(dueDate.getDate() + 30); // Due in 30 days
+  const monthName = monthNames[month - 1];
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const invoicePeriod = `${month}/1/${year} to ${month}/${lastDayOfMonth}/${year}`;
+
   const docDefinition = {
-    pageMargins: [40, 100, 40, 60],
+    pageSize: 'A4',
+    pageMargins: [40, 80, 40, 60],
     header: [
       {
-        absolutePosition: { x: 40, y: 40 },
-        image: `data:image/png;base64,${logoBase64}`,
-        width: 124,
-        height: 24,
+        image: logoBase64 ? `data:image/png;base64,${logoBase64}` : undefined,
+        width: 150,
+        height: 40,
+        alignment: 'left',
+        margin: [40, 20, 0, 0],
       },
       {
-        absolutePosition: { x: 352, y: 46 },
-        text: 'Reg. No:',
-        style: 'regNoLabel',
-      },
-      {
-        absolutePosition: { x: 406, y: 46 },
-        text: 'U72200DL2013PTC249807',
-        style: 'regNoValue',
-      },
-      {
-        canvas: [
-          {
-            type: 'line',
-            x1: 38,
-            y1: 80,
-            x2: 560, // Page width - page margins
-            y2: 80,
-            lineWidth: 1,
-            lineColor: '#d3d3d3', // Light grey color
-          },
-        ],
+        text: 'Reg. No: REG1234567890CVT',
+        alignment: 'right',
+        margin: [0, 30, 40, 0],
+        style: 'regNo',
       },
     ],
     content: [
       { text: 'INVOICE', style: 'invoiceTitle' },
-      { text: `Project: Over - C Product Dev & Support`, style: 'subheader' },
+      { text: `Project: ${clientName || 'Unknown Client'}`, style: 'subheader' },
       { text: `Invoice number: CVT${year}${month}_${clientId}`, style: 'subheader' },
-      { text: `Invoice Date: ${new Date().toLocaleDateString()}`, style: 'subheader' },
-      { text: `Payment Due Date: ${new Date().toLocaleDateString()}`, style: 'subheader' },
-      { text: `Invoiced to: RISKTECH LIMITED`, style: 'subheader' },
-      { text: `Dromlena, 4 Rockboro Avenue, Old Blackrock Road, Cork, T 12 YY9X`, style: 'subheader' },
-      { text: `Invoiced to: 1 ${monthNames[month - 1]} ${year} to 31 ${monthNames[month - 1]} ${year}`, style: 'subheader' },
+      { text: `Invoice Date: ${invoiceDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}`, style: 'subheader' },
+      { text: `Payment Due Date: ${dueDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}`, style: 'subheader' },
+      { text: `Invoiced to: ${clientName || 'Unknown Client'}`, style: 'subheader' },
+      { text: clientAddress || 'N/A', style: 'subheader' },
+      { text: `Invoice Period: ${invoicePeriod}`, style: 'subheader' },
       {
-        style: 'tableExample',
+        style: 'table',
         table: {
+          widths: ['*', 100],
+          headerRows: 1,
           body: [
-            [{ text: 'Services', style: 'tableHeader' }, { text: 'Cost (£)', style: 'tableHeader' }],
-            ...employeeDetails.map(detail => [detail.name, detail.amount]),
-            [{ text: 'Last Month Balance for 2nd half of March', colSpan: 1 }, { text: '200' }],
-            [{ text: 'Total', colSpan: 1, style: 'totalCell' }, { text: totalAmount.toString(), style: 'totalCell' }],
-            [{ text: 'Advance payment', colSpan: 1 }, { text: '-' }],
-            [{ text: 'Total Due GBP', colSpan: 1, style: 'totalDue' }, { text: `£ ${totalAmount}`, style: 'totalDue' }],
-          ]
+            [
+              { text: 'Services', style: 'tableHeader' },
+              { text: `Cost (${currencyCode})`, style: 'tableHeader', alignment: 'right' },
+            ],
+            ...employeeDetails.map(detail => [
+              { text: detail.name, style: 'tableContent' },
+              { text: detail.amount, style: 'tableContent', alignment: 'right' },
+            ]),
+            [
+              { text: 'Last Month Balance', style: 'tableContent' },
+              { text: '200', style: 'tableContent', alignment: 'right' },
+            ],
+            [
+              { text: 'Total', style: 'totalCell' },
+              { text: totalAmount.toFixed(2), style: 'totalCell', alignment: 'right' },
+            ],
+            [
+              { text: `Total Due ${currencyCode}`, style: 'totalDue' },
+              { text: `${currencyCode} ${totalAmount.toFixed(2)}`, style: 'totalDue', alignment: 'right' },
+            ],
+          ],
         },
       },
       {
-        style: 'tableExample',
+        style: 'table',
+        margin: [0, 20, 0, 0],
         table: {
           widths: ['*'],
           body: [
             [{ text: 'Payment details', style: 'tableHeader' }],
-            [{ text: 'Payee name: Core Value Technologies Pvt Ltd', style: 'tableContent' }],
-            [{ text: 'Bank: ICICI Bank', style: 'tableContent' }],
-            [{ text: 'Account No: 1234546578', style: 'tableContent' }],
-            [{ text: 'Swift code: ICICIINBBCTS', style: 'tableContent' }],
-            [{ text: 'IFSC code: ICIC0000456', style: 'tableContent' }]
-          ]
-        }
+            [{ text: `Payee name: ${bankDetails.payeeName}`, style: 'tableContent' }],
+            [{ text: `Bank: ${bankDetails.bankName}`, style: 'tableContent' }],
+            [{ text: `Account No: ${bankDetails.accountNo}`, style: 'tableContent' }],
+            [{ text: `Swift code: ${bankDetails.swiftCode}`, style: 'tableContent' }],
+            [{ text: `IFSC code: ${bankDetails.ifscCode}`, style: 'tableContent' }],
+          ],
+        },
       },
-      { text: 'A-13A Graphix tower, Sec-62, Noida', style: 'footer' }
     ],
+    footer: {
+      text: 'A-13A Graphix Tower, Sec-62, Noida',
+      alignment: 'center',
+      style: 'footer',
+      margin: [0, 20, 0, 0],
+    },
     styles: {
-      header: {
-        fontSize: 18,
-        bold: true,
-      },
-      subheader: {
-        fontSize: 14,
-        margin: [0, 10, 0, 5],
-      },
       invoiceTitle: {
-        fontSize: 16,
+        fontSize: 24,
         bold: true,
         alignment: 'center',
-        margin: [0, 0, 0, 10]
+        margin: [0, 20, 0, 20],
       },
-      tableExample: {
-        margin: [0, 5, 0, 15]
+      subheader: {
+        fontSize: 12,
+        margin: [0, 4, 0, 4],
+      },
+      table: {
+        margin: [0, 20, 0, 20],
       },
       tableHeader: {
         bold: true,
-        fontSize: 13,
-        color: 'black'
+        fontSize: 12,
+        color: 'black',
+        fillColor: '#f5f5f5',
+        margin: [0, 4, 0, 4],
       },
       tableContent: {
-        fontSize: 12,
-        color: 'black'
+        fontSize: 11,
+        margin: [0, 4, 0, 4],
       },
       totalCell: {
         bold: true,
         fontSize: 12,
-        alignment: 'right'
+        margin: [0, 4, 0, 4],
       },
       totalDue: {
         bold: true,
         fontSize: 14,
-        alignment: 'right',
-        fillColor: '#4caf50',
-        color: 'white'
+        fillColor: '#e0f7fa',
+        color: '#006064',
+        margin: [0, 4, 0, 4],
+      },
+      regNo: {
+        fontSize: 10,
+        color: '#555',
       },
       footer: {
-        margin: [0, 50, 0, 0],
-        alignment: 'center',
         fontSize: 10,
+        color: '#555',
       },
-      regNoLabel: {
-        font: 'Roboto',
-        fontWeight: 500,
-        fontSize: 12,
-        lineHeight: 1.5,
-      },
-      regNoValue: {
-        font: 'Roboto',
-        fontWeight: 400,
-        fontSize: 12,
-        lineHeight: 1.5,
-      }
-    }
+    },
+    defaultStyle: {
+      font: 'Helvetica',
+      fontSize: 11,
+      lineHeight: 1.2,
+    },
   };
 
   const printer = new PdfPrinter(loadFonts());
-
   const pdfDoc = printer.createPdfKitDocument(docDefinition);
   const writeStream = fs.createWriteStream(invoiceFilePath);
   pdfDoc.pipe(writeStream);
