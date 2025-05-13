@@ -14,27 +14,33 @@ const BillingSetup = () => {
   const [tempValue, setTempValue] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
   const [currencyCode, setCurrencyCode] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const { selectedYear, loading, error } = useYear();
+  const { selectedYear } = useYear();
 
+  // Fetch clients when selectedYear changes
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        setLoading(true);
         if (selectedYear) {
           const response = await axios.get(`${API_BASE_URL}/clients/${selectedYear}`);
           setClients(response.data);
         }
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching clients:', err);
+        setLoading(false);
       }
     };
-    if (selectedYear) fetchClients();
+    fetchClients();
   }, [selectedYear]);
 
+  // Fetch billing data when client or year changes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (selectedClient) {
+        if (selectedClient && selectedYear) {
           const response = await axios.get(`${API_BASE_URL}/data/${selectedClient}/${selectedYear}`);
           setData(response.data);
           if (response.data.length > 0) {
@@ -82,8 +88,7 @@ const BillingSetup = () => {
     }
   };
 
-  if (loading) return <div>Loading financial year...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col rounded-3xl shadow-lg bg-white items-center p-8 px-4">
@@ -108,7 +113,9 @@ const BillingSetup = () => {
               <SelectValue placeholder={selectedYear || 'Select Year'} />
             </SelectTrigger>
             <SelectContent className="bg-white">
-              <SelectItem className="cursor-pointer" value={selectedYear}>{selectedYear}</SelectItem>
+              <SelectItem className="cursor-pointer" value={selectedYear}>
+                {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -116,25 +123,25 @@ const BillingSetup = () => {
 
       <div className="w-full overflow-x-auto mt-5">
         {selectedClient && (
-          <table className="w-full border-collapse bg-white shadow-md">
-            <thead className='bg-[#EDEFF2]'>
-              <tr className="bg-secondary-anti-flash-white text-sm font-bold text-primary-black">
-                <th className="p-2 border-b border-secondary-cadet-gray text-left">Name</th>
-                <th className="p-2 border-b border-secondary-cadet-gray text-center">CTC/M</th>
+          <table className="w-full border-collapse items-center bg-white shadow-md">
+            <thead >
+              <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
+                <th className="p-2 border-b border-[#9DA4B3]">Name</th>
+                <th className="p-2 border-b border-[#9DA4B3]">CTC/M</th>
                 {fiscalMonths.map(month => (
-                  <th key={month} className="p-2 border-b border-secondary-cadet-gray text-center">{month}</th>
+                  <th key={month} className="p-2 border-b border-[#9DA4B3]">{month}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {data.map((item, rowIndex) => (
-                <tr key={item.id} className="text-sm text-primary-black">
-                  <td className="p-2 border-b border-secondary-cadet-gray text-left">{item.name}</td>
-                  <td className="p-2 border-b border-secondary-cadet-gray text-center">{currencyCode}{formatNumberWithCommas(item.ctcMonthly)}</td>
+                <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
+                  <td className="p-3  border-b border-[#9DA4B3]">{item.name}</td>
+                  <td className="p-3 border-b border-[#9DA4B3]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
                   {fiscalMonths.map(column => (
                     <td
                       key={`${item.id}-${column}`}
-                      className="p-2 border-b border-secondary-cadet-gray cursor-pointer text-center"
+                      className="p-2 border-b border-[#9DA4B3]"
                       onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                     >
                       {editIndex.row === rowIndex && editIndex.column === column ? (
@@ -145,7 +152,7 @@ const BillingSetup = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          className="h-8 text-center"
+                          className="h-8"
                           autoFocus
                         />
                       ) : (

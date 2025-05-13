@@ -4,6 +4,8 @@ import ClientModal from '@/Modal/EmployeeModal/ClientModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const API_BASE_URL = 'http://localhost:5001/api/clients'; // Adjust if your backend uses a different port
 
@@ -23,7 +25,10 @@ const ClientMaster = () => {
       setFilteredClients(fetchedClients);
     } catch (error) {
       console.error('Error fetching clients:', error);
-      alert('Error fetching clients');
+      toast.error('Error fetching clients', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
   };
 
@@ -72,8 +77,14 @@ const ClientMaster = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newClient),
         });
-        if (!response.ok) throw new Error('Failed to update client');
-        alert('Client updated successfully');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update client');
+        }
+        toast.success('Client updated successfully', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
       } else {
         // Create new client
         const response = await fetch(API_BASE_URL, {
@@ -81,16 +92,28 @@ const ClientMaster = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newClient),
         });
-        if (!response.ok) throw new Error('Failed to create client');
-        alert('Client created successfully');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create client');
+        }
+        toast.success('Client created successfully', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
       }
       await fetchClients(); // Refresh client list
     } catch (error) {
       console.error('Error saving client:', error);
       if (error.message.includes('Client with the same name already exists')) {
-        alert('Client with the same name already exists');
+        toast.error('Client with the same name already exists', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
       } else {
-        alert(`Error saving client: ${error.message}`);
+        toast.error(`Error: ${error.message}`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
       }
     }
   };
@@ -108,23 +131,42 @@ const ClientMaster = () => {
   };
 
   const handleDeleteClient = async (clientId) => {
-    if (window.confirm('Are you sure you want to delete this client? This will also delete all associated resources.')) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/${clientId}`, {
-          method: 'DELETE',
-        });
-        if (!response.ok) throw new Error('Failed to delete client');
-        alert('Client and associated resources deleted successfully');
-        await fetchClients(); // Refresh client list
-      } catch (error) {
-        console.error('Error deleting client:', error);
-        alert('An error occurred while deleting the client.');
+    try {
+      // Attempt to delete the client directly
+      const response = await fetch(`${API_BASE_URL}/${clientId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Check if the error is due to associated resources
+        if (errorData.error && errorData.error.includes('Client cannot be deleted with active employees')) {
+          toast.error('Client cannot be deleted with active employee association.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+        } else {
+          throw new Error(errorData.error || 'Failed to delete client');
+        }
+        return;
       }
+
+      toast.success('Client deleted successfully', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      await fetchClients(); // Refresh client list
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast.error(`Error: ${error.message}`, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
   };
 
   return (
-    <div className="p-4 ">
+    <div className=" ">
       <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-[24px] text-[#272727]">Client Master</h2>
@@ -141,7 +183,7 @@ const ClientMaster = () => {
                 autoComplete="off"
               />
             </div>
-            <Button className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
+            <Button className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all" onClick={handleOpenModal}>Add Client</Button>
           </div>
         </div>
 
@@ -161,7 +203,9 @@ const ClientMaster = () => {
           initialData={selectedClient}
           onSubmit={handleSubmitClient}
         />
+
       </div>
+      <ToastContainer />
     </div>
   );
 };

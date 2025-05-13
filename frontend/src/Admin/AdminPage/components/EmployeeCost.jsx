@@ -9,8 +9,6 @@ const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "D
 const EmployeeCost = () => {
   const [data, setData] = useState([]);
   const { selectedYear, loading: yearLoading, error: yearError } = useYear();
-  const [localYear] = useState(new Date().getFullYear().toString());
-  const effectiveYear = selectedYear || localYear;
   const [editIndex, setEditIndex] = useState({ row: -1, column: '' });
   const [tempValue, setTempValue] = useState('');
   const [error, setError] = useState(null);
@@ -18,14 +16,21 @@ const EmployeeCost = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!selectedYear) {
+        console.log('No year selected, skipping fetch');
+        return;
+      }
+      
       try {
+        console.log('Fetching data for year:', selectedYear);
         setError(null);
         setLoading(true);
-        const response = await fetch(`http://localhost:5001/api/employee-cost/${effectiveYear}`);
+        const response = await fetch(`http://localhost:5001/api/employee-cost/${selectedYear}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch employee cost data: ${response.statusText}`);
         }
         const result = await response.json();
+        console.log('Fetched employee cost data:', result);
         setData(result);
       } catch (err) {
         console.error('Error fetching employee cost data:', err);
@@ -36,14 +41,12 @@ const EmployeeCost = () => {
       }
     };
 
-    if (effectiveYear && !yearLoading) {
-      fetchData();
-    }
-  }, [effectiveYear, yearLoading]);
+    fetchData();
+  }, [selectedYear]);
 
   const handleDoubleClick = (row, column, value) => {
     setEditIndex({ row, column });
-    setTempValue(value);
+    setTempValue(value || '');
   };
 
   const handleChange = (e) => {
@@ -60,7 +63,6 @@ const EmployeeCost = () => {
       const month = editIndex.column;
       const amount = parseFloat(tempValue);
 
-      // Update backend
       const response = await fetch(`http://localhost:5001/api/employee-cost/${employeeId}`, {
         method: 'PATCH',
         headers: {
@@ -73,7 +75,6 @@ const EmployeeCost = () => {
         throw new Error('Failed to update employee cost');
       }
 
-      // Update local state
       newData[editIndex.row][editIndex.column] = amount;
       setData(newData);
       setEditIndex({ row: -1, column: '' });
@@ -85,21 +86,22 @@ const EmployeeCost = () => {
   };
 
   const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return '';
     return `₹${parseFloat(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   };
 
   return (
     <div className="">
-      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
-        <div className="flex justify-between items-center w-full mb-2">
+      <div className="w-full max-w-[1400px] bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex justify-between items-center w-full mb-4">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
-          <div className="w-32">
-            <Select disabled value={effectiveYear}>
+          <div className="min-w-[120px]">
+            <Select disabled value={selectedYear}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={effectiveYear}>{effectiveYear}</SelectItem>
+                <SelectItem value={selectedYear}>{selectedYear}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -109,14 +111,14 @@ const EmployeeCost = () => {
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
-        <div className="md:w-6xl 2xl:w-auto overflow-x-auto">
-          {effectiveYear && !yearLoading && !loading && (
-            <Table className="bg-white shadow-sm w-full table-fixed">
-              <TableHeader className="text-[16px] bg-[#EDEFF2]">
+        <div className="w-full overflow-x-auto">
+          {selectedYear && !yearLoading && !loading && data.length > 0 ? (
+            <Table className="w-full border-collapse bg-white shadow-sm">
+              <TableHeader className="bg-[#EDEFF2]">
                 <TableRow className="border-b border-[#9DA4B3]">
-                  <TableHead className="px-3 py-2 w-[200px] text-left">Name</TableHead>
+                  <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
                   {fiscalMonths.map((month) => (
-                    <TableHead key={month} className="px-3 py-2 w-[100px] text-center">{month}</TableHead>
+                    <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -127,29 +129,29 @@ const EmployeeCost = () => {
                     key={item.id}
                     className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200"
                   >
-                    <TableCell className="px-3 py-2 text-[14px] w-[200px] truncate text-left">
+                    <TableCell className="p-3 text-[14px] min-w-[200px] truncate text-left">
                       {item.name}
                     </TableCell>
                     {fiscalMonths.map((column) => (
                       <TableCell
                         key={`${item.id}-${column}`}
-                        className="px-3 py-2 text-[14px] w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
+                        className="p-3 text-[14px] min-w-[100px] text-center"
                         onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}
                       >
-                        <div className="max-w-[100px] whitespace-nowrap flex justify-center">
+                        <div className="whitespace-nowrap flex justify-center">
                           {editIndex.row === rowIndex && editIndex.column === column ? (
                             <Input
+                              id={`cost-${item.id}-${column}`}
+                              name={`cost-${item.id}-${column}`}
                               value={tempValue}
                               onChange={handleChange}
                               onBlur={handleBlur}
                               type="number"
-                              className="h-8 text-sm w-full max-w-[100px] overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 text-center"
+                              className="h-8 text-sm w-full max-w-[100px] text-center"
                               autoFocus
                             />
                           ) : (
-                            item[column] !== null && item[column] !== undefined && item[column] !== ''
-                              ? formatCurrency(item[column])
-                              : ''
+                            formatCurrency(item[column])
                           )}
                         </div>
                       </TableCell>
@@ -158,6 +160,10 @@ const EmployeeCost = () => {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              {selectedYear ? 'No employee cost data available for the selected year.' : 'Please select a year to view employee costs.'}
+            </div>
           )}
         </div>
       </div>

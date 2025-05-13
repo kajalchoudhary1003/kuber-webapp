@@ -67,10 +67,23 @@ const clientService = {
       if (!client) {
         throw new Error('Client not found');
       }
+
+      // Check for active resources
+      const activeResources = await ClientEmployee.findAll({
+        where: {
+          ClientID: id,
+          Status: 'Active',
+        },
+      });
+
+      if (activeResources.length > 0) {
+        throw new Error('Client cannot be deleted with active employee association.');
+      }
+
       await client.destroy();
       return { message: 'Client deleted successfully' };
     } catch (error) {
-      throw new Error(`Error deleting client: ${error.message}`);
+      throw new Error(error.message);
     }
   },
 
@@ -99,14 +112,22 @@ const clientService = {
 
   async getAllActiveClients() {
     try {
-      const activeClientIds = await ClientEmployee.findAll({
+      // First get all active client employee records
+      const activeClientEmployees = await ClientEmployee.findAll({
         where: { Status: 'Active' },
         attributes: ['ClientID'],
         group: ['ClientID']
       });
 
-      const clientIds = activeClientIds.map(ce => ce.ClientID);
+      // Extract client IDs
+      const clientIds = activeClientEmployees.map(ce => ce.ClientID);
       
+      // Handle case when no active clients are found
+      if (clientIds.length === 0) {
+        return [];
+      }
+      
+      // Fetch the actual client records with their relationships
       const clients = await Client.findAll({
         where: { id: clientIds },
         include: [
@@ -118,20 +139,29 @@ const clientService = {
       
       return clients;
     } catch (error) {
+      console.error('Error in getAllActiveClients:', error);
       throw new Error(`Error fetching active clients: ${error.message}`);
     }
   },
 
   async getAllInactiveClients() {
     try {
-      const inactiveClientIds = await ClientEmployee.findAll({
+      // First get all inactive client employee records
+      const inactiveClientEmployees = await ClientEmployee.findAll({
         where: { Status: 'Inactive' },
         attributes: ['ClientID'],
         group: ['ClientID']
       });
 
-      const clientIds = inactiveClientIds.map(ce => ce.ClientID);
+      // Extract client IDs
+      const clientIds = inactiveClientEmployees.map(ce => ce.ClientID);
       
+      // Handle case when no inactive clients are found
+      if (clientIds.length === 0) {
+        return [];
+      }
+      
+      // Fetch the actual client records with their relationships
       const clients = await Client.findAll({
         where: { id: clientIds },
         include: [
@@ -143,6 +173,7 @@ const clientService = {
       
       return clients;
     } catch (error) {
+      console.error('Error in getAllInactiveClients:', error);
       throw new Error(`Error fetching inactive clients: ${error.message}`);
     }
   }

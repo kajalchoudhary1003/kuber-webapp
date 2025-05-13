@@ -719,10 +719,10 @@ const restoreDatabase = async () => {
   };
 
   return (
-    <div className="flex flex-col items-center p-5">
+    <div className="flex flex-col items-center p-7">
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-xl font-semibold">Financial Year</h2>
+          <h2 className="text-xl font-normal">Financial Year</h2>
           <div className="flex gap-2.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -751,7 +751,7 @@ const restoreDatabase = async () => {
             </DropdownMenu>
             <Button
               onClick={handleAddUpcomingYear}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add Financial Year
             </Button>
@@ -761,12 +761,12 @@ const restoreDatabase = async () => {
 
       <div className="w-full bg-white rounded-3xl shadow-sm p-8 mb-5">
         <div className="flex justify-between items-center w-full mb-0">
-          <h2 className="text-xl font-semibold">Backup and Restore</h2>
+          <h2 className="text-xl font-normal">Backup and Restore</h2>
           <div className="flex gap-2.5">
-            <Button onClick={backupDatabase} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <Button onClick={backupDatabase} className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Backup Database
             </Button>
-            <Button onClick={openRestoreModal} className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full">
+            <Button onClick={openRestoreModal} className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Restore Database
             </Button>
           </div>
@@ -776,7 +776,7 @@ const restoreDatabase = async () => {
       {restoreModalOpen && (
   <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs bg-opacity-10">
     <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-      <h3 className="text-lg font-semibold mb-4">Restore Database</h3>
+      <h3 className="text-lg font-normal mb-4">Restore Database</h3>
       
       <div className="mb-4">
         <div className="flex gap-4 mb-4">
@@ -845,10 +845,10 @@ const restoreDatabase = async () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Employee Levels</h2>
+            <h2 className="text-xl font-normal">Employee Levels</h2>
             <Button
               onClick={handleAddEmployeeLevel}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Level
             </Button>
@@ -856,19 +856,19 @@ const restoreDatabase = async () => {
           {employeeLevels.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+              <TableHeader >
+                <TableRow className="bg-[#EDEFF2] border-none">
+                  <TableHead className="text-center text-sm font-normal text-black">Name</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employeeLevels.map((level) => (
                   <TableRow key={level.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3] ">
                       {level.LevelName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
@@ -896,10 +896,10 @@ const restoreDatabase = async () => {
 
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Employee Roles</h2>
+            <h2 className="text-xl font-normal">Employee Roles</h2>
             <Button
               onClick={handleAddEmployeeRole}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Role
             </Button>
@@ -908,18 +908,18 @@ const restoreDatabase = async () => {
              <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+                <TableRow className="border-none bg-[#EDEFF2]">
+                  <TableHead className="text-center text-sm font-normal text-black">Name</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employeeRoles.map((role) => (
                   <TableRow key={role.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {role.RoleName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 cursor-pointer hover:text-blue-500 mx-4"
                         title="Edit"
@@ -949,10 +949,10 @@ const restoreDatabase = async () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Organisations</h2>
+            <h2 className="text-xl font-normal">Organisations</h2>
             <Button
               onClick={handleAddOrganisation}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Organisation
             </Button>
@@ -961,26 +961,26 @@ const restoreDatabase = async () => {
              <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Abbreviation</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Reg. Number</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+                <TableRow className="bg-[#EDEFF2] border-none">
+                  <TableHead className="text-center text-sm font-normal text-black">Name</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Abbreviation</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Reg. Number</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {organisations.map((org) => (
                   <TableRow key={org.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {org.OrganisationName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {org.Abbreviation}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {org.RegNumber}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -1010,10 +1010,10 @@ const restoreDatabase = async () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Bank Details</h2>
+            <h2 className="text-xl font-normal">Bank Details</h2>
             <Button
               onClick={handleAddBankDetail}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+             className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Bank Detail
             </Button>
@@ -1022,30 +1022,30 @@ const restoreDatabase = async () => {
              <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Bank Name</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Account Number</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Swift Code</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">IFSC Code</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+                <TableRow className="bg-[#EDEFF2] border-none">
+                  <TableHead className="text-center text-sm font-normal text-black">Bank Name</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Account Number</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Swift Code</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">IFSC Code</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {bankDetails.map((detail) => (
                   <TableRow key={detail.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {detail.BankName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {detail.AccountNumber}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {detail.SwiftCode}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {detail.IFSC}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -1075,10 +1075,10 @@ const restoreDatabase = async () => {
       <div className="flex justify-between w-full gap-5">
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px]">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Currencies</h2>
+            <h2 className="text-xl font-normal">Currencies</h2>
             <Button
               onClick={handleAddCurrency}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Currency
             </Button>
@@ -1087,22 +1087,22 @@ const restoreDatabase = async () => {
              <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Code</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Name</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+                <TableRow className="bg-[#EDEFF2] border-none">
+                  <TableHead className="text-center text-sm font-normal text-black">Code</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Name</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currencies.map((currency) => (
                   <TableRow key={currency.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {currency.CurrencyCode}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {currency.CurrencyName}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 hover:text-blue-500 cursor-pointer mx-4"
                         title="Edit"
@@ -1129,10 +1129,10 @@ const restoreDatabase = async () => {
         </div>
         <div className="flex-1 bg-white rounded-3xl shadow-sm p-8 mb-5 max-h-[300px] ">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold">Currency Exchange Rate</h2>
+            <h2 className="text-xl font-normal">Currency Exchange Rate</h2>
             <Button
               onClick={handleAddExchangeRate}
-              className="bg-blue-500 text-white cursor-pointer hover:bg-blue-500/90 rounded-full"
+              className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Add New Exchange Rate
             </Button>
@@ -1141,26 +1141,26 @@ const restoreDatabase = async () => {
              <div className="max-h-[200px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableHead className="text-center text-sm font-semibold text-black">Currency From</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Currency To</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Exchange Rate</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-black">Actions</TableHead>
+                <TableRow className="bg-[#EDEFF2] border-none">
+                  <TableHead className="text-center text-sm font-normal text-black">Currency From</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Currency To</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Exchange Rate</TableHead>
+                  <TableHead className="text-center text-sm font-normal text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {exchangeRates.map((rate) => (
                   <TableRow key={rate.id}>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {rate.CurrencyFrom?.CurrencyName || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {rate.CurrencyTo?.CurrencyName || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       {parseFloat(rate.Rate).toFixed(6)}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-black border-b-2 border-gray-100">
+                    <TableCell className="text-center text-sm text-black border-b border-[#9DA4B3]">
                       <button
                         className="text-gray-500 hover:text-blue-500 mx-4 cursor-pointer"
                         title="Edit"

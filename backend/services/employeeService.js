@@ -3,11 +3,15 @@ const Employee = require('../models/employeeModel');
 const Organisation = require('../models/organisationModel');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
+const EmployeeCost = require('../models/employeeCostModel');
+const FinancialYear = require('../models/financialYearModel');
+const Level = require('../models/levelModel'); // Added import for Level model
+const Role = require('../models/roleModel'); // Added import for Role model
 const logger = require('../utils/logger');
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
-const createEmployee = async (employeeData) => {
+const createEmployee = async (employeeData, year) => {
   try {
     const existingEmployee = await Employee.findOne({
       where: { EmpCode: employeeData.EmpCode }
@@ -15,7 +19,42 @@ const createEmployee = async (employeeData) => {
     if (existingEmployee) {
       throw new Error('Employee with this code already exists');
     }
+
+    // Create the employee
     const employee = await Employee.create(employeeData);
+
+    // Get all financial years
+    const financialYears = await FinancialYear.findAll({
+      order: [['year', 'DESC']]
+    });
+
+    if (financialYears.length === 0) {
+      throw new Error('No financial years found');
+    }
+
+    // Create employee cost records for all financial years
+    const monthlyCTC = employee.CTCMonthly || 0; // Fallback to 0 if CTCMonthly is not set
+    const employeeCosts = financialYears.map(year => ({
+      EmployeeID: employee.id,
+      Year: parseInt(year.year, 10),
+      Apr: monthlyCTC,
+      May: monthlyCTC,
+      Jun: monthlyCTC,
+      Jul: monthlyCTC,
+      Aug: monthlyCTC,
+      Sep: monthlyCTC,
+      Oct: monthlyCTC,
+      Nov: monthlyCTC,
+      Dec: monthlyCTC,
+      Jan: monthlyCTC,
+      Feb: monthlyCTC,
+      Mar: monthlyCTC
+    }));
+
+    await EmployeeCost.bulkCreate(employeeCosts, {
+      ignoreDuplicates: true // This will skip any duplicates instead of failing
+    });
+
     return employee;
   } catch (error) {
     throw new Error(`Error creating employee: ${error.message}`);
@@ -60,7 +99,9 @@ const getAllEmployees = async (page = 1, limit = 10, query = '') => {
     const employees = await Employee.findAll({
       where: whereClause,
       include: [
-        { model: Organisation, as: 'Organisation' }
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' }, // Added Level model
+        { model: Role, as: 'Role' }, // Added Role model
       ],
       offset,
       limit
@@ -81,7 +122,9 @@ const getEmployeeById = async (employeeId) => {
   try {
     const employee = await Employee.findByPk(employeeId, {
       include: [
-        { model: Organisation, as: 'Organisation' }
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' }, // Added Level model
+        { model: Role, as: 'Role' }, // Added Role model
       ]
     });
     if (!employee) {
@@ -115,27 +158,39 @@ const deleteEmployee = async (employeeId) => {
   }
 };
 
-const searchEmployees = async (query) => {
+const searchEmployees = async (query, page = 1, limit = 10) => {
   try {
+    const offset = (page - 1) * limit;
+    const whereClause = {
+      [Op.or]: [
+        { FirstName: { [Op.like]: `%${query}%` } },
+        { LastName: { [Op.like]: `%${query}%` } },
+        { EmpCode: { [Op.like]: `%${query}%` } },
+        { Email: { [Op.like]: `%${query}%` } },
+      ],
+    };
+
     const employees = await Employee.findAll({
-      where: {
-        [Op.or]: [
-          { FirstName: { [Op.like]: `%${query}%` } },
-          { LastName: { [Op.like]: `%${query}%` } },
-          { EmpCode: { [Op.like]: `%${query}%` } },
-          { Email: { [Op.like]: `%${query}%` } }
-        ]
-      },
+      where: whereClause,
       include: [
-        { model: Organisation, as: 'Organisation' }
-      ]
+        { model: Organisation, as: 'Organisation' },
+        { model: Level, as: 'Level' },
+        { model: Role, as: 'Role' },
+      ],
+      offset,
+      limit,
     });
-    return employees;
+
+    const total = await Employee.count({ where: whereClause });
+
+    return {
+      employees,
+      total,
+    };
   } catch (error) {
     throw new Error(`Error searching employees: ${error.message}`);
   }
 };
-
 const getEmployeeClients = async (id) => {
   try {
     const employee = await Employee.findByPk(id);

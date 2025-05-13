@@ -19,8 +19,8 @@ import {
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [employeeOptions, setEmployeeOptions] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [employeeDetails, setEmployeeDetails] = useState({
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [formData, setFormData] = useState({
     empCode: '',
     role: '',
     level: '',
@@ -37,28 +37,84 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const API_BASE_URL = 'http://localhost:5001/api';
 
   useEffect(() => {
+    if (open) {
+      fetchEmployees();
+      if (!initialData) {
+        const today = new Date().toISOString().split('T')[0];
+        setFormData((prev) => ({
+          ...prev,
+          startDate: today,
+        }));
+      }
+    }
+  }, [open]);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/employees`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch employees');
+      }
+      const data = await response.json();
+      setEmployeeOptions(Array.isArray(data.employees) ? data.employees : data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
+      setError('Failed to load employees. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchTerm && searchTerm.length >= 2) {
+      searchEmployees(searchTerm);
+    }
+  }, [searchTerm]);
+
+  const searchEmployees = async (query) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/employees/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error('Failed to search employees');
+      }
+      const data = await response.json();
+      setEmployeeOptions(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error searching employees:', err);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (initialData) {
       const formatDate = (date) =>
-        date && !isNaN(new Date(date))
-          ? new Date(date).toISOString().split('T')[0]
-          : '';
+        date && !isNaN(new Date(date)) ? new Date(date).toISOString().split('T')[0] : '';
 
       const employee = initialData.Employee || {};
-      const name = `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+      const name = employee.FirstName && employee.LastName
+        ? `${employee.FirstName} ${employee.LastName}`.trim()
+        : '';
 
-      setEmployeeDetails({
+      setFormData({
         empCode: employee.EmpCode || '',
-        role: employee.Role?.RoleName || '',
-        level: employee.Level?.LevelName || '',
-        organization: employee.Organisation?.Abbreviation || '',
+        role: employee.Role?.RoleName || 'Unknown',
+        level: employee.Level?.LevelName || 'Unknown',
+        organization: employee.Organisation?.Abbreviation || 'Unknown',
         startDate: formatDate(initialData.StartDate),
         billingMonthly: initialData.MonthlyBilling || '',
         endDate: formatDate(initialData.EndDate),
         status: initialData.Status || 'Active',
-        EmployeeID: initialData.EmployeeID || null,
+        EmployeeID: initialData.EmployeeID || employee.id || null,
       });
 
-      setSelectedEmployee(name);
+      setSelectedEmployee({
+        id: employee.id,
+        name: name,
+        EmpCode: employee.EmpCode,
+      });
       setSearchTerm(name);
     } else {
       resetForm();
@@ -66,18 +122,19 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   }, [initialData]);
 
   const resetForm = () => {
-    setEmployeeDetails({
+    const today = new Date().toISOString().split('T')[0];
+    setFormData({
       empCode: '',
       role: '',
       level: '',
       organization: '',
-      startDate: '',
+      startDate: today,
       billingMonthly: '',
       endDate: '',
       status: 'Active',
       EmployeeID: null,
     });
-    setSelectedEmployee('');
+    setSelectedEmployee(null);
     setSearchTerm('');
     setError(null);
   };
@@ -85,208 +142,236 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const handleEmployeeChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setSelectedEmployee(value);
+    if (
+      !employeeOptions.some((emp) =>
+        `${emp.FirstName || ''} ${emp.LastName || ''}`.trim().toLowerCase() === value.trim().toLowerCase()
+      )
+    ) {
+      setSelectedEmployee(null);
+    }
+  };
 
-    const employee = employeeOptions.find(
-      (emp) => `${emp.FirstName} ${emp.LastName}`.trim() === value.trim()
-    );
+  const handleEmployeeSelection = async (employee) => {
+    const fullName = `${employee.FirstName || ''} ${employee.LastName || ''}`.trim();
+    setSearchTerm(fullName);
+    setSelectedEmployee({
+      id: employee.id,
+      name: fullName,
+      EmpCode: employee.EmpCode,
+    });
 
-    if (employee) {
-      setEmployeeDetails((prev) => ({
+    // Check if employee is already assigned to this client
+    try {
+      const clientId = initialData?.ClientID;
+      if (clientId && employee.id && !initialData?.id) { // Skip for editing existing resource
+        const response = await fetch(`${API_BASE_URL}/client-employees/client/${clientId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch client assignments');
+        }
+        const assignments = await response.json();
+        const isAssigned = assignments.some(
+          (assignment) => assignment.EmployeeID === employee.id && !assignment.deletedAt
+        );
+        if (isAssigned) {
+          setError('This employee is already assigned to this client.');
+          setSelectedEmployee(null);
+          setSearchTerm('');
+          setFormData((prev) => ({
+            ...prev,
+            empCode: '',
+            role: '',
+            level: '',
+            organization: '',
+            EmployeeID: null,
+          }));
+          return;
+        }
+      }
+
+      setFormData((prev) => ({
         ...prev,
         empCode: employee.EmpCode || '',
-        role: employee.Role?.RoleName || '',
-        level: employee.Level?.LevelName || '',
-        organization: employee.Organisation?.Abbreviation || '',
-        EmployeeID: employee.id || null,
+        role: employee.Role?.RoleName || 'Unknown',
+        level: employee.Level?.LevelName || 'Unknown',
+        organization: employee.Organisation?.Abbreviation || 'Unknown',
+        EmployeeID: employee.id,
       }));
-    } else {
-      setEmployeeDetails((prev) => ({
-        ...prev,
-        empCode: '',
-        role: '',
-        level: '',
-        organization: '',
-        EmployeeID: null,
-      }));
+      setError(null);
+    } catch (err) {
+      console.error('Error checking employee assignment:', err);
+      setError('Failed to verify employee assignment. Please try again.');
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'status') {
       const endDate = value === 'Inactive' ? new Date().toISOString().split('T')[0] : '';
-      setEmployeeDetails((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         status: value,
         endDate,
       }));
     } else {
-      setEmployeeDetails((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ const handleSubmit = (e) => {
+  e.preventDefault();
+  console.log("Submitting form:", formData);
 
-    if (!employeeDetails.EmployeeID) {
-      setError('Please select a valid employee.');
-      return;
-    }
+  if (!formData.EmployeeID) {
+    setError("Please select a valid employee.");
+    return;
+  }
 
-    if (!employeeDetails.startDate || !employeeDetails.billingMonthly) {
-      setError('Please fill in all required fields (Start Date and Monthly Billing).');
-      return;
-    }
+  if (!formData.startDate) {
+    setError("Please provide a start date.");
+    return;
+  }
 
-    const payload = {
-      EmployeeID: employeeDetails.EmployeeID,
-      ClientID: initialData?.ClientID || null,
-      StartDate: employeeDetails.startDate,
-      EndDate: employeeDetails.endDate || null,
-      MonthlyBilling: Number(employeeDetails.billingMonthly),
-      Status: employeeDetails.status,
-    };
+  if (!formData.billingMonthly || formData.billingMonthly <= 0) {
+    setError("Please provide a valid monthly billing amount.");
+    return;
+  }
 
-    onSubmit(payload);
-    resetForm();
-    onClose();
+  const payload = {
+    EmployeeID: formData.EmployeeID,
+    ClientID: initialData?.ClientID || null,
+    StartDate: formData.startDate,
+    EndDate: formData.status === "Active" ? null : formData.endDate || new Date().toISOString().split("T")[0], // Ensure EndDate is set for Inactive
+    MonthlyBilling: Number(formData.billingMonthly),
+    Status: formData.status,
+    isInactiveUpdate: initialData && initialData.Status === "Active" && formData.status === "Inactive",
   };
 
-  const handleDelete = () => {
-    if (employeeDetails.status === 'Active') {
-      setError('Employee cannot be deleted in active state.');
-      return;
+  console.log("Submitting payload:", payload);
+  onSubmit(payload, () => {
+    if (payload.isInactiveUpdate) {
+      console.log("Resource updated to Inactive successfully");
     }
-
-    const payload = {
-      EmployeeID: employeeDetails.EmployeeID,
-      delete: true,
-    };
-
-    onSubmit(payload);
-    resetForm();
-    onClose();
-  };
+  });
+};
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl p-6 rounded-2xl shadow-lg bg-white">
-        <DialogHeader className="flex justify-between items-center mb-4">
-          <DialogTitle>{initialData ? 'Edit Resource' : 'Add Resource'}</DialogTitle>
+      <DialogContent className="max-w-3xl p-6 rounded-2xl shadow-lg border-none bg-white">
+        <DialogHeader className="flex items-start border-b border-[#9DA4B3] mb-3">
+          <DialogTitle className="text-left min-w-[120px]">
+            {initialData ? 'Edit Resource' : 'Add Resource'}
+          </DialogTitle>
         </DialogHeader>
 
         {loading && <p>Loading employees...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-red-500 p-2 bg-red-50 rounded">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Name & Emp Code */}
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Name</Label>
-              <Input
-                value={searchTerm}
-                onChange={handleEmployeeChange}
-                placeholder="Search employee by name"
-                list="employee-options"
-              />
-              <datalist id="employee-options">
-                {employeeOptions.map((emp) => (
-                  <option key={emp.id} value={`${emp.FirstName} ${emp.LastName}`} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <Input
+                  value={searchTerm}
+                  onChange={handleEmployeeChange}
+                  placeholder="Search employee by name"
+                />
+                {searchTerm && employeeOptions.length > 0 && !selectedEmployee && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {employeeOptions.map((emp) => {
+                      const fullName = `${emp.FirstName || ''} ${emp.LastName || ''}`.trim();
+                      if (fullName.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        return (
+                          <div
+                            key={emp.id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => handleEmployeeSelection(emp)}
+                          >
+                            {fullName} ({emp.EmpCode || 'No code'})
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-
             <div className="w-full">
               <Label>Emp. Code</Label>
-              <Input name="empCode" value={employeeDetails.empCode} readOnly />
+              <Input name="empCode" value={formData.empCode} readOnly />
             </div>
           </div>
-
-          {/* Role & Level */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Role</Label>
-              <Input name="role" value={employeeDetails.role} readOnly />
+              <Input name="role" value={formData.role} readOnly />
             </div>
             <div className="w-full">
               <Label>Level</Label>
-              <Input name="level" value={employeeDetails.level} readOnly />
+              <Input name="level" value={formData.level} readOnly />
             </div>
           </div>
-
-          {/* Organization */}
           <div>
             <Label>Organization</Label>
-            <Input name="organization" value={employeeDetails.organization} readOnly />
+            <Input name="organization" value={formData.organization} readOnly />
           </div>
-
-          {/* Start Date & Billing */}
           <div className="flex gap-4">
             <div className="w-full">
-              <Label>Start Date</Label>
+              <Label>Start Date*</Label>
               <Input
                 type="date"
                 name="startDate"
-                value={employeeDetails.startDate}
+                value={formData.startDate}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="w-full">
-              <Label>Billing (Monthly)</Label>
+              <Label>Billing (Monthly)*</Label>
               <Input
                 type="number"
                 name="billingMonthly"
-                value={employeeDetails.billingMonthly}
+                value={formData.billingMonthly}
                 onChange={handleChange}
                 required
+                min="1"
+                step="0.01"
               />
             </div>
           </div>
-
-          {/* Status & End Date */}
           <div className="flex gap-4">
             <div className="w-full">
               <Label>Status</Label>
               <Select
-                value={employeeDetails.status}
-                onValueChange={(val) =>
-                  handleChange({ target: { name: 'status', value: val } })
-                }
+                value={formData.status}
+                onValueChange={(val) => handleChange({ target: { name: 'status', value: val } })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full h-12 text-base">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-none">
                   <SelectItem value="Active">Active</SelectItem>
                   <SelectItem value="Inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {employeeDetails.status === 'Inactive' && (
+            {formData.status === 'Inactive' && (
               <div className="w-full">
                 <Label>End Date</Label>
                 <Input
                   type="date"
                   name="endDate"
-                  value={employeeDetails.endDate}
+                  value={formData.endDate}
                   onChange={handleChange}
                 />
               </div>
             )}
           </div>
-
-          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2">
-            {initialData && (
-              <Button type="button" variant="destructive" onClick={handleDelete}>
-                Delete
-              </Button>
-            )}
-            <Button type="submit">{initialData ? 'Update' : 'Add'}</Button>
+            <Button type="submit" className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
+              {initialData ? 'Update' : 'Add'}
+            </Button>
           </div>
         </form>
       </DialogContent>

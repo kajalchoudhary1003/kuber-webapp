@@ -1,4 +1,3 @@
-// ClientDetails.jsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +5,8 @@ import { Edit, Trash2 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -67,7 +68,10 @@ const ClientDetails = () => {
 
   const filteredResources = resources.filter((r) => r.Status === activeTab);
 
-  const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : "N/A");
+  const formatDate = (date, status) => {
+    if (status === "Active") return "N/A"; // Return "N/A" for Active resources
+    return date ? new Date(date).toISOString().split("T")[0] : "N/A";
+  };
 
   // Helper function to safely get employee name
   const getEmployeeName = (employee) => {
@@ -92,7 +96,7 @@ const ClientDetails = () => {
   // Helper function to format billing
   const formatBilling = (billing, currency) => {
     if (!billing) return "N/A";
-    const currencyName = currency?.CurrencyName || currency?.CurrencyCode || "INR";
+    const currencyName =  currency?.CurrencyCode || "INR";
     return `${currencyName} ${parseFloat(billing).toFixed(2)}`;
   };
 
@@ -119,6 +123,7 @@ const ClientDetails = () => {
           throw new Error(errorData.error || "Failed to delete resource");
         }
         setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+        toast.success("Resource deleted successfully");
       } else {
         if (selectedResource && selectedResource.id) {
           const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
@@ -134,6 +139,7 @@ const ClientDetails = () => {
           setResources((prev) =>
             prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
           );
+          toast.success("Resource updated successfully");
         } else {
           const response = await fetch(`${API_BASE_URL}/client-employees`, {
             method: "POST",
@@ -146,13 +152,14 @@ const ClientDetails = () => {
           }
           const newResource = await response.json();
           setResources((prev) => [...prev, newResource]);
+          toast.success("Resource added successfully");
         }
       }
       // Refresh resources after update
       await fetchClientData();
     } catch (err) {
       console.error("Error submitting resource:", err.message);
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
     setIsResourceModalOpen(false);
     setSelectedResource(null);
@@ -181,10 +188,10 @@ const ClientDetails = () => {
         throw new Error(errorData.error || "Failed to update client");
       }
       await fetchClientData();
-      alert("Client updated successfully!");
+      toast.success("Client updated successfully");
     } catch (err) {
       console.error("Error updating client:", err);
-      alert(`Error updating client: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
     setIsClientModalOpen(false);
   };
@@ -198,6 +205,12 @@ const ClientDetails = () => {
   };
 
   const handleDeleteResource = async (resourceId) => {
+    const resource = resources.find((r) => r.id === resourceId);
+    if (resource.Status === "Active") {
+      toast.error("Cannot delete client employee with active status");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this resource?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
@@ -210,15 +223,16 @@ const ClientDetails = () => {
         }
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
         await fetchClientData();
+        toast.success("Resource deleted successfully");
       } catch (err) {
         console.error("Error deleting resource:", err.message);
-        alert(`Error: ${err.message}`);
+        toast.error(`Error: ${err.message}`);
       }
     }
   };
 
   const handleDeleteClient = async () => {
-    if (window.confirm("Are you sure you want to delete this client and all associated resources?")) {
+    if (window.confirm("Are you sure you want to delete this client ?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
           method: "DELETE",
@@ -226,12 +240,18 @@ const ClientDetails = () => {
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete client");
+          if (errorData.error && errorData.error.includes("Client cannot be deleted with active employees")) {
+            toast.error("Client cannot be deleted with active employees.");
+          } else {
+            throw new Error(errorData.error || "Failed to delete client");
+          }
+          return;
         }
+        toast.success("Client deleted successfully");
         navigate("/admin");
       } catch (err) {
         console.error("Error deleting client:", err.message);
-        alert(`Error: ${err.message}`);
+        toast.error(`Error: ${err.message}`);
       }
     }
   };
@@ -241,6 +261,19 @@ const ClientDetails = () => {
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
+      {/* This is the correct placement for ToastContainer - at the root level */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-blue-900">
           {`${client.ClientName} (${client.Abbreviation})`}
@@ -248,8 +281,7 @@ const ClientDetails = () => {
         <div className="space-x-2">
           <Button
             onClick={() => navigate("/admin")}
-            className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-          >
+            className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
             Back to Client Master
           </Button>
         </div>
@@ -320,7 +352,7 @@ const ClientDetails = () => {
       {/* Resources Assigned */}
       <div className="bg-white shadow p-6 rounded-2xl space-y-4">
         <div className="flex justify-between items-center pb-4">
-          <h3 className="text-[24px] text-[#272727]">Resources Assigned</h3>
+          <h3 className="text-[24px] text-[#272727] ">Resources Assigned</h3>
           <div className="flex gap-2">
             <Button
               onClick={() => setActiveTab("Active")}
@@ -336,8 +368,7 @@ const ClientDetails = () => {
             </Button>
             <Button
               onClick={handleAddResource}
-              className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
-            >
+              className="bg-[#048DFF] text-white cursor-pointer hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
               Add Resource
             </Button>
           </div>
@@ -346,8 +377,8 @@ const ClientDetails = () => {
         <div className="my-2"></div>
 
         <Table>
-          <TableHeader className="border-b border-[#9DA4B3]">
-            <TableRow>
+          <TableHeader >
+            <TableRow className='border-b border-[#9DA4B3]'>
               <TableHead>Name</TableHead>
               <TableHead>Emp. Code</TableHead>
               <TableHead>Role</TableHead>
@@ -363,14 +394,14 @@ const ClientDetails = () => {
           <TableBody>
             {filteredResources.length > 0 ? (
               filteredResources.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow className='border-b border-[#9DA4B3]' key={r.id}>
                   <TableCell>{getEmployeeName(r.Employee)}</TableCell>
                   <TableCell>{getEmployeeCode(r.Employee)}</TableCell>
                   <TableCell>{r.Employee?.Role?.RoleName || "N/A"}</TableCell>
                   <TableCell>{r.Employee?.Level?.LevelName || "N/A"}</TableCell>
                   <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
                   <TableCell>{formatDate(r.StartDate)}</TableCell>
-                  <TableCell>{formatDate(r.EndDate)}</TableCell>
+                  <TableCell>{formatDate(r.EndDate, r.Status)}</TableCell>
                   <TableCell>{formatBilling(r.MonthlyBilling, r.Client?.BillingCurrency)}</TableCell>
                   <TableCell className="text-blue-500">{r.Status}</TableCell>
                   <TableCell className="flex gap-2">

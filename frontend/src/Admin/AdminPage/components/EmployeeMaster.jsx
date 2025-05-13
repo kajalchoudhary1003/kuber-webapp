@@ -7,9 +7,10 @@ import RoleModal from '@/Modal/EmployeeModal/RoleModal';
 import LevelModal from '@/Modal/EmployeeModal/LevelModal';
 import OrganisationModal from '@/Modal/EmployeeModal/OrganisationModal';
 import { Button } from '@/components/ui/button';
-import { Pagination } from '@/components/ui/pagination';
+import { Pagination } from 'antd'; // Use antd Pagination
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -21,13 +22,13 @@ const cache = {
 };
 
 const EmployeeMaster = () => {
-  const [employees, setEmployees] = useState([]);
-  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]); // Store all employees
+  const [filteredEmployees, setFilteredEmployees] = useState([]); // Displayed employees (paginated)
   const [roles, setRoles] = useState([]);
   const [levels, setLevels] = useState([]);
   const [organisations, setOrganisations] = useState([]);
   const [clientAssignments, setClientAssignments] = useState({});
-  const [clientErrors, setClientErrors] = useState({}); // New state for client fetch errors
+  const [clientErrors, setClientErrors] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [levelModalOpen, setLevelModalOpen] = useState(false);
@@ -46,32 +47,35 @@ const EmployeeMaster = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
-    fetchEmployees(page);
+    fetchAllEmployees();
     fetchRolesLevelsOrgs();
-  }, [page]);
+  }, []);
 
-  const fetchEmployees = async (page) => {
+  useEffect(() => {
+    applySearchAndPagination();
+  }, [page, searchQuery, allEmployees]);
+
+  const fetchAllEmployees = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/employees?page=${page}&limit=${limit}`);
+      // Fetch all employees (adjust limit if needed)
+      const response = await axios.get(`${API_BASE_URL}/employees`, {
+        params: { page: 1, limit: 1000 }, // Large limit to get all employees
+      });
       const fetchedEmployees = response.data.employees;
-      setEmployees(fetchedEmployees);
-      setFilteredEmployees(fetchedEmployees);
+      setAllEmployees(fetchedEmployees);
+      setFilteredEmployees(fetchedEmployees.slice(0, limit)); // Initial page
       setTotalEmployees(response.data.total);
-
-      // Fetch client assignments for employees
       await fetchClientAssignmentsForEmployees(fetchedEmployees);
-
-      if (isSearchActive && searchQuery) {
-        applySearchFilter(fetchedEmployees, searchQuery);
-      }
     } catch (err) {
       setError('Error fetching employees');
       console.error('Error fetching employees:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
+        stack: err.stack,
       });
+      toast.error(err.response?.data?.error || 'Error fetching employees');
     } finally {
       setLoading(false);
     }
@@ -84,7 +88,8 @@ const EmployeeMaster = () => {
       employees.map(async (employee) => {
         try {
           const response = await axios.get(`${API_BASE_URL}/employees/${employee.id}/clients`);
-          assignments[employee.id] = response.data;
+          const activeAssignments = response.data.filter((assignment) => assignment.Status === 'Active');
+          assignments[employee.id] = activeAssignments;
         } catch (err) {
           console.error(`Error fetching clients for employee ${employee.id}:`, {
             message: err.message,
@@ -118,6 +123,7 @@ const EmployeeMaster = () => {
       orgsRes.data.forEach((org) => (cache.organisations[org.id] = org));
     } catch (err) {
       console.error('Error fetching roles, levels, or organisations:', err);
+      toast.error('Error fetching roles, levels, or organisations');
     }
   };
 
@@ -157,6 +163,48 @@ const EmployeeMaster = () => {
     }
   };
 
+  const applySearchAndPagination = () => {
+    let result = allEmployees;
+
+    if (searchQuery) {
+      const queryLower = searchQuery.toLowerCase();
+      result = allEmployees.filter((employee) => {
+        // Search by FirstName, LastName, EmpCode, Email
+        const matchesEmployee =
+          (employee.FirstName && employee.FirstName.toLowerCase().includes(queryLower)) ||
+          (employee.LastName && employee.LastName.toLowerCase().includes(queryLower)) ||
+          (employee.EmpCode && employee.EmpCode.toLowerCase().includes(queryLower)) ||
+          (employee.Email && employee.Email.toLowerCase().includes(queryLower));
+
+        // Search by client names
+        const clientNames = clientAssignments[employee.id]?.map((assignment) =>
+          assignment.Client?.ClientName?.toLowerCase() || ''
+        ) || [];
+        const matchesClient = clientNames.some((name) => name.includes(queryLower));
+
+        return matchesEmployee || matchesClient;
+      });
+      setIsSearchActive(true);
+    } else {
+      setIsSearchActive(false);
+    }
+
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const paginatedEmployees = result.slice(startIndex, startIndex + limit);
+    setFilteredEmployees(paginatedEmployees);
+    setTotalEmployees(result.length);
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setPage(1); // Reset to first page on search
+  };
+
+  const handlePageChange = (page) => {
+    setPage(page);
+  };
+
   const handleOpenModal = (employee = null, mode = 'create') => {
     setSelectedEmployee(employee);
     setModalMode(mode);
@@ -189,11 +237,16 @@ const EmployeeMaster = () => {
         if (selectedEmployee) {
           await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
           toast.success('Employee updated successfully');
+          // Update allEmployees
+          setAllEmployees((prev) =>
+            prev.map((emp) => (emp.id === selectedEmployee.id ? { ...emp, ...newEmployee } : emp))
+          );
         } else {
-          await axios.post(`${API_BASE_URL}/employees`, newEmployee);
+          const response = await axios.post(`${API_BASE_URL}/employees`, newEmployee);
           toast.success('Employee created successfully');
+          // Add new employee to allEmployees
+          setAllEmployees((prev) => [...prev, response.data]);
         }
-        fetchEmployees(page);
       } catch (err) {
         console.error('Error saving employee:', err);
         setError('Error saving employee');
@@ -268,8 +321,9 @@ const EmployeeMaster = () => {
   const handleDeleteEmployee = async (employeeId) => {
     try {
       await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
-      fetchEmployees(page);
       toast.success('Employee deleted successfully');
+      // Remove employee from allEmployees
+      setAllEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
     } catch (err) {
       console.error('Error deleting employee:', {
         message: err.message,
@@ -277,67 +331,31 @@ const EmployeeMaster = () => {
         status: err.response?.status,
       });
       const errorMessage = err.response?.data?.error || 'Error deleting employee';
-      setError(errorMessage);
-      if (errorMessage === 'Active employees cannot be deleted') {
-        toast.error('Active employees cannot be deleted');
+      if (errorMessage === 'Cannot delete employee with active client assignments') {
+        toast.error('Employee cannot be deleted with active clients');
       } else {
         toast.error(errorMessage);
       }
     }
   };
 
-  // Helper function to check if a value contains the search query
-  const valueContainsQuery = (value, query) => {
-    if (value == null) return false;
-    return String(value).toLowerCase().includes(query.toLowerCase());
-  };
-
-  // Function to apply search filter
-  const applySearchFilter = (employeesList, query) => {
-    if (!query.trim()) {
-      setFilteredEmployees(employeesList);
-      setIsSearchActive(false);
-      return;
-    }
-
-    setIsSearchActive(true);
-
-    // Log the first employee to see the structure
-    if (employeesList.length > 0) {
-      console.log('Employee structure for search:', employeesList[0]);
-    }
-
-    // Function to check if any value in an object contains the query
-    const checkObjectValues = (obj, searchQuery, employeeId) => {
-      if (!obj) return false;
-
-      // Check client names for the employee
-      const clientNames = clientAssignments[employeeId]?.map((assignment) => assignment.Client?.ClientName || '') || [];
-      if (clientNames.some((name) => name.toLowerCase().includes(searchQuery.toLowerCase()))) {
-        return true;
+  // Custom render function for Pagination to show only current page
+  const paginationItemRender = (page, type, originalElement) => {
+    if (type === 'page') {
+      // Only show the current page number
+      if (page === currentPage) {
+        return originalElement;
       }
-
-      // Check other object properties
-      return Object.values(obj).some((value) => {
-        if (value === null || value === undefined) return false;
-        if (typeof value === 'object') return checkObjectValues(value, searchQuery, employeeId);
-        return String(value).toLowerCase().includes(searchQuery.toLowerCase());
-      });
-    };
-
-    const filtered = employeesList.filter((employee) =>
-      checkObjectValues(employee, query, employee.id)
-    );
-
-    console.log(`Search query: "${query}" - Found ${filtered.length} results`);
-    setFilteredEmployees(filtered);
+      return null; // Hide other page numbers
+    }
+    // Show Previous and Next buttons
+    if (type === 'prev' || type === 'next') {
+      return originalElement;
+    }
+    return originalElement;
   };
 
-  // Handle search from SearchBar component
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    applySearchFilter(employees, query);
-  };
+  const currentPage = page; // For use in itemRender
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div className="text-center text-red-500 py-10">Error: {error}</div>;
@@ -351,9 +369,9 @@ const EmployeeMaster = () => {
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
-            <Button
+            <Button 
               onClick={() => handleOpenModal()}
-              className="whitespace-nowrap bg-blue-500 rounded-full text-white hover:bg-blue-500/90 cursor-pointer px-6 py-2"
+             className="bg-[#048DFF] cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all"
             >
               Create Employee
             </Button>
@@ -373,17 +391,18 @@ const EmployeeMaster = () => {
               fetchLevelById={fetchLevelById}
               fetchOrganisationById={fetchOrganisationById}
               clientAssignments={clientAssignments}
-              clientErrors={clientErrors} // Pass clientErrors for potential UI display
+              clientErrors={clientErrors}
             />
-            {!isSearchActive && (
-              <div className="mt-8 flex justify-center">
-                <Pagination
-                  total={Math.ceil(totalEmployees / limit)}
-                  current={page}
-                  onChange={(value) => setPage(value)}
-                />
-              </div>
-            )}
+            <div className="mt-8 flex justify-center">
+              <Pagination
+                current={page}
+                total={totalEmployees}
+                pageSize={limit}
+                onChange={handlePageChange}
+                showSizeChanger={false}
+                itemRender={paginationItemRender} // Custom render to show only current page
+              />
+            </div>
           </>
         ) : (
           <div className="text-center py-8 text-gray-500 text-lg">No employees found.</div>
