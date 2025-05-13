@@ -19,16 +19,30 @@ const getFinancialYears = async (req, res) => {
 // Add a new financial year
 const addFinancialYear = async (req, res) => {
   try {
-    logger.info('Add financial year service called');
-    const newYear = await financialYearService.addFinancialYear();
-    res.status(201).json(newYear);
+    const { year } = req.body;
+    logger.info(`Adding new financial year: ${year}`);
+    const result = await financialYearService.addFinancialYear(year);
+    res.json(result);
   } catch (error) {
     logger.error(`Error adding financial year: ${error.message}`);
     res.status(500).json({ error: 'Failed to add financial year' });
   }
 };
 
+const createBillingDetails = async (req, res) => {
+  try {
+    const { year } = req.params;
+    logger.info(`Creating billing details for year: ${year}`);
+    const result = await financialYearService.createBillingDetailsForYear(year);
+    res.json(result);
+  } catch (error) {
+    logger.error(`Error creating billing details: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getFinancialYears,
   addFinancialYear,
+  createBillingDetails
 };

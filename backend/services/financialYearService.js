@@ -27,22 +27,25 @@ const getFinancialYears = async ({ page = 1, limit = 2 }) => {
   }
 };
 
-const addFinancialYear = async () => {
+const addFinancialYear = async (year) => {
   const transaction = await sequelize.transaction();
 
   try {
     // Get the new financial year
-    const financialYears = await getFinancialYears({ page: 1, limit: 100 });
     let newFinancialYear;
-
-    if (financialYears.financialYears.length === 0) {
-      logger.info('No financial years found, creating new financial year');
-      newFinancialYear = `${new Date().getFullYear()}`;
+    if (year) {
+      newFinancialYear = year;
     } else {
-      logger.info('Financial years found, creating new financial year');
-      const lastYear = parseInt(financialYears.financialYears[0].year, 10);
-      newFinancialYear = `${lastYear + 1}`;
-      logger.info(`Last year: ${lastYear}, new year: ${newFinancialYear}`);
+      const financialYears = await getFinancialYears({ page: 1, limit: 100 });
+      if (financialYears.financialYears.length === 0) {
+        logger.info('No financial years found, creating new financial year');
+        newFinancialYear = `${new Date().getFullYear()}`;
+      } else {
+        logger.info('Financial years found, creating new financial year');
+        const lastYear = parseInt(financialYears.financialYears[0].year, 10);
+        newFinancialYear = `${lastYear + 1}`;
+        logger.info(`Last year: ${lastYear}, new year: ${newFinancialYear}`);
+      }
     }
 
     // Create the new financial year
@@ -65,6 +68,13 @@ const addFinancialYear = async () => {
     });
 
     logger.info(`Active client employees found: ${activeClientEmployees.length}`);
+    logger.info('Active client employees:', JSON.stringify(activeClientEmployees.map(ce => ({
+      EmployeeID: ce.EmployeeID,
+      ClientID: ce.ClientID,
+      MonthlyBilling: ce.MonthlyBilling,
+      Status: ce.Status,
+      EmployeeStatus: ce.Employee.Status
+    })), null, 2));
 
     // Create billing details for active client employees
     const billingDetails = activeClientEmployees.map(clientEmployee => ({
@@ -86,11 +96,41 @@ const addFinancialYear = async () => {
     }));
 
     if (billingDetails.length > 0) {
-      await BillingDetail.bulkCreate(billingDetails, { 
-        transaction,
-        ignoreDuplicates: true // This will skip any duplicates instead of failing
+      logger.info('Creating billing details:', JSON.stringify(billingDetails, null, 2));
+      
+      // First check for existing billing details
+      const existingBillingDetails = await BillingDetail.findAll({
+        where: {
+          Year: parseInt(newFinancialYear, 10),
+          [Op.or]: billingDetails.map(detail => ({
+            EmployeeID: detail.EmployeeID,
+            ClientID: detail.ClientID
+          }))
+        }
       });
-      logger.info(`Created billing details for ${billingDetails.length} client employees`);
+
+      logger.info(`Found ${existingBillingDetails.length} existing billing details`);
+
+      // Filter out any that already exist
+      const newBillingDetails = billingDetails.filter(detail => 
+        !existingBillingDetails.some(existing => 
+          existing.EmployeeID === detail.EmployeeID && 
+          existing.ClientID === detail.ClientID
+        )
+      );
+
+      logger.info(`Creating ${newBillingDetails.length} new billing details`);
+
+      if (newBillingDetails.length > 0) {
+        const createdBillingDetails = await BillingDetail.bulkCreate(newBillingDetails, { 
+          transaction
+        });
+        logger.info(`Created billing details for ${createdBillingDetails.length} client employees`);
+      } else {
+        logger.info('No new billing details to create');
+      }
+    } else {
+      logger.warn('No billing details to create');
     }
 
     // Get all active employees
@@ -144,7 +184,104 @@ const addFinancialYear = async () => {
   }
 };
 
+const createBillingDetailsForYear = async (year) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    logger.info(`Creating billing details for year: ${year}`);
+
+    // Get all active client employees
+    const activeClientEmployees = await ClientEmployee.findAll({
+      where: { 
+        Status: 'Active',
+        EndDate: {
+          [Op.or]: [null, { [Op.gt]: new Date() }]
+        }
+      },
+      include: [{
+        model: Employee,
+        where: { Status: 'Active' },
+        required: true
+      }]
+    });
+
+    logger.info(`Found ${activeClientEmployees.length} active client employees`);
+
+    // Create billing details for active client employees
+    const billingDetails = activeClientEmployees.map(clientEmployee => ({
+      EmployeeID: clientEmployee.EmployeeID,
+      ClientID: clientEmployee.ClientID,
+      Year: parseInt(year, 10),
+      Apr: clientEmployee.MonthlyBilling,
+      May: clientEmployee.MonthlyBilling,
+      Jun: clientEmployee.MonthlyBilling,
+      Jul: clientEmployee.MonthlyBilling,
+      Aug: clientEmployee.MonthlyBilling,
+      Sep: clientEmployee.MonthlyBilling,
+      Oct: clientEmployee.MonthlyBilling,
+      Nov: clientEmployee.MonthlyBilling,
+      Dec: clientEmployee.MonthlyBilling,
+      Jan: clientEmployee.MonthlyBilling,
+      Feb: clientEmployee.MonthlyBilling,
+      Mar: clientEmployee.MonthlyBilling,
+    }));
+
+    if (billingDetails.length > 0) {
+      logger.info('Creating billing details:', JSON.stringify(billingDetails, null, 2));
+      
+      // First check for existing billing details
+      const existingBillingDetails = await BillingDetail.findAll({
+        where: {
+          Year: parseInt(year, 10),
+          [Op.or]: billingDetails.map(detail => ({
+            EmployeeID: detail.EmployeeID,
+            ClientID: detail.ClientID
+          }))
+        }
+      });
+
+      logger.info(`Found ${existingBillingDetails.length} existing billing details`);
+
+      // Filter out any that already exist
+      const newBillingDetails = billingDetails.filter(detail => 
+        !existingBillingDetails.some(existing => 
+          existing.EmployeeID === detail.EmployeeID && 
+          existing.ClientID === detail.ClientID
+        )
+      );
+
+      logger.info(`Creating ${newBillingDetails.length} new billing details`);
+
+      if (newBillingDetails.length > 0) {
+        const createdBillingDetails = await BillingDetail.bulkCreate(newBillingDetails, { 
+          transaction
+        });
+        logger.info(`Created billing details for ${createdBillingDetails.length} client employees`);
+      } else {
+        logger.info('No new billing details to create');
+      }
+    } else {
+      logger.warn('No billing details to create');
+    }
+
+    await transaction.commit();
+    logger.info('Transaction committed successfully');
+
+    return { 
+      success: true, 
+      message: 'Billing details created successfully',
+      createdCount: billingDetails.length
+    };
+
+  } catch (error) {
+    await transaction.rollback();
+    logger.error(`Error creating billing details: ${error.message}`);
+    throw new Error(`Error creating billing details: ${error.message}`);
+  }
+};
+
 module.exports = {
   getFinancialYears,
   addFinancialYear,
+  createBillingDetailsForYear
 };

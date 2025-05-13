@@ -6,6 +6,7 @@ import { useYear } from '../../../contexts/YearContexts';
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 const API_BASE_URL = 'http://localhost:5001/api/billing';
+const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
 
 const BillingSetup = () => {
   const [data, setData] = useState([]);
@@ -24,7 +25,21 @@ const BillingSetup = () => {
       try {
         setLoading(true);
         if (selectedYear) {
+          console.log('Fetching clients for year:', selectedYear);
+          
+          // First ensure billing details exist
+          try {
+            console.log('Creating billing details for year:', selectedYear);
+            await axios.post(`${FINANCIAL_YEAR_API_BASE_URL}/create-billing/${selectedYear}`);
+            console.log('Billing details created successfully');
+          } catch (error) {
+            console.error('Error creating billing details:', error);
+            // Continue even if this fails - we'll still try to fetch clients
+          }
+
+          // Then fetch the clients
           const response = await axios.get(`${API_BASE_URL}/clients/${selectedYear}`);
+          console.log('Clients response:', response.data);
           setClients(response.data);
         }
         setLoading(false);
