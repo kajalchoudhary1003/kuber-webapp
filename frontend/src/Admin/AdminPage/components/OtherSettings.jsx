@@ -575,19 +575,23 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   };
 
   // Confirm add upcoming year
-  const confirmAddUpcomingYear = async () => {
-    try {
-      const response = await axios.post(FINANCIAL_YEAR_API_BASE_URL);
-      const newYear = response.data.year;
-      setFinancialYears(prev => [newYear, ...prev]);
-      setSelectedYear(newYear);
-      setTotalYears(prev => prev + 1);
-    } catch (error) {
-      console.error('Error adding financial year:', error);
-      alert(error.response?.data?.error || 'Failed to add financial year.');
-    }
-    setModalOpen(false);
-  };
+  // Confirm add upcoming year
+const confirmAddUpcomingYear = async () => {
+  try {
+    const response = await axios.post(FINANCIAL_YEAR_API_BASE_URL);
+    const newYear = response.data.year;
+    setFinancialYears(prev => [newYear, ...prev]);
+    setSelectedYear(newYear);
+    setTotalYears(prev => prev + 1);
+    
+    // Reload the page after adding a new financial year
+    window.location.reload();
+  } catch (error) {
+    console.error('Error adding financial year:', error);
+    alert(error.response?.data?.error || 'Failed to add financial year.');
+  }
+  setModalOpen(false);
+};
 
 
 
