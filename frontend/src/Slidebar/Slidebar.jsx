@@ -27,8 +27,8 @@ export function AppSidebar() {
       path: "/dashboard",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -48,8 +48,8 @@ export function AppSidebar() {
       path: "/admin",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -69,8 +69,8 @@ export function AppSidebar() {
       path: "/invoice",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -91,8 +91,8 @@ export function AppSidebar() {
       path: "/payment",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -110,8 +110,8 @@ export function AppSidebar() {
       path: "/ledger",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -130,12 +130,15 @@ export function AppSidebar() {
   return (
     <div
       className={clsx(
-        "transition-all duration-300 border-r border-gray-200 bg-white h-full",
+        "transition-all duration-300 border-r border-gray-200 bg-white h-full shadow-2xl flex-shrink-0",
         collapsed ? "w-[60px]" : "w-64"
       )}
+      style={{ minWidth: collapsed ? '60px' : '256px', maxWidth: collapsed ? '60px' : '256px' }}
     >
-      <div className="p-4 flex justify-between items-center">
-        
+      <div className={clsx(
+        "p-4 flex items-center",
+        collapsed ? "justify-center" : "justify-end"
+      )}>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[#E6F2FF] transition-colors"
@@ -145,29 +148,38 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname === item.path}
-                className="hover:bg-[#E6F2FF] transition-colors"
-              >
-                <Link
-                  onClick={() => handleNavigation(item.path)}
+        <SidebarMenu className="space-y-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
                   className={clsx(
-                    "flex items-center py-2 px-4 gap-3",
-                    collapsed ? "justify-center" : "justify-start"
+                    "hover:bg-[#E6F2FF] py-6 transition-colors relative",
+                    isActive && "bg-[#E6F2FF] py-6"
                   )}
                 >
-                  <span>{item.icon}</span>
-                  {!collapsed && <span className="whitespace-nowrap">{item.title}</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+                  <Link
+                    onClick={() => handleNavigation(item.path)}
+                    className={clsx(
+                      "flex items-center py-3 px-4 gap-4",
+                      collapsed ? "justify-center" : "justify-start",
+                      "text-base",
+                      isActive && "before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:rounded-none before:bg-blue-500"
+                    )}
+                  >
+                    <span>{item.icon}</span>
+                    {!collapsed && <span className="whitespace-nowrap text-lg">{item.title}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarContent>
     </div>
   )
 }
+

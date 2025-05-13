@@ -260,7 +260,7 @@ const GenerateInvoicePage = () => {
   return (
     <div className="flex flex-col items-center gap-5 p-4">
       <Card className="w-full rounded-4xl shadow-sm bg-white border-white h-28">
-        <CardHeader className="flex flex-row items-center justify-between px-7 py-7">
+        <CardHeader className="flex flex-row items-center justify-between pt-5">
           <h2 className="text-2xl font-normal text-black">
             FY: {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
           </h2>

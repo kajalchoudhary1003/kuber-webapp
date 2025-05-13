@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export const Header = () => {
   return (
-    <header className="bg-white border-b border-gray-300 shadow-sm h-16 w-full">
+    <header className="bg-white border-b border-gray-300 shadow-lg h-16 w-full">
       <div className="flex justify-between items-center h-full px-8">
         <h1 className="font-normal text-2xl flex items-center text-[#272727]">
           <span className="text-[#048DFF]">K</span>UBER
@@ -38,3 +38,4 @@ export const Header = () => {
 // }
 
 // export default Header;
+

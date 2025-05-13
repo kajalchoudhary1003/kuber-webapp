@@ -121,8 +121,9 @@ const BillingSetup = () => {
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto mt-5">
+      <div className="md:w-[1020px] mt-5  2xl:w-auto">
         {selectedClient && (
+          <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
 
           <table className="w-full border-collapse items-center bg-white shadow-md">
             <thead >
@@ -169,6 +170,7 @@ const BillingSetup = () => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

@@ -114,9 +114,10 @@ const EmployeeCost = () => {
         {(yearLoading || loading) && <div className="mb-4">Loading...</div>}
 
 
-        <div className="w-full overflow-x-auto">
+        <div className="md:w-[1020px]  2xl:w-full">
           {selectedYear && !yearLoading && !loading && data.length > 0 ? (
-            <Table className="w-full border-collapse bg-white shadow-sm">
+            <div style={{ width: '100%', overflowX: 'auto', maxWidth: '100%' }}>
+            <Table className="   shadow-sm" style={{ width: '100%' }}>
               <TableHeader className="bg-[#EDEFF2]">
 
                 <TableRow className="border-b border-[#9DA4B3]">
@@ -164,6 +165,7 @@ const EmployeeCost = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <div className="text-center py-4 text-gray-500">
               {selectedYear ? 'No employee cost data available for the selected year.' : 'Please select a year to view employee costs.'}
