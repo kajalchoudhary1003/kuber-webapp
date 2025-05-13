@@ -71,7 +71,7 @@ const EmployeeTableRow = ({
   };
 
   return (
-    <TableRow className="hover:bg-blue-50 border-b border-[#9DA4B3]">
+    <TableRow className="hover:bg-blue-50 border-b border-gray-300">
       <TableCell className="py-3 px-1 text-center w-[150px] whitespace-normal">{`${data.FirstName} ${data.LastName}`}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{data.EmpCode || 'N/A'}</TableCell>
       <TableCell className="py-3 px-1 text-center w-[120px] whitespace-normal">{roleName}</TableCell>

@@ -2,7 +2,7 @@ import React from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 
 const EmployeeTableHeader = () => (
-  <TableRow className="bg-[#EDEFF2] border-b border-[#9DA4B3]">
+  <TableRow className="bg-[#EDEFF2] border-0" style={{ borderBottom: 'none' }}>
     <TableCell className="py-3 px-1 text-[16px] font-normal text-center">Name</TableCell>
     <TableCell className="py-3 px-1 text-[16px] font-normal text-center">Employee Code</TableCell>
     <TableCell className="py-3 px-1 text-[16px] font-normal text-center">Role</TableCell>
