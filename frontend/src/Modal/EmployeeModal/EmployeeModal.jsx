@@ -209,6 +209,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               <Input 
                 name="EmpCode" 
                 value={formData.EmpCode} 
+                on Leave="true"
                 onChange={handleChange} 
                 required 
                 className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
@@ -220,16 +221,13 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                 value={formData.RoleID}
                 onValueChange={(value) => setFormData({ ...formData, RoleID: value })}
                 required
+                disabled={roles.length === 0}
               >
                 <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                  <SelectValue placeholder="Select Role" />
+                  <SelectValue placeholder={roles.length === 0 ? "No roles available" : "Select Role"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
-                  {roles.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      No roles available
-                    </SelectItem>
-                  ) : (
+                  {roles.length === 0 ? null : (
                     roles.map((role) => (
                       <SelectItem key={role.id} value={String(role.id)}>
                         {role.RoleName}
@@ -238,6 +236,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                   )}
                 </SelectContent>
               </Select>
+              
             </div>
           </div>
 
@@ -248,16 +247,13 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                 value={formData.LevelID}
                 onValueChange={(value) => setFormData({ ...formData, LevelID: value })}
                 required
+                disabled={levels.length === 0}
               >
                 <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                  <SelectValue placeholder="Select Level" />
+                  <SelectValue placeholder={levels.length === 0 ? "No levels available" : "Select Level"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
-                  {levels.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      No levels available
-                    </SelectItem>
-                  ) : (
+                  {levels.length === 0 ? null : (
                     levels.map((level) => (
                       <SelectItem key={level.id} value={String(level.id)}>
                         {level.LevelName}
@@ -266,26 +262,21 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                   )}
                 </SelectContent>
               </Select>
+              
             </div>
             <div className="w-full">
               <Label className="mb-2">Organisation</Label>
               <Select
                 value={formData.OrganisationID}
                 onValueChange={(value) => setFormData({ ...formData, OrganisationID: value })}
-                disabled={organisations.length === 0}
                 required
+                disabled={organisations.length === 0}
               >
                 <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                  <SelectValue
-                    placeholder={organisations.length === 0 ? 'No organisations available' : 'Select Organisation'}
-                  />
+                  <SelectValue placeholder={organisations.length === 0 ? "No organisations available" : "Select Organisation"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
-                  {organisations.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      No organisations available
-                    </SelectItem>
-                  ) : (
+                  {organisations.length === 0 ? null : (
                     organisations.map((org) => (
                       <SelectItem key={org.id} value={String(org.id)}>
                         {org.Abbreviation}
@@ -294,6 +285,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
                   )}
                 </SelectContent>
               </Select>
+              
             </div>
           </div>
 
@@ -349,21 +341,23 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
           </div>
 
           <div className="w-full">
-            <Label className="mb-2">Status</Label>
-            <Select
-              value={formData.Status}
-              onValueChange={(value) => setFormData({ ...formData, Status: value })}
-              required
-            >
-              <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-none">
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+  <Label className="mb-2">Status</Label>
+  <Select
+    value={formData.Status}
+    onValueChange={(value) => setFormData({ ...formData, Status: value })}
+    required
+  >
+    <SelectTrigger
+      className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 min-w-full px-4"
+    >
+      <SelectValue placeholder="Select Status" />
+    </SelectTrigger>
+    <SelectContent className="bg-white border-none">
+      <SelectItem value="Active">Active</SelectItem>
+      <SelectItem value="Inactive">Inactive</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
 
           <DialogFooter className="pt-4">
             <Button
