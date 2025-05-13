@@ -11,19 +11,27 @@ const logger = require('../utils/logger');
 const getClientsForYear = async (year) => {
   try {
     const parsedYear = parseInt(year, 10);
+    logger.info(`Fetching clients for year: ${parsedYear}`);
+
+    // First get all unique client IDs from billing details
     const billingDetails = await BillingDetail.findAll({
       where: { Year: parsedYear },
-      include: [
-        {
-          model: Client,
-          attributes: ['id', 'ClientName', 'Abbreviation'],
-          paranoid: false,
-        },
-      ],
-      group: ['Client.id'],
+      attributes: ['ClientID'],
+      group: ['ClientID'],
+      raw: true
     });
 
-    const clients = billingDetails.map(detail => detail.Client);
+    logger.info(`Found ${billingDetails.length} unique clients with billing details`);
+
+    // Then fetch the full client details
+    const clientIds = billingDetails.map(detail => detail.ClientID);
+    const clients = await Client.findAll({
+      where: { id: { [Op.in]: clientIds } },
+      attributes: ['id', 'ClientName', 'Abbreviation'],
+      paranoid: false
+    });
+
+    logger.info(`Retrieved ${clients.length} client details`);
     return clients;
   } catch (error) {
     logger.error(`Error fetching clients for year: ${error.message}`);
