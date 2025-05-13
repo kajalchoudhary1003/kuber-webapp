@@ -102,7 +102,7 @@ const EmployeeCost = () => {
           <div className="min-w-[120px]">
             <Button
               disabled
-              className="w-full bg-[#9DA4B3] text-black rounded-xl h-10 text-sm"
+              className="w-full bg-gray-200 border-2 border-gray-300 text-black rounded-xl h-10 text-sm"
             >
               {fiscalYearRange}
             </Button>

@@ -108,7 +108,7 @@ const BillingSetup = () => {
             </SelectContent>
           </Select>
 
-          <div className="min-w-[120px] flex items-center text-sm text-[#272727] bg-[#9DA4B3] px-3 py-2 rounded opacity-50 cursor-not-allowed">
+          <div className="min-w-[120px] flex items-center text-sm text-[#272727] bg-gray-200 border-2 border-gray-300 px-3 py-2 rounded-md opacity-70 cursor-not-allowed">
             {selectedYear ? `${selectedYear}-${parseInt(selectedYear) + 1}` : 'Select Year'}
           </div>
         </div>
