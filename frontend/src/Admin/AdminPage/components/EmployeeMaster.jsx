@@ -341,8 +341,8 @@ const EmployeeMaster = () => {
       }
 
     }
-  }
-};
+  };
+
 
   // Custom render function for Pagination to show only current page
   const paginationItemRender = (page, type, originalElement) => {
