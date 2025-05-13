@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
 import axios from 'axios';
@@ -33,9 +32,17 @@ const BACKUP_API_BASE_URL = 'http://localhost:5001/api/backup';
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
   try {
-    return useYear() || { selectedYear: null, setSelectedYear: () => {} };
+    return useYear() || { 
+      selectedYear: null, 
+      setSelectedYear: () => {}, 
+      addNewYear: () => {} 
+    };
   } catch (e) {
-    return { selectedYear: null, setSelectedYear: () => {} };
+    return { 
+      selectedYear: null, 
+      setSelectedYear: () => {}, 
+      addNewYear: () => {} 
+    };
   }
 };
 
@@ -50,7 +57,7 @@ const OtherSettings = () => {
   const [totalYears, setTotalYears] = useState(0);
   const [showMoreAvailable, setShowMoreAvailable] = useState(true);
   const [randomCode, setRandomCode] = useState('');
-  const { selectedYear, setSelectedYear } = useYearWithFallback();
+  const { selectedYear, setSelectedYear, addNewYear } = useYearWithFallback();
 
 const [backupFile, setBackupFile] = useState(null);
 const [restoreModalOpen, setRestoreModalOpen] = useState(false);
@@ -579,8 +586,12 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
     try {
       const response = await axios.post(FINANCIAL_YEAR_API_BASE_URL);
       const newYear = response.data.year;
+      
+      // Add the new year to the context
+      addNewYear(newYear);
+      
+      // Update local state
       setFinancialYears(prev => [newYear, ...prev]);
-      setSelectedYear(newYear);
       setTotalYears(prev => prev + 1);
     } catch (error) {
       console.error('Error adding financial year:', error);

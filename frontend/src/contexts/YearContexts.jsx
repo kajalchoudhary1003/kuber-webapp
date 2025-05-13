@@ -14,29 +14,30 @@ export const YearProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [financialYears, setFinancialYears] = useState([]);
 
+  const refreshFinancialYears = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=1&limit=100`);
+      const years = response.data.financialYears.map((year) => year.year);
+      setFinancialYears(years);
+      
+      // If current selected year is not in the new list, select the latest year
+      if (!years.includes(selectedYear) && years.length > 0) {
+        const latestYear = years[0];
+        setSelectedYear(latestYear);
+        localStorage.setItem('selectedYear', latestYear);
+      }
+    } catch (error) {
+      console.error('Error refreshing financial years:', error);
+      setError('Failed to refresh financial years');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch financial years only once on mount
   useEffect(() => {
-    const fetchFinancialYears = async () => {
-      try {
-        const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=1&limit=100`);
-        const years = response.data.financialYears.map((year) => year.year);
-        setFinancialYears(years);
-        
-        // Only set a new year if there's no year selected
-        if (!selectedYear && years.length > 0) {
-          const latestYear = years[0]; // Assuming sorted DESC
-          setSelectedYear(latestYear);
-          localStorage.setItem('selectedYear', latestYear);
-        }
-      } catch (error) {
-        console.error('Error fetching financial years:', error);
-        setError('Failed to fetch financial years');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFinancialYears();
+    refreshFinancialYears();
   }, []); // Empty dependency array - only run once on mount
 
   // Update localStorage whenever selectedYear changes
@@ -50,9 +51,17 @@ export const YearProvider = ({ children }) => {
   const updateSelectedYear = (year) => {
     if (financialYears.includes(year)) {
       setSelectedYear(year);
+      localStorage.setItem('selectedYear', year);
     } else {
       console.error('Invalid year selected:', year);
     }
+  };
+
+  // Add a new year to the list
+  const addNewYear = (year) => {
+    setFinancialYears(prev => [year, ...prev]);
+    setSelectedYear(year);
+    localStorage.setItem('selectedYear', year);
   };
 
   return (
@@ -61,7 +70,9 @@ export const YearProvider = ({ children }) => {
       setSelectedYear: updateSelectedYear, 
       loading, 
       error, 
-      financialYears 
+      financialYears,
+      refreshFinancialYears,
+      addNewYear
     }}>
       {children}
     </YearContext.Provider>
