@@ -342,7 +342,7 @@ const GenerateInvoicePage = () => {
               </thead>
               <tbody>
                 {mergedInvoices.map((invoice, index) => (
-                  <tr key={`${invoice.id || invoice.clientId}-${index}`} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
+                  <tr key={`${invoice.id || invoice.clientId}-${index}`} className="text-sm text-black border-b border-[#EDEFF2] hover:bg-[#E6F2FF] transition-colors duration-200">
                     <td className="p-3 text-center">
                       <Checkbox
                         checked={selectedRows.includes(invoice.id || invoice.clientId)}

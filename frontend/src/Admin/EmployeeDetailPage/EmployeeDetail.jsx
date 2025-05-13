@@ -240,7 +240,7 @@ const EmployeeDetail = () => {
       </div>
 
       <div className="bg-white rounded-3xl shadow-md p-8 w-full mb-6">
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#9DA4B3]">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#EDEFF2]">
           <h2 className="text-[24px] text-[#272727]">Employee Details</h2>
           <div className="flex gap-6">
             <Button
@@ -259,7 +259,7 @@ const EmployeeDetail = () => {
         </div>
 
         <div className="employee-detail">
-          <div className="detail-row flex justify-between mb-4 pb-4 border-b border-[#9DA4B3]">
+          <div className="detail-row flex justify-between mb-4 pb-4 border-b border-[#EDEFF2]">
             <div className="detail-item flex-1 mr-4">
               <label className="text-[14px] text-[#7B7B7B] mb-1">First name</label>
               <div className="text-[16px] text-black">{employee.FirstName}</div>
@@ -278,7 +278,7 @@ const EmployeeDetail = () => {
             </div>
           </div>
 
-          <div className="detail-row flex justify-between mb-4 pb-4 border-b border-[#9DA4B3]">
+          <div className="detail-row flex justify-between mb-4 pb-4 border-b border-[#EDEFF2]">
             <div className="detail-item flex-1 mr-4">
               <label className="text-[14px] text-[#7B7B7B] mb-1">Level</label>
               <div className="text-[16px] text-black">{levelName}</div>
@@ -311,16 +311,16 @@ const EmployeeDetail = () => {
       </div>
 
       <div className="projects-card bg-white rounded-2xl shadow-md p-8 w-full">
-        <div className="projects-header flex justify-between items-center pb-4 border-b border-[#9DA4B3]">
+        <div className="projects-header flex justify-between items-center pb-4 border-b border-[#EDEFF2]">
           <h2 className="text-xl text-primary-federal-blue">Clients</h2>
         </div>
 
         {clientError ? (
           <div className="text-center text-red-500 py-4">{clientError}</div>
         ) : (
-          <Table className="w-full border-b border-[#9DA4B3]">
-            <TableHeader className="bg-[#EDEFF2] border-b border-[#9DA4B3]">
-              <TableRow className="border-b border-[#9DA4B3]">
+          <Table className="w-full border-b border-[#EDEFF2]">
+            <TableHeader className="bg-[#EDEFF2] border-b border-[#EDEFF2]">
+              <TableRow className="border-b border-[#EDEFF2]">
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Client Name</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">Start Date</TableCell>
                 <TableCell className="py-3 px-1 font-medium text-[16px]">End Date</TableCell>
@@ -331,7 +331,7 @@ const EmployeeDetail = () => {
             <TableBody>
               {clientAssignments?.length > 0 ? (
                 clientAssignments.map((clientEmployee) => (
-                  <TableRow className="border-b border-[#9DA4B3]" key={clientEmployee.id}>
+                  <TableRow className="border-b border-[#EDEFF2]" key={clientEmployee.id}>
                     <TableCell className="py-3 px-1 text-[14px]">
                       {clientEmployee.Client?.ClientName || 'N/A'}
                     </TableCell>

@@ -121,10 +121,10 @@ const BillingSetup = () => {
             <table className="w-full border-collapse items-center bg-white shadow-md">
               <thead >
                 <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
-                  <th className="p-2 border-b border-[#9DA4B3]">Name</th>
-                  <th className="p-2 border-b border-[#9DA4B3]">CTC/M</th>
+                  <th className="p-2 border-b border-[#EDEFF2]">Name</th>
+                  <th className="p-2 border-b border-[#EDEFF2]">CTC/M</th>
                   {fiscalMonths.map(month => (
-                    <th key={month} className="p-2 border-b border-[#9DA4B3]">{month}</th>
+                    <th key={month} className="p-2 border-b border-[#EDEFF2]">{month}</th>
 
                   ))}
                 </tr>
@@ -133,12 +133,12 @@ const BillingSetup = () => {
                 {data.map((item, rowIndex) => (
 
                   <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
-                    <td className="p-3  border-b border-[#9DA4B3]">{item.name}</td>
-                    <td className="p-3 border-b border-[#9DA4B3]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
+                    <td className="p-3  border-b border-[#EDEFF2]">{item.name}</td>
+                    <td className="p-3 border-b border-[#EDEFF2]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
                     {fiscalMonths.map(column => (
                       <td
                         key={`${item.id}-${column}`}
-                        className="p-2 border-b border-[#9DA4B3]"
+                        className="p-2 border-b border-[#EDEFF2]"
 
 
                         onDoubleClick={() => handleDoubleClick(rowIndex, column, item[column])}

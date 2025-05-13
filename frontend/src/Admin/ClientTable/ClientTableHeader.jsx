@@ -1,8 +1,8 @@
 import React from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 
-const ClientTableHeade = () => (
-  <TableRow className='bg-[#EDEFF2] border-[#9DA4B3]'>
+const ClientTableHeader = () => (
+  <TableRow className="bg-[#EDEFF2] border-0" style={{ borderBottom: 'none' }}>
     <TableCell className="py-3 px-1">Client Name</TableCell>
     <TableCell className="py-3 px-1"> Contact person</TableCell>
     <TableCell className="py-3 px-1">Email</TableCell>
@@ -12,4 +12,4 @@ const ClientTableHeade = () => (
   </TableRow>
 );
 
-export default ClientTableHeade;
+export default ClientTableHeader;
