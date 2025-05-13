@@ -207,12 +207,15 @@ const invoiceController = {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
-      const filePath = path.join(__dirname, '../invoices', `${invoice.InvoiceNumber}.pdf`);
+      const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Invoice file not found' });
       }
 
-      res.download(filePath);
+      const filename = `${invoice.Client.ClientName.replace(/[^a-zA-Z0-9]/g, '_')}_${invoice.Year}_${invoice.Month}.pdf`;
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.download(filePath, filename);
     } catch (error) {
       logger.error('Error downloading invoice:', error);
       res.status(500).json({ error: error.message });

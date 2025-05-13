@@ -135,10 +135,46 @@ const GenerateInvoicePage = () => {
         }
       }
       await fetchGeneratedInvoices();
-
     } catch (err) {
       console.error('Generate invoice failed:', err);
       alert(`Error generating invoices: ${err.message}`);
+    }
+  };
+
+  const handleDownload = async () => {
+    const toDownload = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
+    if (toDownload.length === 0) {
+      alert('No generated invoices selected to download.');
+      return;
+    }
+
+    try {
+      for (const inv of toDownload) {
+        const response = await fetch(`${API_BASE}/invoices/download/${inv.id}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to download invoice ${inv.id}: ${errorData.error}`);
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `invoice_${inv.id}.pdf`;
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Download invoice failed:', err);
+      alert(`Error downloading invoices: ${err.message}`);
     }
   };
 
@@ -149,15 +185,12 @@ const GenerateInvoicePage = () => {
       return;
     }
 
-
-
     try {
       for (const inv of toDelete) {
         const response = await fetch(`${API_BASE}/invoices/delete/${inv.id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error(`Failed to delete invoice ${inv.id}`);
       }
       await fetchGeneratedInvoices();
-
     } catch (err) {
       console.error('Delete invoice failed:', err);
       alert('Failed to delete invoice(s). Please try again.');
@@ -175,8 +208,7 @@ const GenerateInvoicePage = () => {
         const response = await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
         if (!response.ok) throw new Error(`Failed to mark invoice ${inv.id} as sent`);
       }
-      await fetchGeneratedInvoices(); // Refresh invoices after marking as sent
-
+      await fetchGeneratedInvoices();
     } catch (err) {
       console.error('Mark as sent failed:', err);
       alert('Failed to mark invoice(s) as sent. Please try again.');
@@ -202,7 +234,6 @@ const GenerateInvoicePage = () => {
         }
       }
       await fetchGeneratedInvoices();
-
     } catch (err) {
       console.error('Regenerate invoice failed:', err);
       alert('Failed to regenerate invoice(s). Please try again.');
@@ -233,7 +264,6 @@ const GenerateInvoicePage = () => {
     return inv && !inv.id;
   });
 
-  // Check if only generated invoices are selected
   const hasGeneratedSelected = selectedRows.some((rowId) => {
     const inv = mergedInvoices.find((i) => i.id === rowId);
     return inv && inv.id;
@@ -249,8 +279,6 @@ const GenerateInvoicePage = () => {
   // Helper function to get full invoice date from month and year
   const getInvoiceDate = (year, month) => {
     if (!year || !month) return 'N/A';
-
-    // For formatting consistency, use the 15th of the month
     const date = new Date(year, month - 1, 15);
     return formatDate(date);
   };
@@ -285,40 +313,55 @@ const GenerateInvoicePage = () => {
         <CardContent className="p-7">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-[24px] font-normal text-[#272727]">Generated Invoices</h2>
-            <div className="flex gap-3">
+
+            <div className="flex-1 flex justify-center">
               {hasGeneratedSelected && (
-                <>
+                <div className="flex gap-3 flex-wrap justify-center">
                   <Button
                     onClick={handleDelete}
                     className="px-6 py-2 text-[#FF6E65] transition-all duration-300 ease-in-out 
-             hover:bg-[rgba(255,110,101,0.08)] hover:text-[#FF6E65] 
-             disabled:opacity-50 disabled:cursor-not-allowed"
+            hover:bg-[rgba(255,110,101,0.08)] hover:text-[#FF6E65] 
+            disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Delete
                   </Button>
                   <Button
+                    onClick={handleDownload}
+                    className="px-6 py-2 text-[#048DFF] transition-all duration-300 ease-in-out 
+            hover:bg-[rgba(4,141,255,0.08)] hover:text-[#048DFF]
+            disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Download
+                  </Button>
+                  <Button
                     onClick={handleMarkAsSent}
                     className="px-6 py-2 text-[#00C7B5] transition-all duration-300 ease-in-out 
-             hover:bg-[rgba(0,199,181,0.08)] hover:text-[#00C7B5] 
-             disabled:opacity-50 disabled:cursor-not-allowed"
+            hover:bg-[rgba(0,199,181,0.08)] hover:text-[#00C7B5] 
+            disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Mark as Sent to Client
                   </Button>
                   <Button
                     onClick={handleRegenerate}
-                    className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer">
+                    className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer"
+                  >
                     Re-generate
                   </Button>
-                </>
+                </div>
               )}
+            </div>
+
+            <div className="ml-auto">
               <Button
                 onClick={handleGenerateInvoice}
-                disabled={!hasNonGeneratedSelected}
-                className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer">
+                
+                className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 hover:border-blue-500 border-2 border-blue-500 rounded-3xl px-6 py-2 transition-all cursor-pointer"
+              >
                 Generate Invoice(s)
               </Button>
             </div>
           </div>
+
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -342,7 +385,10 @@ const GenerateInvoicePage = () => {
               </thead>
               <tbody>
                 {mergedInvoices.map((invoice, index) => (
-                  <tr key={`${invoice.id || invoice.clientId}-${index}`} className="text-sm text-black border-b border-[#EDEFF2] hover:bg-[#E6F2FF] transition-colors duration-200">
+                  <tr
+                    key={`${invoice.id || invoice.clientId}-${index}`}
+                    className="text-sm text-black border-b border-[#EDEFF2] hover:bg-[#E6F2FF] transition-colors duration-200"
+                  >
                     <td className="p-3 text-center">
                       <Checkbox
                         checked={selectedRows.includes(invoice.id || invoice.clientId)}
@@ -352,17 +398,16 @@ const GenerateInvoicePage = () => {
                     </td>
                     <td className="p-3 text-center">{invoice.clientName}</td>
                     <td className="p-3 text-center">
-                      {invoice.id ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
+                      {invoice.id
+                        ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                        : 'N/A'}
                     </td>
-                    <td className="p-3 text-center">
-                      {formatDate(invoice.generatedOn)}
-                    </td>
-                    <td className="p-3 text-center">
-                      {getInvoiceDate(invoice.year, invoice.month)}
-                    </td>
-                    <td className="p-3 text-center">
-                      {invoice.status}
-                    </td>
+                    <td className="p-3 text-center">{formatDate(invoice.generatedOn)}</td>
+                    <td className="p-3 text-center">{getInvoiceDate(invoice.year, invoice.month)}</td>
+                    <td className="p-3 text-center">{invoice.status}</td>
                     <td className="p-3 text-center">
                       {invoice.pdfPath ? (
                         <Button
