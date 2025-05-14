@@ -5,7 +5,7 @@ import { Edit, Trash2 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
-
+import { formatCurrency } from "../../utils/currency";
 import { ToastContainer, toast } from "react-toastify";
 
 import "react-toastify/dist/ReactToastify.css";
@@ -438,7 +438,7 @@ const ClientDetails = () => {
                   <TableCell>{r.Employee?.Organisation?.Abbreviation || "N/A"}</TableCell>
                   <TableCell>{formatDate(r.StartDate)}</TableCell>
                   <TableCell>{formatDate(r.EndDate, r.Status)}</TableCell>
-                  <TableCell>{formatBilling(r.MonthlyBilling, r.Client?.BillingCurrency)}</TableCell>
+                  <TableCell>{formatCurrency(r.MonthlyBilling, r.Client?.BillingCurrency?.CurrencyCode)}</TableCell>
                   <TableCell className="text-blue-500">{r.Status}</TableCell>
                   <TableCell className="flex gap-2">
                     <button onClick={() => handleEditResource(r)}>
