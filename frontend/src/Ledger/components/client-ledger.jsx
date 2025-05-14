@@ -64,56 +64,78 @@ export default function ClientLedger() {
     setEndDate(date);
   }
 
-  const handleShowLedger = async () => {
-    if (selectedClient && 
-        (selectedPeriod !== "custom" || (startDate && endDate))) {
-      try {
-        setLoading(true)
-        
-        // Calculate date range based on selected period
-        let startDateStr = ''
-        let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
-        
-        if (selectedPeriod === "custom" && startDate && endDate) {
-          startDateStr = dayjs(startDate).format('YYYY-MM-DD')
-          endDateStr = dayjs(endDate).format('YYYY-MM-DD')
-        } else {
-          switch (selectedPeriod) {
-            case "1month":
-              startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
-              break
-            case "3months":
-              startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
-              break
-            case "6months":
-              startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
-              break
-            case "1year":
-              startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
-              break
-            default:
-              break
-          }
+  // Modify the handleShowLedger function to add console logs
+const handleShowLedger = async () => {
+  if (selectedClient && 
+      (selectedPeriod !== "custom" || (startDate && endDate))) {
+    try {
+      setLoading(true)
+      
+      // Calculate date range based on selected period
+      let startDateStr = ''
+      let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
+      
+      if (selectedPeriod === "custom" && startDate && endDate) {
+        startDateStr = dayjs(startDate).format('YYYY-MM-DD')
+        endDateStr = dayjs(endDate).format('YYYY-MM-DD')
+      } else {
+        switch (selectedPeriod) {
+          case "1month":
+            startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
+            break
+          case "3months":
+            startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
+            break
+          case "6months":
+            startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
+            break
+          case "1year":
+            startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
+            break
+          default:
+            break
         }
-        
-        // Fetch ledger data from backend - using POST as required by your API
-        const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
-          clientId: selectedClient,
-          startDate: startDateStr,
-          endDate: endDateStr
-        })
-        
-        setLedgerEntries(response.data.entries)
-        setBalance(response.data.balance)
-        setShowLedger(true)
-        setLoading(false)
-      } catch (err) {
-        console.error('Error fetching ledger data:', err)
-        setError('Failed to load ledger data')
-        setLoading(false)
       }
+      
+      console.log("Request parameters:", {
+        clientId: selectedClient,
+        startDate: startDateStr,
+        endDate: endDateStr
+      });
+      
+      // Fetch ledger data from backend - using POST as required by your API
+      const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
+        clientId: selectedClient,
+        startDate: startDateStr,
+        endDate: endDateStr
+      })
+      
+      console.log("API Response:", response.data);
+      console.log("Entries received:", response.data.entries);
+      
+      // Check if there are any invoice entries
+      const invoiceEntries = response.data.entries.filter(entry => 
+        entry.type === 'Invoice' || entry.type === 'invoice'
+      );
+      console.log("Invoice entries:", invoiceEntries);
+      
+      // Check if there are any payment entries
+      const paymentEntries = response.data.entries.filter(entry => 
+        entry.type === 'Payment' || entry.type === 'payment'
+      );
+      console.log("Payment entries:", paymentEntries);
+      
+      setLedgerEntries(response.data.entries)
+      setBalance(response.data.balance)
+      setShowLedger(true)
+      setLoading(false)
+    } catch (err) {
+      console.error('Error fetching ledger data:', err)
+      setError('Failed to load ledger data')
+      setLoading(false)
     }
   }
+}
 
   const isButtonDisabled = () => {
     // Button should be disabled if:
