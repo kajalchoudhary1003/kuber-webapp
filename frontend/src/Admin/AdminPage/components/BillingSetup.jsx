@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useYear } from '../../../contexts/YearContexts';
-
+import { formatCurrency } from '../../../utils/currency';
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 const API_BASE_URL = 'http://localhost:5001/api/billing';
 const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
@@ -69,10 +69,12 @@ const BillingSetup = () => {
     fetchData();
   }, [selectedClient, selectedYear]);
 
-  const formatNumberWithCommas = (number) => {
-    if (number == null) return '';
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
+
+  // formatCurrency(item[column], currencyCode)
+  // const formatNumberWithCommas = (number) => {
+  //   if (number == null) return '';
+  //   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  // };
 
   const handleDoubleClick = (row, column, value) => {
     setEditIndex({ row, column });
@@ -149,7 +151,7 @@ const BillingSetup = () => {
 
                   <tr key={item.id} className="text-sm text-black border-b border-[#9DA4B3] hover:bg-[#E6F2FF] transition-colors duration-200">
                     <td className="p-3  border-b border-[#EDEFF2]">{item.name}</td>
-                    <td className="p-3 border-b border-[#EDEFF2]">₹{formatNumberWithCommas(item.ctcMonthly)}</td>
+                    <td className="p-3 border-b border-[#EDEFF2]">{formatCurrency(item.ctcMonthly, 'INR')}</td>
                     {fiscalMonths.map(column => (
                       <td
                         key={`${item.id}-${column}`}
@@ -170,7 +172,7 @@ const BillingSetup = () => {
                             autoFocus
                           />
                         ) : (
-                          `${currencyCode}${formatNumberWithCommas(item[column])}`
+                          formatCurrency(item[column], currencyCode)
                         )}
                       </td>
                     ))}

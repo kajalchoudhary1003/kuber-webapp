@@ -4,6 +4,7 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '@/utils/currency';
 
 const EmployeeTableRow = ({
   data,
@@ -59,15 +60,6 @@ const EmployeeTableRow = ({
     if (window.confirm('Are you sure you want to delete this employee?')) {
       onDelete(data.id);
     }
-  };
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
   };
 
   return (

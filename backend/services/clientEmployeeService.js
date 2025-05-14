@@ -224,7 +224,14 @@ const clientEmployeeService = {
           {
             model: Client,
             attributes: ['ClientName', 'Abbreviation', 'BillingCurrencyID'],
-            paranoid: false // Include soft-deleted clients to ensure we always get client data
+            paranoid: false, // Include soft-deleted clients to ensure we always get client data
+            include: [
+              {
+                model: Currency,
+                as: 'BillingCurrency',
+                attributes: ['CurrencyCode']
+              }
+            ]
           },
           {
             model: Employee,
