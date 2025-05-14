@@ -8,12 +8,14 @@ const ClientEmployee = require('../models/clientEmployeeModel');
 const BankDetail = require('../models/bankDetailModel');
 const Organisation = require('../models/organisationModel');
 const { createInvoicePdf, loadLogo } = require('../utils/pdfUtils');
+const clientBalanceService = require('./clientBalanceService');
 const path = require('path');
 const fs = require('fs');
 
 const invoiceService = {
   async generateInvoices(year, month, clientId) {
     try {
+
       console.log(`Generating invoice for clientId: ${clientId}, year: ${year}, month: ${month}`);
       if (!clientId || isNaN(clientId) || parseInt(clientId) <= 0) {
         console.error(`Invalid clientId: ${clientId}`);
@@ -56,11 +58,18 @@ const invoiceService = {
       }
 
       const billingYear = month >= 1 && month <= 3 ? parseInt(year) + 1 : parseInt(year);
-
+      const clientBalance = await clientBalanceService.getClientBalance(clientId);
+      const previousBalance = clientBalance.balances.find(balance => 
+        balance.currencyId === client.BillingCurrencyID
+      )?.balance || 0;
+      
+      console.log(`Previous balance for client ${clientId}: ${previousBalance}`); // Add this for debugging
+      
       // Calculate total billing amount and fetch employee details
       const { total: billingTotal, employeeDetails } = await calculateTotalBillingAmount(clientId, billingYear, monthName);
       console.log(`Calculated total billing amount: ${billingTotal}`);
-
+      console.log(`Total due (previous + current): ${previousBalance + billingTotal}`); // Add this for debugging
+  
       const invoice = await Invoice.create({
         ClientID: client.id,
         BillingCurrencyID: client.BillingCurrencyID,
@@ -90,6 +99,7 @@ const invoiceService = {
             year,
             month,
             totalAmount: billingTotal,
+            previousBalance: previousBalance, // Add this line
             logoBase64: loadLogo(),
             clientName: client.ClientName,
             clientAddress: client.RegisteredAddress || 'N/A',
@@ -113,6 +123,7 @@ const invoiceService = {
           employeeDetails,
           invoiceFilePath
         );
+
         console.log(`PDF generated successfully for invoiceId=${invoice.id}`);
       } catch (pdfError) {
         console.error(`PDF generation failed for invoiceId=${invoice.id}:`, pdfError);
