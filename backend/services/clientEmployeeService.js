@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const ClientEmployee = require('../models/clientEmployeeModel');
 const Client = require('../models/clientModel');
 const Employee = require('../models/employeeModel');
+const BillingDetail = require('../models/billingDetailModel'); // Correct import
 const Role = require('../models/roleModel');
 const Level = require('../models/levelModel');
 const Organisation = require('../models/organisationModel');
@@ -67,6 +68,7 @@ const clientEmployeeService = {
   },
 
   async createClientEmployee(clientEmployeeData) {
+    const transaction = await sequelize.transaction();
     try {
       console.log('Creating client employee with data:', clientEmployeeData); // Log incoming payload
 
@@ -81,9 +83,8 @@ const clientEmployeeService = {
 
       if (existingRecord) {
         if (existingRecord.deletedAt) {
-          // Restore soft-deleted record and update it
-          await existingRecord.restore();
-          await existingRecord.update(clientEmployeeData);
+          await existingRecord.restore({ transaction });
+          await existingRecord.update(clientEmployeeData, { transaction });
           return existingRecord;
         }
         throw new Error('This employee is already assigned to this client');
@@ -99,9 +100,50 @@ const clientEmployeeService = {
         throw new Error('Invalid ClientID: Client not found');
       }
 
-      const clientEmployee = await ClientEmployee.create(clientEmployeeData);
+      // Create ClientEmployee record
+      const clientEmployee = await ClientEmployee.create(clientEmployeeData, { transaction });
+
+      // Create or update BillingDetail record
+      const startDate = new Date(clientEmployeeData.StartDate);
+      const year = startDate.getFullYear();
+      const startMonth = startDate.getMonth(); // 0 = Jan, 4 = May, etc.
+
+      const fiscalMonths = [
+        'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+        'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+      ];
+
+      // Prepare billing data
+      const billingData = {
+        EmployeeID: clientEmployeeData.EmployeeID,
+        ClientID: clientEmployeeData.ClientID,
+        Year: year,
+      };
+
+      // Set billing amounts based on StartDate
+      fiscalMonths.forEach((month, index) => {
+        const fiscalMonthIndex = index;
+        const calendarMonth = (fiscalMonthIndex + 3) % 12; // Apr=3, May=4, ..., Mar=2
+        const isNextYear = fiscalMonthIndex >= 9; // Jan, Feb, Mar
+        const billingYear = isNextYear ? year + 1 : year;
+
+        if (
+          (billingYear > year) ||
+          (billingYear === year && calendarMonth >= startMonth)
+        ) {
+          billingData[month] = clientEmployeeData.MonthlyBilling || 0;
+        } else {
+          billingData[month] = 0;
+        }
+      });
+
+      // Create or update BillingDetail
+      await BillingDetail.upsert(billingData, { transaction });
+
+      await transaction.commit();
       return clientEmployee;
     } catch (error) {
+      await transaction.rollback();
       if (error.name === 'SequelizeValidationError') {
         const errors = error.errors.map((err) => ({
           field: err.path,

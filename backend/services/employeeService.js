@@ -14,7 +14,7 @@ const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "D
 const createEmployee = async (employeeData, year) => {
   try {
     const existingEmployee = await Employee.findOne({
-      where: { EmpCode: employeeData.EmpCode }
+      where: { EmpCode: employeeData.EmpCode },
     });
     if (existingEmployee) {
       throw new Error('Employee with this code already exists');
@@ -23,36 +23,74 @@ const createEmployee = async (employeeData, year) => {
     // Create the employee
     const employee = await Employee.create(employeeData);
 
-    // Get all financial years
+    // Get the current date
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11 (January is 0)
+    const currentYear = now.getFullYear();
+
+    // Determine fiscal year (starts in April, month 3)
+    let fiscalYear;
+    if (currentMonth >= 3) {
+      fiscalYear = currentYear;
+    } else {
+      fiscalYear = currentYear - 1;
+    }
+
+    // Fiscal month names in order
+    const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+
+    // Determine the current fiscal month index (0-11)
+    let fiscalMonthIndex;
+    if (currentMonth >= 3) {
+      fiscalMonthIndex = currentMonth - 3; // April is index 0
+    } else {
+      fiscalMonthIndex = currentMonth + 9; // Jan is 9, Feb is 10, Mar is 11
+    }
+
+    // Get financial years (current and future only)
     const financialYears = await FinancialYear.findAll({
-      order: [['year', 'DESC']]
+      where: {
+        year: {
+          [Op.gte]: fiscalYear, // Only fetch current and future fiscal years
+        },
+      },
+      order: [['year', 'ASC']],
     });
 
     if (financialYears.length === 0) {
       throw new Error('No financial years found');
     }
 
-    // Create employee cost records for all financial years
     const monthlyCTC = employee.CTCMonthly || 0; // Fallback to 0 if CTCMonthly is not set
-    const employeeCosts = financialYears.map(year => ({
-      EmployeeID: employee.id,
-      Year: parseInt(year.year, 10),
-      Apr: monthlyCTC,
-      May: monthlyCTC,
-      Jun: monthlyCTC,
-      Jul: monthlyCTC,
-      Aug: monthlyCTC,
-      Sep: monthlyCTC,
-      Oct: monthlyCTC,
-      Nov: monthlyCTC,
-      Dec: monthlyCTC,
-      Jan: monthlyCTC,
-      Feb: monthlyCTC,
-      Mar: monthlyCTC
-    }));
+
+    // Create employee cost records for current and future financial years
+    const employeeCosts = financialYears.map((fy) => {
+      const costRecord = {
+        EmployeeID: employee.id,
+        Year: parseInt(fy.year, 10),
+      };
+
+      if (parseInt(fy.year, 10) === fiscalYear) {
+        // For the current fiscal year, set costs from the current month onward
+        fiscalMonths.forEach((month, index) => {
+          if (index < fiscalMonthIndex) {
+            costRecord[month] = 0; // Prior months are 0
+          } else {
+            costRecord[month] = parseFloat(monthlyCTC); // Current and future months get the salary
+          }
+        });
+      } else {
+        // For future fiscal years, set all months to monthly CTC
+        fiscalMonths.forEach((month) => {
+          costRecord[month] = parseFloat(monthlyCTC);
+        });
+      }
+
+      return costRecord;
+    });
 
     await EmployeeCost.bulkCreate(employeeCosts, {
-      ignoreDuplicates: true // This will skip any duplicates instead of failing
+      ignoreDuplicates: true, // Skip duplicates
     });
 
     return employee;

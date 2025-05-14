@@ -69,8 +69,6 @@ const BillingSetup = () => {
     fetchData();
   }, [selectedClient, selectedYear]);
 
-
-  // formatCurrency(item[column], currencyCode)
   // const formatNumberWithCommas = (number) => {
   //   if (number == null) return '';
   //   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -108,9 +106,10 @@ const BillingSetup = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col rounded-3xl shadow-lg bg-white items-center p-8 px-4">
-      <div className="flex justify-between items-center w-full mb-0">
-        <h2 className="text-[24px] text-[#272727] m-0">Billing Setup</h2>
+    
+    <div className="w-full mx-auto max-w-[1400px] bg-white rounded-3xl shadow-lg pt-6 pl-6 p-19">
+      <div className="flex justify-between items-center w-full ">
+        <h2 className="text-[24px] text-[#272727]  ">Billing Setup</h2>
         <div className="flex gap-2">
           <Select onValueChange={setSelectedClient} value={selectedClient}>
             <SelectTrigger className="cursor-pointer min-w-[180px]">
@@ -137,11 +136,11 @@ const BillingSetup = () => {
 
             <table className="w-full border-collapse items-center bg-white shadow-md">
               <thead >
-                <tr className="bg-[#EDEFF2] text-sm font-normal text-primary-black">
-                  <th className="p-2 border-b border-[#EDEFF2]">Name</th>
-                  <th className="p-2 border-b border-[#EDEFF2]">CTC/M</th>
+                <tr className="bg-[#EDEFF2] text-[16px] font-normal ">
+                  <th className="p-2 border-b text-[16px] font-normal border-[#EDEFF2]">Name</th>
+                  <th className="p-2 border-b text-[16px] font-normal border-[#EDEFF2]">CTC/M</th>
                   {fiscalMonths.map(month => (
-                    <th key={month} className="p-2 border-b border-[#EDEFF2]">{month}</th>
+                    <th key={month} className="p-2 border-b text-[16px] font-normal border-[#EDEFF2]">{month}</th>
 
                   ))}
                 </tr>
@@ -184,6 +183,7 @@ const BillingSetup = () => {
         )}
       </div>
     </div>
+
   );
 };
 
