@@ -99,32 +99,51 @@ export default function Overview() {
   }, [])
 
   // Fetch client balance data on component mount
-  useEffect(() => {
-    const fetchClientBalanceData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5001/api/client-balance/report');
-        
-        // Make sure we're handling the data format correctly
-        if (Array.isArray(response.data)) {
-          setClientBalanceData(response.data);
+  // Fetch client balance data on component mount
+useEffect(() => {
+  const fetchClientBalanceData = async () => {
+    try {
+      setLoading(true);
+      console.log("Fetching client balance data...");
+      const response = await axios.get('http://localhost:5001/api/client-balance/report');
+      
+      console.log("API Response:", response);
+      console.log("Response data:", response.data);
+      
+      // Make sure we're handling the data format correctly
+      if (Array.isArray(response.data)) {
+        console.log("Data is an array with length:", response.data.length);
+        setClientBalanceData(response.data);
+      } else if (response.data && typeof response.data === 'object') {
+        console.log("Data is an object, keys:", Object.keys(response.data));
+        // Check if the data might be nested under a property
+        if (response.data.clients && Array.isArray(response.data.clients)) {
+          console.log("Found clients array in response, length:", response.data.clients.length);
+          setClientBalanceData(response.data.clients);
         } else {
           console.error('Unexpected data format:', response.data);
           toast.error('Received invalid data format from server');
           setError('Received invalid data format from server');
         }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching client balance data:', err);
-        toast.error('Failed to load client balance data');
-        setError('Failed to load client balance data');
-        setLoading(false);
+      } else {
+        console.error('Unexpected data format:', response.data);
+        toast.error('Received invalid data format from server');
+        setError('Received invalid data format from server');
       }
-    };
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching client balance data:', err);
+      console.error('Error details:', err.response?.data || err.message);
+      toast.error('Failed to load client balance data');
+      setError('Failed to load client balance data');
+      setLoading(false);
+    }
+  };
 
-    fetchClientBalanceData();
-  }, []);
+  fetchClientBalanceData();
+}, []);
+
 
   // Handle showing profitability report
   const handleShowProfitabilityReport = async () => {
