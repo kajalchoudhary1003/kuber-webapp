@@ -166,80 +166,81 @@ const clientBalanceService = {
         include: [
           {
             model: Currency,
+            as: 'BillingCurrency',
             attributes: ['CurrencyName', 'CurrencyCode']
           }
         ],
         transaction
       });
-
+  
       if (!client) {
         throw new Error('Client not found');
       }
-
+  
       // Get all invoices for the client
-      const invoices = await Invoice.findAll({
+      const invoiceTotal = await Invoice.findOne({
         where: { ClientID: clientId },
         attributes: [
-          'CurrencyID',
-          [sequelize.fn('SUM', sequelize.col('TotalAmount')), 'totalInvoiced']
+          [sequelize.fn('SUM', sequelize.col('TotalAmount')), 'totalBill']
         ],
-        group: ['CurrencyID'],
+        raw: true,
         transaction
       });
-
+  
       // Get all payments for the client
-      const payments = await PaymentTracker.findAll({
+      const paymentTotal = await PaymentTracker.findOne({
         where: { ClientID: client.id },
         attributes: [
-          'CurrencyID',
           [sequelize.fn('SUM', sequelize.col('Amount')), 'totalPaid']
         ],
-        group: ['CurrencyID'],
+        raw: true,
         transaction
       });
-
+  
+  
       // Calculate balance for each currency
-      const balances = {};
-      const currencies = {};
-
-      // Process invoices
-      for (const invoice of invoices) {
-        const currencyId = invoice.CurrencyID;
-        const amount = parseFloat(invoice.getDataValue('totalInvoiced'));
+      // const balances = {};
+      // // const currencies = {};
+  
+      // // Process invoices
+      // for (const invoice of invoices) {
+      //   const currencyId = invoice.BillingCurrencyID;
+      //   const amount = parseFloat(invoice.getDataValue('totalInvoiced'));
         
-        if (!balances[currencyId]) {
-          balances[currencyId] = 0;
-        }
-        balances[currencyId] += amount;
-      }
-
+      //   if (!balances[currencyId]) {
+      //     balances[currencyId] = 0;
+      //   }
+      //   balances[currencyId] += amount;
+      // }
+  
       // Process payments
-      for (const payment of payments) {
-        const currencyId = payment.CurrencyID;
-        const amount = parseFloat(payment.getDataValue('totalPaid'));
-        
-        if (!balances[currencyId]) {
-          balances[currencyId] = 0;
-        }
-        balances[currencyId] -= amount;
-      }
-
-      // Get currency details
-      const currencyIds = [...new Set([...Object.keys(balances)])];
-      const currencyDetails = await Currency.findAll({
-        where: { id: { [Op.in]: currencyIds } },
-        attributes: ['id', 'CurrencyName', 'CurrencyCode'],
-        transaction
-      });
-
+      // const totalPaid = payments.length > 0 ? parseFloat(payments[0].getDataValue('totalPaid')) : 0;
+      // const clientCurrencyId = client.BillingCurrencyID;
+      
+      const totalBill = invoiceTotal?.totalBill || 0;
+      const totalPaid = paymentTotal?.totalPaid || 0;
+      const balance = totalBill - totalPaid; // This matches the overview page calculation
+  
+      // if (!balances[clientCurrencyId]) {
+      //   balances[clientCurrencyId] = 0;
+      // }
+      // balances[clientCurrencyId] -= totalPaid;
+  
+      // // Get currency details
+      // const currencyIds = [...new Set([...Object.keys(balances)])];
+      // const currencyDetails = await Currency.findAll({
+      //   where: { id: { [Op.in]: currencyIds } },
+      //   attributes: ['id', 'CurrencyName', 'CurrencyCode'],
+      //   transaction
+      // });
+  
       // Format the response
-      const formattedBalances = currencyDetails.map(currency => ({
-        currencyId: currency.id,
-        currencyName: currency.CurrencyName,
-        currencyCode: currency.CurrencyCode,
-        balance: balances[currency.id] || 0
-      }));
-
+      const formattedBalances = [{
+        currencyId: client.BillingCurrencyID,
+        currencyName: client.BillingCurrency.CurrencyName,
+        currencyCode: client.BillingCurrency.CurrencyCode,
+        balance: balance
+      }];
       await transaction.commit();
       return {
         clientId: client.id,
