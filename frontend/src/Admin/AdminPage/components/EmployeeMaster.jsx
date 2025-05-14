@@ -232,30 +232,39 @@ const EmployeeMaster = () => {
   };
 
   const handleCloseModal = async (newEmployee) => {
-    setModalOpen(false);
-    setSelectedEmployee(null);
-    if (newEmployee) {
-      try {
-        if (selectedEmployee) {
-          await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
-          toast.success('Employee updated successfully');
-          // Update allEmployees
-          setAllEmployees((prev) =>
-            prev.map((emp) => (emp.id === selectedEmployee.id ? { ...emp, ...newEmployee } : emp))
-          );
-        } else {
-          const response = await axios.post(`${API_BASE_URL}/employees`, newEmployee);
-          toast.success('Employee created successfully');
-          // Add new employee to allEmployees
-          setAllEmployees((prev) => [...prev, response.data]);
-        }
-      } catch (err) {
-        console.error('Error saving employee:', err);
-        setError('Error saving employee');
-        toast.error('Error saving employee');
+  setModalOpen(false);
+
+  if (newEmployee) {
+    try {
+      let employeeData;
+
+      if (selectedEmployee) {
+        // Update existing employee
+        await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
+        toast.success('Employee updated successfully');
+
+        // Update allEmployees
+        setAllEmployees((prev) =>
+          prev.map((emp) => (emp.id === selectedEmployee.id ? { ...emp, ...newEmployee } : emp))
+        );
+      } else {
+        // Create new employee
+        const response = await axios.post(`${API_BASE_URL}/employees`, newEmployee);
+        employeeData = response.data;
+        toast.success('Employee created successfully');
+
+        // Add new employee to allEmployees
+        setAllEmployees((prev) => [...prev, employeeData]);
       }
+    } catch (err) {
+      console.error('Error saving employee:', err);
+      setError('Error saving employee');
+      toast.error('Error saving employee');
     }
-  };
+  }
+
+  setSelectedEmployee(null);
+};
 
   const handleCloseRoleModal = async (roleData) => {
     setRoleModalOpen(false);
@@ -367,8 +376,8 @@ const EmployeeMaster = () => {
 
   return (
     <div className="">
-      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
           <h2 className="text-[24px] text-[#272727]">Employee Master</h2>
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="flex-1">
@@ -410,7 +419,7 @@ const EmployeeMaster = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-8 text-gray-500 text-lg">No employees found.</div>
+          <div className="text-center py-4 text-gray-500 ">No employees found.</div>
         )}
 
         <EmployeeModal

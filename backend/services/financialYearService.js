@@ -189,6 +189,7 @@ const createBillingDetailsForYear = async (year) => {
 
   try {
     logger.info(`Creating billing details for year: ${year}`);
+    const parsedYear = parseInt(year, 10);
 
     // Get all active client employees
     const activeClientEmployees = await ClientEmployee.findAll({
@@ -207,24 +208,42 @@ const createBillingDetailsForYear = async (year) => {
 
     logger.info(`Found ${activeClientEmployees.length} active client employees`);
 
+    const fiscalMonths = [
+      'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+      'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+    ];
+
     // Create billing details for active client employees
-    const billingDetails = activeClientEmployees.map(clientEmployee => ({
-      EmployeeID: clientEmployee.EmployeeID,
-      ClientID: clientEmployee.ClientID,
-      Year: parseInt(year, 10),
-      Apr: clientEmployee.MonthlyBilling,
-      May: clientEmployee.MonthlyBilling,
-      Jun: clientEmployee.MonthlyBilling,
-      Jul: clientEmployee.MonthlyBilling,
-      Aug: clientEmployee.MonthlyBilling,
-      Sep: clientEmployee.MonthlyBilling,
-      Oct: clientEmployee.MonthlyBilling,
-      Nov: clientEmployee.MonthlyBilling,
-      Dec: clientEmployee.MonthlyBilling,
-      Jan: clientEmployee.MonthlyBilling,
-      Feb: clientEmployee.MonthlyBilling,
-      Mar: clientEmployee.MonthlyBilling,
-    }));
+    const billingDetails = activeClientEmployees.map(clientEmployee => {
+      const startDate = new Date(clientEmployee.StartDate);
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth(); // 0 = Jan, 4 = May, etc.
+
+      const billingData = {
+        EmployeeID: clientEmployee.EmployeeID,
+        ClientID: clientEmployee.ClientID,
+        Year: parsedYear,
+      };
+
+      // Set billing amounts based on StartDate
+      fiscalMonths.forEach((month, index) => {
+        const fiscalMonthIndex = index;
+        const calendarMonth = (fiscalMonthIndex + 3) % 12; // Apr=3, May=4, ..., Mar=2
+        const isNextYear = fiscalMonthIndex >= 9; // Jan, Feb, Mar
+        const billingYear = isNextYear ? parsedYear + 1 : parsedYear;
+
+        if (
+          (billingYear > startYear) ||
+          (billingYear === startYear && calendarMonth >= startMonth)
+        ) {
+          billingData[month] = clientEmployee.MonthlyBilling || 0;
+        } else {
+          billingData[month] = 0;
+        }
+      });
+
+      return billingData;
+    });
 
     if (billingDetails.length > 0) {
       logger.info('Creating billing details:', JSON.stringify(billingDetails, null, 2));
@@ -232,7 +251,7 @@ const createBillingDetailsForYear = async (year) => {
       // First check for existing billing details
       const existingBillingDetails = await BillingDetail.findAll({
         where: {
-          Year: parseInt(year, 10),
+          Year: parsedYear,
           [Op.or]: billingDetails.map(detail => ({
             EmployeeID: detail.EmployeeID,
             ClientID: detail.ClientID

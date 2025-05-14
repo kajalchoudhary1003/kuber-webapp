@@ -170,8 +170,8 @@ const ClientMaster = () => {
 
   return (
     <div className=" ">
-      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-8">
-        <div className="flex justify-between items-center mb-6">
+      <div className="max-w-[1600px] mx-auto bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-[24px] text-[#272727]">Client Master</h2>
           <div className="flex gap-4 items-center">
             <div className="max-w-[280px] rounded-full bg-white shadow-sm flex items-center px-3 border border-gray-300">
@@ -197,7 +197,7 @@ const ClientMaster = () => {
             onDeleteClient={handleDeleteClient}
           />
         ) : (
-          <p className="text-gray-500">No clients found.</p>
+          <p className="text-center py-4 text-gray-500">No clients found.</p>
         )}
 
         <ClientModal

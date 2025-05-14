@@ -66,30 +66,65 @@ const getBillingData = async (clientId, year) => {
       ],
     });
 
-    return billingDetails.map(detail => ({
-      id: detail.id,
-      name: `${detail.Employee.FirstName} ${detail.Employee.LastName}`,
-      ctcMonthly: detail.Employee.CTCMonthly,
-      Apr: detail.Apr,
-      May: detail.May,
-      Jun: detail.Jun,
-      Jul: detail.Jul,
-      Aug: detail.Aug,
-      Sep: detail.Sep,
-      Oct: detail.Oct,
-      Nov: detail.Nov,
-      Dec: detail.Dec,
-      Jan: detail.Jan,
-      Feb: detail.Feb,
-      Mar: detail.Mar,
-      currencyCode: detail.Client.BillingCurrency.CurrencyCode,
-    }));
+    // Fetch ClientEmployee data separately
+    const employeeIds = billingDetails.map(detail => detail.EmployeeID);
+    const clientEmployees = await ClientEmployee.findAll({
+      where: {
+        ClientID: clientId,
+        EmployeeID: { [Op.in]: employeeIds },
+      },
+      attributes: ['EmployeeID', 'StartDate'],
+      paranoid: false,
+    });
+
+    // Create a map of EmployeeID to StartDate for quick lookup
+    const startDateMap = new Map(
+      clientEmployees.map(ce => [ce.EmployeeID, ce.StartDate])
+    );
+
+    const fiscalMonths = [
+      'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+      'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+    ];
+
+    return billingDetails.map(detail => {
+      const startDate = startDateMap.get(detail.EmployeeID)
+        ? new Date(startDateMap.get(detail.EmployeeID))
+        : null;
+      const startYear = startDate ? startDate.getFullYear() : null;
+      const startMonth = startDate ? startDate.getMonth() : null;
+
+      const adjustedBilling = {};
+      fiscalMonths.forEach((month, index) => {
+        const fiscalMonthIndex = index;
+        const calendarMonth = (fiscalMonthIndex + 3) % 12;
+        const isNextYear = fiscalMonthIndex >= 9;
+        const billingYear = isNextYear ? parsedYear + 1 : parsedYear;
+
+        if (
+          !startDate ||
+          (billingYear < startYear) ||
+          (billingYear === startYear && calendarMonth < startMonth)
+        ) {
+          adjustedBilling[month] = 0;
+        } else {
+          adjustedBilling[month] = detail[month] || 0;
+        }
+      });
+
+      return {
+        id: detail.id,
+        name: `${detail.Employee.FirstName} ${detail.Employee.LastName}`,
+        ctcMonthly: detail.Employee.CTCMonthly,
+        ...adjustedBilling,
+        currencyCode: detail.Client.BillingCurrency.CurrencyCode,
+      };
+    });
   } catch (error) {
     logger.error(`Error fetching billing data: ${error.message}`);
     throw new Error(`Error fetching billing data: ${error.message}`);
   }
 };
-
 // Update billing data for a specific record
 const updateBillingData = async (id, month, amount) => {
   try {

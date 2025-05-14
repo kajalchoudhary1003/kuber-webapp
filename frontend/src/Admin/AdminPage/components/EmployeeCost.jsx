@@ -95,7 +95,7 @@ const EmployeeCost = () => {
 
   return (
     <div className="">
-      <div className="w-full max-w-[1400px] bg-white rounded-3xl shadow-lg p-6">
+      <div className="w-full mx-auto max-w-[1400px] bg-white rounded-3xl shadow-lg p-6">
         <div className="flex justify-between items-center w-full mb-4">
           <h2 className="text-[24px] text-[#272727]">Employee Cost</h2>
 
@@ -119,9 +119,9 @@ const EmployeeCost = () => {
               <Table className="shadow-sm" style={{ width: '100%' }}>
                 <TableHeader className="bg-[#EDEFF2]">
                   <TableRow className="border-b border-[#EDEFF2]">
-                    <TableHead className="p-3 text-left min-w-[200px] text-[14px]">Name</TableHead>
+                    <TableHead className="p-3 text-left min-w-[200px] text-[16px]">Name</TableHead>
                     {fiscalMonths.map((month) => (
-                      <TableHead key={month} className="p-3 text-center min-w-[100px] text-[14px]">{month}</TableHead>
+                      <TableHead key={month} className="p-3 text-center min-w-[100px] text-[16px]">{month}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
