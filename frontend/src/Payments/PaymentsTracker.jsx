@@ -237,8 +237,7 @@ export default function PaymentTracker() {
 
       <div className="space-y-2">
         <Label htmlFor="amount">Amount</Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
+        
           <Input 
             id="amount" 
             value={amount} 
@@ -247,7 +246,7 @@ export default function PaymentTracker() {
             type="number"
             step="0.01" 
           />
-        </div>
+        
       </div>
 
       <div className="space-y-2">
@@ -304,7 +303,7 @@ export default function PaymentTracker() {
               clientPayments.map((payment) => (
                 <TableRow key={payment.id} className="border-t border-gray-300">
                   <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
-                  <TableCell className="text-center">£{parseFloat(payment.Amount).toFixed(2)}</TableCell>
+                  <TableCell className="text-center">{parseFloat(payment.Amount).toFixed(2)}</TableCell>
                   <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
                 </TableRow>
               ))
