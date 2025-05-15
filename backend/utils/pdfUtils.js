@@ -91,7 +91,10 @@ const createInvoicePdf = async (invoiceData, employeeDetails, invoiceFilePath) =
       {
         columns: [
           { text: 'Invoice number:', style: 'subheaderKey', width: 160 },
-          { text: `CVT${year}${monthName}_${clientId}`, style: 'subheaderValue' }
+          {
+            text: `CVT_${year}_${month.toString().padStart(2, '0')}`,
+            style: 'subheaderValue'
+          }
         ],
         margin: [0, 0, 0, 10]
       },
