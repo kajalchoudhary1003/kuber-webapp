@@ -167,7 +167,7 @@ const GenerateInvoicePage = () => {
         // Fallback: Construct filename as {Month} {Year} {ClientName} invoice.pdf
         const monthName = fiscalMonths.find((m) => m.value === inv.month)?.label.slice(0, 3);
         const sanitizedClientName = inv.clientName.replace(/[^a-zA-Z0-9]/g, '_');
-        filename = `${monthName} ${inv.year} ${sanitizedClientName} invoice.pdf`;
+        filename = `${monthName} ${inv.year} ${sanitizedClientName} Invoice.pdf`;
       }
 
       const url = window.URL.createObjectURL(blob);
