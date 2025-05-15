@@ -43,7 +43,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
         const currenciesData = await currenciesRes.json();
         const orgsData = await orgsRes.json();
         const bankData = await bankRes.json();
-        
+
         setCurrencies(currenciesData);
         setOrganisations(orgsData);
         setBankDetails(bankData);
@@ -65,14 +65,14 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
         ContactPerson: initialData.ContactPerson || '',
         Email: initialData.Email || '',
         RegisteredAddress: initialData.RegisteredAddress || '',
-        BillingCurrencyID: initialData.BillingCurrencyID ? String(initialData.BillingCurrencyID) : 
-                         (initialData.BillingCurrency?.id ? String(initialData.BillingCurrency.id) : ''),
-        OrganisationID: initialData.OrganisationID ? String(initialData.OrganisationID) : 
-                       (initialData.Organisation?.id ? String(initialData.Organisation.id) : ''),
-        BankDetailID: initialData.BankDetailID ? String(initialData.BankDetailID) : 
-                     (initialData.BankDetail?.id ? String(initialData.BankDetail.id) : ''),
+        BillingCurrencyID: initialData.BillingCurrencyID ? String(initialData.BillingCurrencyID) :
+          (initialData.BillingCurrency?.id ? String(initialData.BillingCurrency.id) : ''),
+        OrganisationID: initialData.OrganisationID ? String(initialData.OrganisationID) :
+          (initialData.Organisation?.id ? String(initialData.Organisation.id) : ''),
+        BankDetailID: initialData.BankDetailID ? String(initialData.BankDetailID) :
+          (initialData.BankDetail?.id ? String(initialData.BankDetail.id) : ''),
       });
-      
+
       console.log("Setting initial data in modal:", formData);
     } else {
       resetForm();
@@ -92,7 +92,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submitting form data:", formData);
-    
+
     // Pass the formData to the parent component
     onClose(formData);
   };
@@ -121,60 +121,85 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mt-4">
-          <input
-            type="text"
-            placeholder="Client Name *"
-            name="ClientName"
-            value={formData.ClientName}
-            onChange={handleChange}
-            required
-            className="col-span-1 p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Abbreviation *"
-            name="Abbreviation"
-            value={formData.Abbreviation}
-            onChange={handleChange}
-            required
-            className="col-span-1 p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Contact Person *"
-            name="ContactPerson"
-            value={formData.ContactPerson}
-            onChange={handleChange}
-            required
-            className="col-span-1 p-2 border rounded"
-          />
-          <input
-            type="email"
-            placeholder="Email *"
-            name="Email"
-            value={formData.Email}
-            onChange={handleChange}
-            required
-            className="col-span-1 p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Registered Address *"
-            name="RegisteredAddress"
-            value={formData.RegisteredAddress}
-            onChange={handleChange}
-            required
-            className="col-span-2 p-2 border rounded"
-          />
-
-          {/* Billing Currency Select */}
+          {/* Client Name */}
           <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Client Name *</label>
+            <input
+              type="text"
+              placeholder="Client Name"
+              name="ClientName"
+              value={formData.ClientName}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+            />
+          </div>
+
+          {/* Abbreviation */}
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Abbreviation *</label>
+            <input
+              type="text"
+              placeholder="Abbreviation"
+              name="Abbreviation"
+              value={formData.Abbreviation}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+            />
+          </div>
+
+          {/* Contact Person */}
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Contact Person *</label>
+            <input
+              type="text"
+              placeholder="Contact Person"
+              name="ContactPerson"
+              value={formData.ContactPerson}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+            />
+          </div>
+
+          {/* Email */}
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Email *</label>
+            <input
+              type="email"
+              placeholder="Email"
+              name="Email"
+              value={formData.Email}
+              onChange={handleChange}
+              required
+             className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+            />
+          </div>
+
+          {/* Registered Address */}
+          <div className="col-span-2">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Registered Address *</label>
+            <input
+              type="text"
+              placeholder="Registered Address"
+              name="RegisteredAddress"
+              value={formData.RegisteredAddress}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+            />
+          </div>
+
+          {/* Billing Currency */}
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Billing Currency *</label>
             <Select
               value={formData.BillingCurrencyID || ""}
               onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
             >
-              <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder=" Billing Currency" />
+              <SelectTrigger className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 ">
+                <SelectValue placeholder="Select Billing Currency" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {currencies.map((currency) => (
@@ -186,14 +211,15 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             </Select>
           </div>
 
-          {/* Bank Detail Select */}
+          {/* Bank Detail */}
           <div className="col-span-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Bank Detail *</label>
             <Select
               value={formData.BankDetailID || ""}
               onValueChange={(val) => handleSelectChange('BankDetailID', val)}
             >
-              <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder=" Bank Detail" />
+              <SelectTrigger className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 ">
+                <SelectValue placeholder="Select Bank Detail" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {bankDetails.map((bank) => (
@@ -204,15 +230,16 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               </SelectContent>
             </Select>
           </div>
-          
-          {/* Organisation Select */}
+
+          {/* Organisation / Payee */}
           <div className="col-span-2">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Payee *</label>
             <Select
               value={formData.OrganisationID || ""}
               onValueChange={(val) => handleSelectChange('OrganisationID', val)}
             >
-              <SelectTrigger className="w-full p-2 border rounded">
-                <SelectValue placeholder=" Payee" />
+              <SelectTrigger className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 ">
+                <SelectValue placeholder="Select Payee" />
               </SelectTrigger>
               <SelectContent className='border-none bg-white'>
                 {organisations.map((org) => (
@@ -233,6 +260,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
             </button>
           </DialogFooter>
         </form>
+
       </DialogContent>
     </Dialog>
   );
