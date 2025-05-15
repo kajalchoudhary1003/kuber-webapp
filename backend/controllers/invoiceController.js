@@ -3,6 +3,7 @@ const { createInvoicePdf, loadLogo } = require('../utils/pdfUtils');
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+const { getMonthNameFromNumber } = require('../utils/dateUtils');
 
 const invoiceController = {
   async getAllInvoices(req, res) {
@@ -199,28 +200,37 @@ const invoiceController = {
   },
 
   async downloadInvoice(req, res) {
-    try {
-      const { invoiceId } = req.params;
-      logger.info(`Downloading invoice: invoiceId=${invoiceId}`);
-      const invoice = await invoiceService.getInvoiceById(invoiceId);
-      if (!invoice) {
-        return res.status(404).json({ error: 'Invoice not found' });
-      }
-
-      const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'Invoice file not found' });
-      }
-
-      const filename = `${invoice.Client.ClientName.replace(/[^a-zA-Z0-9]/g, '_')}_${invoice.Year}_${invoice.Month}.pdf`;
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.download(filePath, filename);
-    } catch (error) {
-      logger.error('Error downloading invoice:', error);
-      res.status(500).json({ error: error.message });
+  try {
+    const { invoiceId } = req.params;
+    logger.info(`Downloading invoice: invoiceId=${invoiceId}`);
+    const invoice = await invoiceService.getInvoiceById(invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
     }
-  },
+
+    const filePath = path.join(__dirname, '../invoices', invoice.PdfPath);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Invoice file not found' });
+    }
+
+    // Get the 3-character month name
+    const monthName = getMonthNameFromNumber(invoice.Month);
+    if (!monthName) {
+      throw new Error(`Invalid month number: ${invoice.Month}`);
+    }
+
+    // Construct the filename: {Month} {Year} {ClientName} invoice.pdf
+    const sanitizedClientName = invoice.Client.ClientName.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize client name
+    const filename = `${monthName} ${invoice.Year} ${sanitizedClientName} invoice.pdf`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.download(filePath, filename);
+  } catch (error) {
+    logger.error('Error downloading invoice:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
 
   async markInvoiceAsSent(req, res) {
     try {

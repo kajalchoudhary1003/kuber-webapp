@@ -142,41 +142,48 @@ const GenerateInvoicePage = () => {
   };
 
   const handleDownload = async () => {
-    const toDownload = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
-    if (toDownload.length === 0) {
-      alert('No generated invoices selected to download.');
-      return;
-    }
+  const toDownload = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
+  if (toDownload.length === 0) {
+    alert('No generated invoices selected to download.');
+    return;
+  }
 
-    try {
-      for (const inv of toDownload) {
-        const response = await fetch(`${API_BASE}/invoices/download/${inv.id}`);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to download invoice ${inv.id}: ${errorData.error}`);
-        }
-
-        const blob = await response.blob();
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `invoice_${inv.id}.pdf`;
-        if (contentDisposition && contentDisposition.includes('filename=')) {
-          filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-        }
-
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+  try {
+    for (const inv of toDownload) {
+      const response = await fetch(`${API_BASE}/invoices/download/${inv.id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to download invoice ${inv.id}: ${errorData.error}`);
       }
-    } catch (err) {
-      console.error('Download invoice failed:', err);
-      alert(`Error downloading invoices: ${err.message}`);
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename;
+
+      // Try to extract filename from Content-Disposition
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+      } else {
+        // Fallback: Construct filename as {Month} {Year} {ClientName} invoice.pdf
+        const monthName = fiscalMonths.find((m) => m.value === inv.month)?.label.slice(0, 3);
+        const sanitizedClientName = inv.clientName.replace(/[^a-zA-Z0-9]/g, '_');
+        filename = `${monthName} ${inv.year} ${sanitizedClientName} invoice.pdf`;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     }
-  };
+  } catch (err) {
+    console.error('Download invoice failed:', err);
+    alert(`Error downloading invoices: ${err.message}`);
+  }
+};
 
   const handleDelete = async () => {
     const toDelete = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
