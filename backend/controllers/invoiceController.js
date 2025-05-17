@@ -219,9 +219,9 @@ const invoiceController = {
       throw new Error(`Invalid month number: ${invoice.Month}`);
     }
 
-    // Construct the filename: {Month} {Year} {ClientName} invoice.pdf
+    // Construct the filename: {Month} {Year} {ClientName} Invoice.pdf
     const sanitizedClientName = invoice.Client.ClientName.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize client name
-    const filename = `${monthName} ${invoice.Year} ${sanitizedClientName} invoice.pdf`;
+    const filename = `${monthName} ${invoice.Year} ${sanitizedClientName} Invoice.pdf`;
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/pdf');

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import { API_ENDPOINTS } from '../config';
 
 const YearContext = createContext();
-const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
 
 export const YearProvider = ({ children }) => {
   const [selectedYear, setSelectedYear] = useState(() => {
@@ -18,7 +19,7 @@ export const YearProvider = ({ children }) => {
   useEffect(() => {
     const fetchFinancialYears = async () => {
       try {
-        const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=1&limit=100`);
+        const response = await axios.get(`${API_ENDPOINTS.FINANCIAL_YEARS}?page=1&limit=100`);
         const years = response.data.financialYears.map((year) => year.year);
         setFinancialYears(years);
         
@@ -31,6 +32,7 @@ export const YearProvider = ({ children }) => {
       } catch (error) {
         console.error('Error fetching financial years:', error);
         setError('Failed to fetch financial years');
+        toast.error('Failed to fetch financial years');
       } finally {
         setLoading(false);
       }
@@ -52,17 +54,12 @@ export const YearProvider = ({ children }) => {
       setSelectedYear(year);
     } else {
       console.error('Invalid year selected:', year);
+      toast.error('Invalid year selected');
     }
   };
 
   return (
-    <YearContext.Provider value={{ 
-      selectedYear, 
-      setSelectedYear: updateSelectedYear, 
-      loading, 
-      error, 
-      financialYears 
-    }}>
+    <YearContext.Provider value={{ selectedYear, setSelectedYear: updateSelectedYear, financialYears, loading, error }}>
       {children}
     </YearContext.Provider>
   );
@@ -70,7 +67,7 @@ export const YearProvider = ({ children }) => {
 
 export const useYear = () => {
   const context = useContext(YearContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useYear must be used within a YearProvider');
   }
   return context;

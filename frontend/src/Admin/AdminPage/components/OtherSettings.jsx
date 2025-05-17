@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit, Trash, ChevronDown } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import { API_ENDPOINTS } from '../../../config';
 import RoleModal from '../../../Modal/EmployeeModal/RoleModal';
 import OrganisationModal from '../../../Modal/EmployeeModal/OrganisationModal';
 import LevelModal from '../../../Modal/EmployeeModal/LevelModal';
@@ -18,16 +20,6 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useYear } from '../../../contexts/YearContexts';
 import { Input } from '@/components/ui/input';
-
-// API base URLs
-const API_BASE_URL = 'http://localhost:5001/api/levels';
-const ORGANISATION_API_BASE_URL = 'http://localhost:5001/api/organisations';
-const ROLES_API_BASE_URL = 'http://localhost:5001/api/roles';
-const CURRENCY_API_BASE_URL = 'http://localhost:5001/api/currencies';
-const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
-const EXCHANGE_RATE_API_BASE_URL = 'http://localhost:5001/api/exchange-rates';
-const BANK_DETAIL_API_BASE_URL = 'http://localhost:5001/api/bank-details';
-const BACKUP_API_BASE_URL = 'http://localhost:5001/api/backup';
 
 // Fallback for useYear if context is not available
 const useYearWithFallback = () => {
@@ -81,10 +73,13 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const buttonRef = useRef(null);
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   // Fetch financial years
   const fetchFinancialYears = async (page = 1, limit = 2) => {
     try {
-      const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?page=${page}&limit=${limit}`);
+      const response = await axios.get(`${API_ENDPOINTS.FINANCIAL_YEARS}?page=${page}&limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching financial years:', error);
@@ -96,7 +91,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Fetch levels
   const fetchLevels = async () => {
     try {
-      const response = await axios.get(API_BASE_URL);
+      const response = await axios.get(`${API_ENDPOINTS.LEVELS}`);
       setEmployeeLevels(response.data);
     } catch (error) {
       console.error('Error fetching levels:', error);
@@ -107,7 +102,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Fetch organisations
   const fetchOrganisations = async () => {
     try {
-      const response = await axios.get(ORGANISATION_API_BASE_URL);
+      const response = await axios.get(`${API_ENDPOINTS.ORGANISATIONS}`);
       setOrganisations(response.data);
     } catch (error) {
       console.error('Error fetching organisations:', error);
@@ -118,7 +113,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Fetch roles
   const fetchRoles = async () => {
     try {
-      const response = await axios.get(ROLES_API_BASE_URL);
+      const response = await axios.get(`${API_ENDPOINTS.ROLES}`);
       setEmployeeRoles(response.data);
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -129,7 +124,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Fetch currencies
   const fetchCurrencies = async () => {
     try {
-      const response = await axios.get(CURRENCY_API_BASE_URL);
+      const response = await axios.get(`${API_ENDPOINTS.CURRENCIES}`);
       setCurrencies(response.data);
     } catch (error) {
       console.error('Error fetching currencies:', error);
@@ -141,7 +136,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const fetchExchangeRates = async (year) => {
     try {
       if (!year) return;
-      const response = await axios.get(`${EXCHANGE_RATE_API_BASE_URL}?year=${year}`);
+      const response = await axios.get(`${API_ENDPOINTS.EXCHANGE_RATES}?year=${year}`);
       setExchangeRates(response.data);
     } catch (error) {
       console.error('Error fetching exchange rates:', error);
@@ -153,7 +148,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Fetch bank details
   const fetchBankDetails = async () => {
     try {
-      const response = await axios.get(`${BANK_DETAIL_API_BASE_URL}/all`);
+      const response = await axios.get(`${API_ENDPOINTS.BANK_DETAILS}/all`);
       setBankDetails(response.data);
     } catch (error) {
       console.error('Error fetching bank details:', error);
@@ -165,6 +160,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         await Promise.all([
           fetchLevels(),
           fetchOrganisations(),
@@ -181,8 +177,12 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
         if (financialYearData.financialYears.length > 0 && !selectedYear) {
           setSelectedYear(financialYearData.financialYears[0].year);
         }
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching initial data:', error);
+        setError('Failed to load settings data');
+        toast.error('Failed to load settings data');
+        setLoading(false);
       }
     };
 
@@ -240,36 +240,33 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
         CurrencyFromID: parseInt(exchangeRate.CurrencyFromID),
         CurrencyToID: parseInt(exchangeRate.CurrencyToID),
         Rate: parseFloat(exchangeRate.ExchangeRate),
-        Year: parseInt(selectedYear),
+        Year: selectedYear,
       };
 
-      let response;
       if (exchangeRate.id) {
-        response = await axios.put(`${EXCHANGE_RATE_API_BASE_URL}/${exchangeRate.id}`, payload);
+        await axios.put(`${API_ENDPOINTS.EXCHANGE_RATES}/${exchangeRate.id}`, payload);
+        toast.success('Exchange rate updated successfully');
       } else {
-        response = await axios.post(EXCHANGE_RATE_API_BASE_URL, payload);
+        await axios.post(API_ENDPOINTS.EXCHANGE_RATES, payload);
+        toast.success('Exchange rate created successfully');
       }
 
-      setExchangeRates(prev =>
-        exchangeRate.id
-          ? prev.map(rate => (rate.id === exchangeRate.id ? response.data : rate))
-          : [...prev, response.data]
-      );
+      fetchExchangeRates(selectedYear);
       setCurrencyExchangeModalOpen(false);
     } catch (error) {
-      console.error('Error submitting exchange rate:', error);
-      alert(error.response?.data?.error || 'Failed to submit exchange rate.');
+      console.error('Error saving exchange rate:', error);
+      toast.error(error.message || 'Error saving exchange rate');
     }
   };
 
-  // Delete exchange rate
   const deleteExchangeRate = async (exchangeRateId) => {
     try {
-      await axios.delete(`${EXCHANGE_RATE_API_BASE_URL}/${exchangeRateId}`);
-      setExchangeRates(prev => prev.filter(rate => rate.id !== exchangeRateId));
+      await axios.delete(`${API_ENDPOINTS.EXCHANGE_RATES}/${exchangeRateId}`);
+      toast.success('Exchange rate deleted successfully');
+      fetchExchangeRates(selectedYear);
     } catch (error) {
       console.error('Error deleting exchange rate:', error);
-      alert(error.response?.data?.error || 'Failed to delete exchange rate.');
+      toast.error('Error deleting exchange rate');
     }
   };
 
@@ -297,9 +294,9 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
       }
       let response;
       if (role.id) {
-        response = await axios.put(`${ROLES_API_BASE_URL}/${role.id}`, { RoleName: role.RoleName });
+        response = await axios.put(`${API_ENDPOINTS.ROLES}/${role.id}`, { RoleName: role.RoleName });
       } else {
-        response = await axios.post(ROLES_API_BASE_URL, { RoleName: role.RoleName });
+        response = await axios.post(API_ENDPOINTS.ROLES, { RoleName: role.RoleName });
       }
       setEmployeeRoles(prev =>
         role.id
@@ -316,7 +313,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Delete role
   const deleteRole = async (roleId) => {
     try {
-      await axios.delete(`${ROLES_API_BASE_URL}/${roleId}`);
+      await axios.delete(`${API_ENDPOINTS.ROLES}/${roleId}`);
       setEmployeeRoles(prev => prev.filter(role => role.id !== roleId));
     } catch (error) {
       console.error('Error deleting role:', error);
@@ -353,13 +350,13 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
       }
       let response;
       if (organisation.id) {
-        response = await axios.put(`${ORGANISATION_API_BASE_URL}/${organisation.id}`, {
+        response = await axios.put(`${API_ENDPOINTS.ORGANISATIONS}/${organisation.id}`, {
           OrganisationName: organisation.OrganisationName,
           Abbreviation: organisation.Abbreviation,
           RegNumber: organisation.RegNumber,
         });
       } else {
-        response = await axios.post(ORGANISATION_API_BASE_URL, {
+        response = await axios.post(API_ENDPOINTS.ORGANISATIONS, {
           OrganisationName: organisation.OrganisationName,
           Abbreviation: organisation.Abbreviation,
           RegNumber: organisation.RegNumber,
@@ -380,7 +377,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Delete organisation
   const deleteOrganisation = async (organisationId) => {
     try {
-      await axios.delete(`${ORGANISATION_API_BASE_URL}/${organisationId}`);
+      await axios.delete(`${API_ENDPOINTS.ORGANISATIONS}/${organisationId}`);
       setOrganisations(prev => prev.filter(org => org.id !== organisationId));
     } catch (error) {
       console.error('Error deleting organisation:', error);
@@ -411,9 +408,9 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
         throw new Error('Level name is required');
       }
       if (level.id) {
-        await axios.put(`${API_BASE_URL}/${level.id}`, { LevelName: level.LevelName });
+        await axios.put(`${API_ENDPOINTS.LEVELS}/${level.id}`, { LevelName: level.LevelName });
       } else {
-        await axios.post(API_BASE_URL, { LevelName: level.LevelName });
+        await axios.post(API_ENDPOINTS.LEVELS, { LevelName: level.LevelName });
       }
       await fetchLevels();
       setLevelModalOpen(false);
@@ -426,7 +423,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Delete level
   const deleteLevel = async (levelId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/${levelId}`);
+      await axios.delete(`${API_ENDPOINTS.LEVELS}/${levelId}`);
       await fetchLevels();
     } catch (error) {
       console.error('Error deleting level:', error);
@@ -462,12 +459,12 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
       }
       let response;
       if (currency.id) {
-        response = await axios.put(`${CURRENCY_API_BASE_URL}/${currency.id}`, {
+        response = await axios.put(`${API_ENDPOINTS.CURRENCIES}/${currency.id}`, {
           CurrencyCode: currency.CurrencyCode,
           CurrencyName: currency.CurrencyName,
         });
       } else {
-        response = await axios.post(CURRENCY_API_BASE_URL, {
+        response = await axios.post(API_ENDPOINTS.CURRENCIES, {
           CurrencyCode: currency.CurrencyCode,
           CurrencyName: currency.CurrencyName,
         });
@@ -487,7 +484,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Delete currency
   const deleteCurrency = async (currencyId) => {
     try {
-      await axios.delete(`${CURRENCY_API_BASE_URL}/${currencyId}`);
+      await axios.delete(`${API_ENDPOINTS.CURRENCIES}/${currencyId}`);
       setCurrencies(prev => prev.filter(currency => currency.id !== currencyId));
     } catch (error) {
       console.error('Error deleting currency:', error);
@@ -533,9 +530,9 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
 
       let response;
       if (bankDetail.id) {
-        response = await axios.put(`${BANK_DETAIL_API_BASE_URL}/update/${bankDetail.id}`, payload);
+        response = await axios.put(`${API_ENDPOINTS.BANK_DETAILS}/update/${bankDetail.id}`, payload);
       } else {
-        response = await axios.post(`${BANK_DETAIL_API_BASE_URL}/create`, payload);
+        response = await axios.post(`${API_ENDPOINTS.BANK_DETAILS}/create`, payload);
       }
 
       setBankDetails(prev =>
@@ -553,7 +550,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Delete bank detail
   const deleteBankDetail = async (bankDetailId) => {
     try {
-      await axios.delete(`${BANK_DETAIL_API_BASE_URL}/delete/${bankDetailId}`);
+      await axios.delete(`${API_ENDPOINTS.BANK_DETAILS}/delete/${bankDetailId}`);
       setBankDetails(prev => prev.filter(bankDetail => bankDetail.id !== bankDetailId));
     } catch (error) {
       console.error('Error deleting bank detail:', error);
@@ -576,7 +573,7 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   // Confirm add upcoming year
   const confirmAddUpcomingYear = async () => {
     try {
-      const response = await axios.post(FINANCIAL_YEAR_API_BASE_URL);
+      const response = await axios.post(API_ENDPOINTS.FINANCIAL_YEARS);
       const newYear = response.data.year;
       setFinancialYears(prev => [newYear, ...prev]);
       setSelectedYear(newYear);
@@ -591,52 +588,51 @@ const [restoreModalOpen, setRestoreModalOpen] = useState(false);
     setModalOpen(false);
   };
 
-const backupDatabase = async () => {
-  try {
-    const response = await axios.post(BACKUP_API_BASE_URL);
-    if (response.data.success) {
-      const { backupFile } = response.data;
-      // Fetch the backup file as a blob
-      const downloadUrl = `${BACKUP_API_BASE_URL}/download/${backupFile}`;
-      const fileResponse = await axios.get(downloadUrl, { responseType: 'blob' });
-      const blob = fileResponse.data;
-
-      // Try to use showSaveFilePicker for modern browsers
-      if (window.showSaveFilePicker) {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: backupFile,
-          types: [
-            {
-              description: 'SQLite Database',
-              accept: { 'application/x-sqlite3': ['.db'] },
-            },
-          ],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        alert(`${response.data.message} Backup file saved to selected location.`);
+  const backupDatabase = async () => {
+    try {
+      const response = await axios.post(`${API_ENDPOINTS.BACKUP}`);
+      if (response.data.success) {
+        const { backupFile } = response.data;
+        // Fetch the backup file as a blob
+        const downloadUrl = `${API_ENDPOINTS.BACKUP}/download/${backupFile}`;
+        const fileResponse = await axios.get(downloadUrl, { responseType: 'blob' });
+        const blob = fileResponse.data;
+  
+        // Try to use showSaveFilePicker for modern browsers
+        if (window.showSaveFilePicker) {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: backupFile,
+            types: [
+              {
+                description: 'SQLite Database',
+                accept: { 'application/x-sqlite3': ['.db'] },
+              },
+            ],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          alert(`${response.data.message} Backup file saved to selected location.`);
+        } else {
+          // Fallback for browsers without showSaveFilePicker
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = backupFile;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          alert(`${response.data.message} Backup file: ${backupFile} has started downloading.`);
+        }
       } else {
-        // Fallback for browsers without showSaveFilePicker
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = backupFile;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        alert(`${response.data.message} Backup file: ${backupFile} has started downloading.`);
+        alert(response.data.message);
       }
-    } else {
-      alert(response.data.message);
+    } catch (error) {
+      console.error('Error during database backup:', error);
+      alert(error.response?.data?.message || 'Failed to backup database.');
     }
-  } catch (error) {
-    console.error('Error during database backup:', error);
-    alert(error.response?.data?.message || 'Failed to backup database.');
-  }
-};
-
+  };
 
   // Open restore modal
   const openRestoreModal = () => {
@@ -644,50 +640,51 @@ const backupDatabase = async () => {
   };
 
   
-const restoreDatabase = async () => {
-  try {
-    if (!backupFile) {
-      alert('Please select a backup file.');
-      return;
-    }
-    
-    // Create form data for file upload
-    const formData = new FormData();
-    formData.append('backupFile', backupFile);
-    
-    // Make the API call
-    const response = await axios.post(`${BACKUP_API_BASE_URL}/restore`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+
+  const restoreDatabase = async () => {
+    try {
+      if (!backupFile) {
+        alert('Please select a backup file.');
+        return;
       }
-    });
-    
-    if (response.data.success) {
-      alert(response.data.message);
-      setRestoreModalOpen(false);
-      setBackupFile(null);
       
-      // Refresh data after restore
-      fetchLevels();
-      fetchOrganisations();
-      fetchRoles();
-      fetchCurrencies();
-      fetchBankDetails();
-      fetchExchangeRates(selectedYear);
-    } else {
-      alert(response.data.message);
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('backupFile', backupFile);
+      
+      // Make the API call
+      const response = await axios.post(`${API_ENDPOINTS.BACKUP}/restore`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (response.data.success) {
+        alert(response.data.message);
+        setRestoreModalOpen(false);
+        setBackupFile(null);
+        
+        // Refresh data after restore
+        fetchLevels();
+        fetchOrganisations();
+        fetchRoles();
+        fetchCurrencies();
+        fetchBankDetails();
+        fetchExchangeRates(selectedYear);
+      } else {
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error during database restore:', error);
+      alert(error.response?.data?.message || 'Failed to restore database.');
     }
-  } catch (error) {
-    console.error('Error during database restore:', error);
-    alert(error.response?.data?.message || 'Failed to restore database.');
-  }
-};
+  };
 
   // Handle show more years
   const handleShowMoreYears = async (event) => {
     event.stopPropagation();
     try {
-      const response = await axios.get(`${FINANCIAL_YEAR_API_BASE_URL}?limit=${totalYears}`);
+      const response = await axios.get(`${API_ENDPOINTS.FINANCIAL_YEARS}?limit=${totalYears}`);
       const allYears = response.data.financialYears.map(year => year.year);
       setFinancialYears(allYears);
       setShowMoreAvailable(false);

@@ -1,0 +1,25 @@
+# Ignore node_modules
+node_modules
+
+# Ignore logs
+*.log
+backend/app.log
+
+# Ignore OS and editor files
+.DS_Store
+*.swp
+
+# Ignore build output
+frontend/dist
+
+# Ignore Docker output
+kuber-webapp.tar
+kuber-webapp.zip
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore other unnecessary files
+.git
+.gitignore 

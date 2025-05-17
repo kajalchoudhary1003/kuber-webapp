@@ -8,6 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { API_ENDPOINTS } from '../../config';
 
 const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -25,15 +26,13 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   const [organisations, setOrganisations] = useState([]);
   const [bankDetails, setBankDetails] = useState([]);
 
-  const API_BASE_URL = 'http://localhost:5001/api';
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [currenciesRes, orgsRes, bankRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/currencies`),
-          fetch(`${API_BASE_URL}/organisations`),
-          fetch(`${API_BASE_URL}/bank-details/all`)
+          fetch(API_ENDPOINTS.CURRENCIES),
+          fetch(API_ENDPOINTS.ORGANISATIONS),
+          fetch(`${API_ENDPOINTS.BANK_DETAILS}/all`)
         ]);
 
         if (!currenciesRes.ok || !orgsRes.ok || !bankRes.ok) {

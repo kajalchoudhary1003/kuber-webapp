@@ -10,9 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from 'antd'; // Use antd Pagination
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
-const API_BASE_URL = 'http://localhost:5001/api';
+import { API_ENDPOINTS } from '../../../config';
 
 // Simple in-memory cache
 const cache = {
@@ -22,44 +20,49 @@ const cache = {
 };
 
 const EmployeeMaster = () => {
-  const [allEmployees, setAllEmployees] = useState([]); // Store all employees
-  const [filteredEmployees, setFilteredEmployees] = useState([]); // Displayed employees (paginated)
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [query, setQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [clientAssignments, setClientAssignments] = useState({});
+  const [clientErrors, setClientErrors] = useState({});
   const [roles, setRoles] = useState([]);
   const [levels, setLevels] = useState([]);
   const [organisations, setOrganisations] = useState([]);
-  const [clientAssignments, setClientAssignments] = useState({});
-  const [clientErrors, setClientErrors] = useState({});
-  const [modalOpen, setModalOpen] = useState(false);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
-  const [levelModalOpen, setLevelModalOpen] = useState(false);
-  const [orgModalOpen, setOrgModalOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [levelModalOpen, setLevelModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(null);
+  const [orgModalOpen, setOrgModalOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [modalMode, setModalMode] = useState('create');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [totalEmployees, setTotalEmployees] = useState(0);
-  const [limit] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchActive, setIsSearchActive] = useState(false);
 
+  // Fetch all employees and their client assignments on component mount
   useEffect(() => {
     fetchAllEmployees();
+  }, []);
+
+  // Fetch roles, levels, and organizations on component mount
+  useEffect(() => {
     fetchRolesLevelsOrgs();
   }, []);
 
+  // Apply search and pagination when query or currentPage changes
   useEffect(() => {
     applySearchAndPagination();
-  }, [page, searchQuery, allEmployees]);
+  }, [query, currentPage, allEmployees, clientAssignments]);
 
   const fetchAllEmployees = async () => {
     setLoading(true);
     try {
       // Fetch all employees (adjust limit if needed)
-      const response = await axios.get(`${API_BASE_URL}/employees`, {
+      const response = await axios.get(`${API_ENDPOINTS.EMPLOYEES}`, {
         params: { page: 1, limit: 1000 }, // Large limit to get all employees
       });
       const fetchedEmployees = response.data.employees;
@@ -82,13 +85,12 @@ const EmployeeMaster = () => {
   };
 
   const fetchClientAssignmentsForEmployees = async (employees) => {
-
     const assignments = {};
     const errors = {};
     await Promise.all(
       employees.map(async (employee) => {
         try {
-          const response = await axios.get(`${API_BASE_URL}/employees/${employee.id}/clients`);
+          const response = await axios.get(`${API_ENDPOINTS.EMPLOYEES}/${employee.id}/clients`);
           const activeAssignments = response.data.filter((assignment) => assignment.Status === 'Active');
           assignments[employee.id] = activeAssignments;
         } catch (err) {
@@ -96,7 +98,7 @@ const EmployeeMaster = () => {
             message: err.message,
             status: err.response?.status,
             data: err.response?.data,
-            url: `${API_BASE_URL}/employees/${employee.id}/clients`,
+            url: `${API_ENDPOINTS.EMPLOYEES}/${employee.id}/clients`,
           });
           assignments[employee.id] = [];
           errors[employee.id] = err.response?.status === 404
@@ -109,13 +111,12 @@ const EmployeeMaster = () => {
     setClientErrors(errors);
   };
 
-
   const fetchRolesLevelsOrgs = async () => {
     try {
       const [rolesRes, levelsRes, orgsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/roles`),
-        axios.get(`${API_BASE_URL}/levels`),
-        axios.get(`${API_BASE_URL}/organisations`),
+        axios.get(API_ENDPOINTS.ROLES),
+        axios.get(API_ENDPOINTS.LEVELS),
+        axios.get(API_ENDPOINTS.ORGANISATIONS),
       ]);
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
@@ -132,7 +133,7 @@ const EmployeeMaster = () => {
   const fetchRoleById = async (id) => {
     if (cache.roles[id]) return cache.roles[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/roles/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.ROLES}/${id}`);
       cache.roles[id] = response.data;
       return response.data;
     } catch (err) {
@@ -144,7 +145,7 @@ const EmployeeMaster = () => {
   const fetchLevelById = async (id) => {
     if (cache.levels[id]) return cache.levels[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/levels/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.LEVELS}/${id}`);
       cache.levels[id] = response.data;
       return response.data;
     } catch (err) {
@@ -156,7 +157,7 @@ const EmployeeMaster = () => {
   const fetchOrganisationById = async (id) => {
     if (cache.organisations[id]) return cache.organisations[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/organisations/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.ORGANISATIONS}/${id}`);
       cache.organisations[id] = response.data;
       return response.data;
     } catch (err) {
@@ -168,8 +169,8 @@ const EmployeeMaster = () => {
   const applySearchAndPagination = () => {
     let result = allEmployees;
 
-    if (searchQuery) {
-      const queryLower = searchQuery.toLowerCase();
+    if (query) {
+      const queryLower = query.toLowerCase();
       result = allEmployees.filter((employee) => {
         // Search by FirstName, LastName, EmpCode, Email
         const matchesEmployee =
@@ -186,25 +187,22 @@ const EmployeeMaster = () => {
 
         return matchesEmployee || matchesClient;
       });
-      setIsSearchActive(true);
-    } else {
-      setIsSearchActive(false);
     }
 
     // Apply pagination
-    const startIndex = (page - 1) * limit;
+    const startIndex = (currentPage - 1) * limit;
     const paginatedEmployees = result.slice(startIndex, startIndex + limit);
     setFilteredEmployees(paginatedEmployees);
     setTotalEmployees(result.length);
   };
 
   const handleSearch = (query) => {
-    setSearchQuery(query);
-    setPage(1); // Reset to first page on search
+    setQuery(query);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const handlePageChange = (page) => {
-    setPage(page);
+    setCurrentPage(page);
   };
 
   const handleOpenModal = (employee = null, mode = 'create') => {
@@ -232,39 +230,39 @@ const EmployeeMaster = () => {
   };
 
   const handleCloseModal = async (newEmployee) => {
-  setModalOpen(false);
+    setModalOpen(false);
 
-  if (newEmployee) {
-    try {
-      let employeeData;
+    if (newEmployee) {
+      try {
+        let employeeData;
 
-      if (selectedEmployee) {
-        // Update existing employee
-        await axios.put(`${API_BASE_URL}/employees/${selectedEmployee.id}`, newEmployee);
-        toast.success('Employee updated successfully');
+        if (selectedEmployee) {
+          // Update existing employee
+          await axios.put(`${API_ENDPOINTS.EMPLOYEES}/${selectedEmployee.id}`, newEmployee);
+          toast.success('Employee updated successfully');
 
-        // Update allEmployees
-        setAllEmployees((prev) =>
-          prev.map((emp) => (emp.id === selectedEmployee.id ? { ...emp, ...newEmployee } : emp))
-        );
-      } else {
-        // Create new employee
-        const response = await axios.post(`${API_BASE_URL}/employees`, newEmployee);
-        employeeData = response.data;
-        toast.success('Employee created successfully');
+          // Update allEmployees
+          setAllEmployees((prev) =>
+            prev.map((emp) => (emp.id === selectedEmployee.id ? { ...emp, ...newEmployee } : emp))
+          );
+        } else {
+          // Create new employee
+          const response = await axios.post(`${API_ENDPOINTS.EMPLOYEES}`, newEmployee);
+          employeeData = response.data;
+          toast.success('Employee created successfully');
 
-        // Add new employee to allEmployees
-        setAllEmployees((prev) => [...prev, employeeData]);
+          // Add new employee to allEmployees
+          setAllEmployees((prev) => [...prev, employeeData]);
+        }
+      } catch (err) {
+        console.error('Error saving employee:', err);
+        setError('Error saving employee');
+        toast.error('Error saving employee');
       }
-    } catch (err) {
-      console.error('Error saving employee:', err);
-      setError('Error saving employee');
-      toast.error('Error saving employee');
     }
-  }
 
-  setSelectedEmployee(null);
-};
+    setSelectedEmployee(null);
+  };
 
   const handleCloseRoleModal = async (roleData) => {
     setRoleModalOpen(false);
@@ -272,10 +270,10 @@ const EmployeeMaster = () => {
     if (roleData) {
       try {
         if (selectedRole) {
-          await axios.put(`${API_BASE_URL}/roles/${selectedRole.id}`, roleData);
+          await axios.put(`${API_ENDPOINTS.ROLES}/${selectedRole.id}`, roleData);
           toast.success('Role updated successfully');
         } else {
-          await axios.post(`${API_BASE_URL}/roles`, roleData);
+          await axios.post(`${API_ENDPOINTS.ROLES}`, roleData);
           toast.success('Role created successfully');
         }
         fetchRolesLevelsOrgs();
@@ -293,10 +291,10 @@ const EmployeeMaster = () => {
     if (levelData) {
       try {
         if (selectedLevel) {
-          await axios.put(`${API_BASE_URL}/levels/${selectedLevel.id}`, levelData);
+          await axios.put(`${API_ENDPOINTS.LEVELS}/${selectedLevel.id}`, levelData);
           toast.success('Level updated successfully');
         } else {
-          await axios.post(`${API_BASE_URL}/levels`, levelData);
+          await axios.post(`${API_ENDPOINTS.LEVELS}`, levelData);
           toast.success('Level created successfully');
         }
         fetchRolesLevelsOrgs();
@@ -314,10 +312,10 @@ const EmployeeMaster = () => {
     if (orgData) {
       try {
         if (selectedOrg) {
-          await axios.put(`${API_BASE_URL}/organisations/${selectedOrg.id}`, orgData);
+          await axios.put(`${API_ENDPOINTS.ORGANISATIONS}/${selectedOrg.id}`, orgData);
           toast.success('Organisation updated successfully');
         } else {
-          await axios.post(`${API_BASE_URL}/organisations`, orgData);
+          await axios.post(`${API_ENDPOINTS.ORGANISATIONS}`, orgData);
           toast.success('Organisation created successfully');
         }
         fetchRolesLevelsOrgs();
@@ -330,9 +328,8 @@ const EmployeeMaster = () => {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-
     try {
-      await axios.delete(`${API_BASE_URL}/employees/${employeeId}`);
+      await axios.delete(`${API_ENDPOINTS.EMPLOYEES}/${employeeId}`);
       toast.success('Employee deleted successfully');
       // Remove employee from allEmployees
       setAllEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
@@ -348,10 +345,8 @@ const EmployeeMaster = () => {
       } else {
         toast.error(errorMessage);
       }
-
     }
   };
-
 
   // Custom render function for Pagination to show only current page
   const paginationItemRender = (page, type, originalElement) => {
@@ -368,8 +363,6 @@ const EmployeeMaster = () => {
     }
     return originalElement;
   };
-
-  const currentPage = page; // For use in itemRender
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div className="text-center text-red-500 py-10">Error: {error}</div>;
@@ -409,7 +402,7 @@ const EmployeeMaster = () => {
             />
             <div className="mt-8 flex justify-center">
               <Pagination
-                current={page}
+                current={currentPage}
                 total={totalEmployees}
                 pageSize={limit}
                 onChange={handlePageChange}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { DatePicker, ConfigProvider } from "antd"
 import axios from "axios"
 import dayjs from "dayjs"
+import { toast } from 'react-toastify';
+import { API_ENDPOINTS } from '../../config';
 
 export default function ClientLedger() {
   const [clients, setClients] = useState([])
@@ -41,7 +43,7 @@ export default function ClientLedger() {
     const fetchClients = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('http://localhost:5001/api/clients')
+        const response = await axios.get(API_ENDPOINTS.CLIENTS)
         setClients(response.data)
         setLoading(false)
       } catch (err) {
@@ -65,77 +67,77 @@ export default function ClientLedger() {
   }
 
   // Modify the handleShowLedger function to add console logs
-const handleShowLedger = async () => {
-  if (selectedClient && 
-      (selectedPeriod !== "custom" || (startDate && endDate))) {
-    try {
-      setLoading(true)
-      
-      // Calculate date range based on selected period
-      let startDateStr = ''
-      let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
-      
-      if (selectedPeriod === "custom" && startDate && endDate) {
-        startDateStr = dayjs(startDate).format('YYYY-MM-DD')
-        endDateStr = dayjs(endDate).format('YYYY-MM-DD')
-      } else {
-        switch (selectedPeriod) {
-          case "1month":
-            startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
-            break
-          case "3months":
-            startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
-            break
-          case "6months":
-            startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
-            break
-          case "1year":
-            startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
-            break
-          default:
-            break
+  const handleShowLedger = async () => {
+    if (selectedClient && 
+        (selectedPeriod !== "custom" || (startDate && endDate))) {
+      try {
+        setLoading(true)
+        
+        // Calculate date range based on selected period
+        let startDateStr = ''
+        let endDateStr = dayjs().format('YYYY-MM-DD') // Current date
+        
+        if (selectedPeriod === "custom" && startDate && endDate) {
+          startDateStr = dayjs(startDate).format('YYYY-MM-DD')
+          endDateStr = dayjs(endDate).format('YYYY-MM-DD')
+        } else {
+          switch (selectedPeriod) {
+            case "1month":
+              startDateStr = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
+              break
+            case "3months":
+              startDateStr = dayjs().subtract(3, 'month').format('YYYY-MM-DD')
+              break
+            case "6months":
+              startDateStr = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
+              break
+            case "1year":
+              startDateStr = dayjs().subtract(1, 'year').format('YYYY-MM-DD')
+              break
+            default:
+              break
+          }
         }
+        
+        console.log("Request parameters:", {
+          clientId: selectedClient,
+          startDate: startDateStr,
+          endDate: endDateStr
+        });
+        
+        // Fetch ledger data from backend - using POST as required by your API
+        const response = await axios.post(`${API_ENDPOINTS.LEDGER}/by-client-date-range`, {
+          clientId: selectedClient,
+          startDate: startDateStr,
+          endDate: endDateStr
+        })
+        
+        console.log("API Response:", response.data);
+        console.log("Entries received:", response.data.entries);
+        
+        // Check if there are any invoice entries
+        const invoiceEntries = response.data.entries.filter(entry => 
+          entry.type === 'Invoice' || entry.type === 'invoice'
+        );
+        console.log("Invoice entries:", invoiceEntries);
+        
+        // Check if there are any payment entries
+        const paymentEntries = response.data.entries.filter(entry => 
+          entry.type === 'Payment' || entry.type === 'payment'
+        );
+        console.log("Payment entries:", paymentEntries);
+        
+        setLedgerEntries(response.data.entries)
+        setBalance(response.data.balance)
+        setShowLedger(true)
+        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching ledger data:', err)
+        setError('Failed to load ledger data')
+        setLoading(false)
       }
-      
-      console.log("Request parameters:", {
-        clientId: selectedClient,
-        startDate: startDateStr,
-        endDate: endDateStr
-      });
-      
-      // Fetch ledger data from backend - using POST as required by your API
-      const response = await axios.post('http://localhost:5001/api/ledger/by-client-date-range', {
-        clientId: selectedClient,
-        startDate: startDateStr,
-        endDate: endDateStr
-      })
-      
-      console.log("API Response:", response.data);
-      console.log("Entries received:", response.data.entries);
-      
-      // Check if there are any invoice entries
-      const invoiceEntries = response.data.entries.filter(entry => 
-        entry.type === 'Invoice' || entry.type === 'invoice'
-      );
-      console.log("Invoice entries:", invoiceEntries);
-      
-      // Check if there are any payment entries
-      const paymentEntries = response.data.entries.filter(entry => 
-        entry.type === 'Payment' || entry.type === 'payment'
-      );
-      console.log("Payment entries:", paymentEntries);
-      
-      setLedgerEntries(response.data.entries)
-      setBalance(response.data.balance)
-      setShowLedger(true)
-      setLoading(false)
-    } catch (err) {
-      console.error('Error fetching ledger data:', err)
-      setError('Failed to load ledger data')
-      setLoading(false)
     }
   }
-}
 
   const isButtonDisabled = () => {
     // Button should be disabled if:
@@ -179,7 +181,7 @@ const handleShowLedger = async () => {
       }
       
       // Request the PDF download
-      const response = await axios.get(`http://localhost:5001/api/ledger/client/${selectedClient}/download`, {
+      const response = await axios.get(`${API_ENDPOINTS.LEDGER}/client/${selectedClient}/download`, {
         params: {
           startDate: startDateStr,
           endDate: endDateStr

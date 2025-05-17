@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { DatePicker, ConfigProvider } from "antd"
 import dayjs from "dayjs"
+import { API_ENDPOINTS } from "../config"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,7 +42,7 @@ export default function PaymentTracker() {
     const fetchClients = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('http://localhost:5001/api/clients')
+        const response = await axios.get(API_ENDPOINTS.CLIENTS)
         setClients(response.data)
         setError(null)
       } catch (err) {
@@ -65,7 +66,7 @@ export default function PaymentTracker() {
 
       try {
         setPaymentLoading(true)
-        const response = await axios.get(`http://localhost:5001/api/payment-tracker/payment/last-three/${selectedClient}`)
+        const response = await axios.get(`${API_ENDPOINTS.PAYMENT_TRACKER}/payment/last-three/${selectedClient}`)
         setClientPayments(response.data.payments || [])
         setPaymentError(null)
       } catch (err) {
@@ -98,7 +99,7 @@ export default function PaymentTracker() {
       const formattedDate = date.toISOString()
       
       // Send payment data to backend
-      await axios.post('http://localhost:5001/api/payment-tracker/payment', {
+      await axios.post(`${API_ENDPOINTS.PAYMENT_TRACKER}/payment`, {
         ClientID: parseInt(selectedClient),
         ReceivedDate: formattedDate,
         Amount: parseFloat(amount),
@@ -106,7 +107,7 @@ export default function PaymentTracker() {
       })
 
       // Refresh the payments list
-      const response = await axios.get(`http://localhost:5001/api/payment-tracker/payment/last-three/${selectedClient}`)
+      const response = await axios.get(`${API_ENDPOINTS.PAYMENT_TRACKER}/payment/last-three/${selectedClient}`)
       setClientPayments(response.data.payments || [])
       
       // Reset form

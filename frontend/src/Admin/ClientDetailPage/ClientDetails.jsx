@@ -7,6 +7,7 @@ import ResourceModal from "../../Modal/EmployeeModal/ResourceModal";
 import ClientModal from "../../Modal/EmployeeModal/ClientModel";
 import { formatCurrency } from "../../utils/currency";
 import { ToastContainer, toast } from "react-toastify";
+import { API_ENDPOINTS } from "../../config";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -22,8 +23,6 @@ const ClientDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = "http://localhost:5001/api";
-
   // Fetch client and resources
   const fetchClientData = async () => {
     try {
@@ -31,7 +30,7 @@ const ClientDetails = () => {
       setError(null);
 
       // Fetch client details
-      const clientResponse = await fetch(`${API_BASE_URL}/clients/${id}`);
+      const clientResponse = await fetch(`${API_ENDPOINTS.CLIENTS}/${id}`);
       if (!clientResponse.ok) {
         const errorData = await clientResponse.json();
         throw new Error(errorData.error || "Failed to fetch client");
@@ -42,7 +41,7 @@ const ClientDetails = () => {
 
       // Fetch resources
       try {
-        const resourcesResponse = await fetch(`${API_BASE_URL}/client-employees/client/${id}`);
+        const resourcesResponse = await fetch(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/client/${id}`);
         if (!resourcesResponse.ok) {
           const errorData = await resourcesResponse.json();
           console.warn("Resources fetch error:", errorData.error);
@@ -116,64 +115,64 @@ const ClientDetails = () => {
   };
 
   const handleResourceSubmit = async (payload) => {
-  try {
-    if (payload.delete) {
-      const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete resource");
-      }
-      setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
-      toast.success("Resource deleted successfully");
-      alert("Resource deleted successfully");
-    } else {
-      if (selectedResource && selectedResource.id) {
-        // Update existing resource
-        const response = await fetch(`${API_BASE_URL}/client-employees/${selectedResource.id}`, {
-          method: "PUT",
+    try {
+      if (payload.delete) {
+        const response = await fetch(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/${selectedResource.id}`, {
+          method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to update resource");
+          throw new Error(errorData.error || "Failed to delete resource");
         }
-        const updatedResource = await response.json();
-        setResources((prev) =>
-          prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
-        );
-        toast.success("Resource updated successfully");
-        alert("Resource updated successfully"); // Alert for resource update
+        setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
+        toast.success("Resource deleted successfully");
+        alert("Resource deleted successfully");
       } else {
-        // Create new resource
-        const response = await fetch(`${API_BASE_URL}/client-employees`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, ClientID: id }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create resource");
+        if (selectedResource && selectedResource.id) {
+          // Update existing resource
+          const response = await fetch(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/${selectedResource.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update resource");
+          }
+          const updatedResource = await response.json();
+          setResources((prev) =>
+            prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
+          );
+          toast.success("Resource updated successfully");
+          alert("Resource updated successfully");
+        } else {
+          // Create new resource
+          const response = await fetch(API_ENDPOINTS.CLIENT_EMPLOYEES, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, ClientID: id }),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to create resource");
+          }
+          const newResource = await response.json();
+          setResources((prev) => [...prev, newResource]);
+          toast.success("Resource created successfully");
+          alert("Resource created successfully");
         }
-        const newResource = await response.json();
-        setResources((prev) => [...prev, newResource]);
-        toast.success("Resource created successfully");
-        alert("Resource created successfully"); // Alert for resource creation
       }
-    }
 
-    // Refresh resources after update
-    await fetchClientData();
-  } catch (err) {
-    console.error("Error submitting resource:", err.message);
-    toast.error(`Error: ${err.message}`);
-  }
-  setIsResourceModalOpen(false);
-  setSelectedResource(null);
-};
+      // Refresh resources after update
+      await fetchClientData();
+    } catch (err) {
+      console.error("Error submitting resource:", err.message);
+      toast.error(`Error: ${err.message}`);
+    }
+    setIsResourceModalOpen(false);
+    setSelectedResource(null);
+  };
 
   const handleCloseResourceModal = () => {
     setIsResourceModalOpen(false);
@@ -188,7 +187,7 @@ const ClientDetails = () => {
   const handleClientSubmit = async (updatedClientData) => {
     try {
       console.log("Submitting client update with data:", updatedClientData);
-      const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.CLIENTS}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedClientData),
@@ -225,7 +224,7 @@ const ClientDetails = () => {
     
     if (window.confirm("Are you sure you want to delete this resource?")) {
       try {
-        const response = await fetch(`${API_BASE_URL}/client-employees/${resourceId}`, {
+        const response = await fetch(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/${resourceId}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
@@ -255,7 +254,7 @@ const ClientDetails = () => {
   const handleDeleteClient = async () => {
     if (window.confirm("Are you sure you want to delete this client?")) {
       try {
-        const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
+        const response = await fetch(`${API_ENDPOINTS.CLIENTS}/${id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });

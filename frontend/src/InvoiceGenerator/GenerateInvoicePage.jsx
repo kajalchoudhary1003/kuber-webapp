@@ -10,6 +10,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useYear } from '../contexts/YearContexts';
+import { API_ENDPOINTS } from '../config';
 
 const fiscalMonths = [
   { label: 'April', value: 4 },
@@ -26,8 +27,6 @@ const fiscalMonths = [
   { label: 'March', value: 3 },
 ];
 
-const API_BASE = 'http://localhost:5001/api';
-
 const GenerateInvoicePage = () => {
   const [clients, setClients] = useState([]);
   const [generatedInvoices, setGeneratedInvoices] = useState([]);
@@ -38,7 +37,7 @@ const GenerateInvoicePage = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_BASE}/clients?year=${selectedYear}`);
+      const res = await fetch(`${API_ENDPOINTS.CLIENTS}?year=${selectedYear}`);
       if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
       const data = await res.json();
       setClients(data);
@@ -50,7 +49,7 @@ const GenerateInvoicePage = () => {
 
   const fetchGeneratedInvoices = async () => {
     try {
-      const res = await fetch(`${API_BASE}/invoices/generated/${selectedYear}/${selectedMonth}`);
+      const res = await fetch(`${API_ENDPOINTS.INVOICES}/generated/${selectedYear}/${selectedMonth}`);
       if (!res.ok) throw new Error(`Failed to fetch invoices: ${res.status}`);
       const data = await res.json();
       setGeneratedInvoices(data);
@@ -123,7 +122,7 @@ const GenerateInvoicePage = () => {
 
     try {
       for (const inv of toGenerate) {
-        const response = await fetch(`${API_BASE}/invoices/generate`, {
+        const response = await fetch(`${API_ENDPOINTS.INVOICES}/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ year: selectedYear, month: selectedMonth, clientId: inv.clientId }),
@@ -142,48 +141,48 @@ const GenerateInvoicePage = () => {
   };
 
   const handleDownload = async () => {
-  const toDownload = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
-  if (toDownload.length === 0) {
-    alert('No generated invoices selected to download.');
-    return;
-  }
-
-  try {
-    for (const inv of toDownload) {
-      const response = await fetch(`${API_BASE}/invoices/download/${inv.id}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to download invoice ${inv.id}: ${errorData.error}`);
-      }
-
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename;
-
-      // Try to extract filename from Content-Disposition
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-      } else {
-        // Fallback: Construct filename as {Month} {Year} {ClientName} invoice.pdf
-        const monthName = fiscalMonths.find((m) => m.value === inv.month)?.label.slice(0, 3);
-        const sanitizedClientName = inv.clientName.replace(/[^a-zA-Z0-9]/g, '_');
-        filename = `${monthName} ${inv.year} ${sanitizedClientName} Invoice.pdf`;
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+    const toDownload = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
+    if (toDownload.length === 0) {
+      alert('No generated invoices selected to download.');
+      return;
     }
-  } catch (err) {
-    console.error('Download invoice failed:', err);
-    alert(`Error downloading invoices: ${err.message}`);
-  }
-};
+
+    try {
+      for (const inv of toDownload) {
+        const response = await fetch(`${API_ENDPOINTS.INVOICES}/download/${inv.id}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to download invoice ${inv.id}: ${errorData.error}`);
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename;
+
+        // Try to extract filename from Content-Disposition
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+        } else {
+          // Fallback: Construct filename as {Month} {Year} {ClientName} Invoice.pdf
+          const monthName = fiscalMonths.find((m) => m.value === inv.month)?.label.slice(0, 3);
+          const sanitizedClientName = inv.clientName.replace(/[^a-zA-Z0-9]/g, '_');
+          filename = `${monthName} ${inv.year} ${sanitizedClientName} Invoice.pdf`;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Download invoice failed:', err);
+      alert(`Error downloading invoices: ${err.message}`);
+    }
+  };
 
   const handleDelete = async () => {
     const toDelete = mergedInvoices.filter((inv) => selectedRows.includes(inv.id) && inv.pdfPath);
@@ -194,7 +193,7 @@ const GenerateInvoicePage = () => {
 
     try {
       for (const inv of toDelete) {
-        const response = await fetch(`${API_BASE}/invoices/delete/${inv.id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_ENDPOINTS.INVOICES}/delete/${inv.id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error(`Failed to delete invoice ${inv.id}`);
       }
       await fetchGeneratedInvoices();
@@ -212,7 +211,7 @@ const GenerateInvoicePage = () => {
     }
     try {
       for (const inv of toMark) {
-        const response = await fetch(`${API_BASE}/invoices/mark-sent/${inv.id}`, { method: 'PUT' });
+        const response = await fetch(`${API_ENDPOINTS.INVOICES}/mark-sent/${inv.id}`, { method: 'PUT' });
         if (!response.ok) throw new Error(`Failed to mark invoice ${inv.id} as sent`);
       }
       await fetchGeneratedInvoices();
@@ -231,7 +230,7 @@ const GenerateInvoicePage = () => {
 
     try {
       for (const inv of toRegenerate) {
-        const response = await fetch(`${API_BASE}/invoices/regenerate/${inv.id}`, {
+        const response = await fetch(`${API_ENDPOINTS.INVOICES}/regenerate/${inv.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -248,7 +247,7 @@ const GenerateInvoicePage = () => {
   };
 
   const handleViewInvoice = (filePath) => {
-    window.open(`${API_BASE}/invoices/view/${filePath}`, '_blank');
+    window.open(`${API_ENDPOINTS.INVOICES}/view/${filePath}`, '_blank');
   };
 
   useEffect(() => {

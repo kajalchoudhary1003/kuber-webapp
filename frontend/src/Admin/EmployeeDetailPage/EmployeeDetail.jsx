@@ -14,9 +14,7 @@ import {
 
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
-const API_BASE_URL = 'http://localhost:5001/api';
+import { API_ENDPOINTS } from '../../config';
 
 const cache = {
   roles: {},
@@ -64,7 +62,7 @@ const EmployeeDetail = () => {
   const fetchEmployee = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/employees/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.EMPLOYEES}/${id}`);
       setEmployee(response.data);
       if (response.data.RoleID) {
         const role = await fetchRoleById(response.data.RoleID);
@@ -84,20 +82,20 @@ const EmployeeDetail = () => {
       } else {
         setOrgAbbreviation('N/A');
       }
-    } catch (error) {
-      console.error('Error fetching employee:', error);
-      setError('Error fetching employee');
-    } finally {
+    } catch (err) {
+      console.error('Error fetching employee details:', err);
+      setError('Failed to load employee details');
       setLoading(false);
+      toast.error('Failed to load employee details');
     }
   };
 
   const fetchRolesLevelsOrgs = async () => {
     try {
       const [rolesRes, levelsRes, orgsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/roles`),
-        axios.get(`${API_BASE_URL}/levels`),
-        axios.get(`${API_BASE_URL}/organisations`)
+        axios.get(API_ENDPOINTS.ROLES),
+        axios.get(API_ENDPOINTS.LEVELS),
+        axios.get(API_ENDPOINTS.ORGANISATIONS)
       ]);
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
@@ -113,7 +111,7 @@ const EmployeeDetail = () => {
   const fetchRoleById = async (id) => {
     if (cache.roles[id]) return cache.roles[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/roles/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.ROLES}/${id}`);
       cache.roles[id] = response.data;
       return response.data;
     } catch (err) {
@@ -125,7 +123,7 @@ const EmployeeDetail = () => {
   const fetchLevelById = async (id) => {
     if (cache.levels[id]) return cache.levels[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/levels/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.LEVELS}/${id}`);
       cache.levels[id] = response.data;
       return response.data;
     } catch (err) {
@@ -137,7 +135,7 @@ const EmployeeDetail = () => {
   const fetchOrganisationById = async (id) => {
     if (cache.organisations[id]) return cache.organisations[id];
     try {
-      const response = await axios.get(`${API_BASE_URL}/organisations/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.ORGANISATIONS}/${id}`);
       cache.organisations[id] = response.data;
       return response.data;
     } catch (err) {
@@ -148,49 +146,36 @@ const EmployeeDetail = () => {
 
   const fetchClientAssignments = async () => {
     try {
-
-      const response = await axios.get(`${API_BASE_URL}/client-employees/employee/${id}`);
+      const response = await axios.get(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/employee/${id}`);
       setClientAssignments(response.data);
-      setClientError(null);
-    } catch (error) {
-      console.error('Error fetching client assignments:', error.response?.status, error.message);
-      setClientError(
-        `Failed to load client assignments: ${
-          error.response?.status === 404 ? 'Client assignments endpoint not found' : error.message
-        }`
-      );
+    } catch (err) {
+      console.error('Error fetching client assignments:', err);
+      toast.error('Failed to load client assignments');
     }
   };
 
   const handleDelete = async () => {
     try {
-
       if (employee.Status === 'Active') {
         toast.error('Active employees cannot be deleted');
         return;
       }
-
 
       const hasActiveClients = clientAssignments.some(
         (assignment) => assignment.Status === 'Active'
       );
 
       if (hasActiveClients) {
-        toast.error('Employee cannot be deleted with active clients');
+        toast.error('Cannot delete employee with active client assignments');
         return;
       }
 
-
-      await axios.delete(`${API_BASE_URL}/employees/${id}`);
+      await axios.delete(`${API_ENDPOINTS.EMPLOYEES}/${id}`);
       toast.success('Employee deleted successfully');
-
-      navigate('/admin/employee-master');
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-      setError('Error deleting employee');
-
+      navigate('/admin/employees');
+    } catch (err) {
+      console.error('Error deleting employee:', err);
       toast.error('Error deleting employee');
-
     }
   };
 
@@ -203,7 +188,7 @@ const EmployeeDetail = () => {
     if (updatedData) {
       try {
         console.log('Updating employee with data:', updatedData);
-        const response = await axios.put(`${API_BASE_URL}/employees/${id}`, updatedData);
+        const response = await axios.put(`${API_ENDPOINTS.EMPLOYEES}/${id}`, updatedData);
         console.log('Update response:', response.data);
         toast.success('Employee updated successfully');
         alert('Employee updated successfully');
@@ -371,7 +356,6 @@ const EmployeeDetail = () => {
       />
 
       <ToastContainer position="top-right" autoClose={3000} />
-
     </div>
   );
 };

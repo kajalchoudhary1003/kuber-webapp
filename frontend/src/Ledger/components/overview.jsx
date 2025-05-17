@@ -15,6 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js"
+import { API_ENDPOINTS } from '../../config'
 
 // Register ChartJS components
 ChartJS.register(
@@ -59,6 +60,9 @@ export default function Overview() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [colorPalette, setColorPalette] = useState([]) // Store the color palette
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState('');
+  const [clientBalance, setClientBalance] = useState(null);
 
   // Format number with commas
   const formatNumberWithCommas = (number) => {
@@ -77,7 +81,7 @@ export default function Overview() {
     const fetchFinancialYears = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('http://localhost:5001/api/financial-years')
+        const response = await axios.get(API_ENDPOINTS.FINANCIAL_YEARS)
         const years = response.data.financialYears.map(year => year.year)
         setFinancialYears(years)
         
@@ -99,51 +103,22 @@ export default function Overview() {
   }, [])
 
   // Fetch client balance data on component mount
-  // Fetch client balance data on component mount
-useEffect(() => {
-  const fetchClientBalanceData = async () => {
-    try {
-      setLoading(true);
-      console.log("Fetching client balance data...");
-      const response = await axios.get('http://localhost:5001/api/client-balance/report');
-      
-      console.log("API Response:", response);
-      console.log("Response data:", response.data);
-      
-      // Make sure we're handling the data format correctly
-      if (Array.isArray(response.data)) {
-        console.log("Data is an array with length:", response.data.length);
+  useEffect(() => {
+    const fetchClientBalances = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_ENDPOINTS.CLIENT_BALANCE}/report`);
         setClientBalanceData(response.data);
-      } else if (response.data && typeof response.data === 'object') {
-        console.log("Data is an object, keys:", Object.keys(response.data));
-        // Check if the data might be nested under a property
-        if (response.data.clients && Array.isArray(response.data.clients)) {
-          console.log("Found clients array in response, length:", response.data.clients.length);
-          setClientBalanceData(response.data.clients);
-        } else {
-          console.error('Unexpected data format:', response.data);
-          toast.error('Received invalid data format from server');
-          setError('Received invalid data format from server');
-        }
-      } else {
-        console.error('Unexpected data format:', response.data);
-        toast.error('Received invalid data format from server');
-        setError('Received invalid data format from server');
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching client balances:', err);
+        setError('Failed to load client balances');
+        setLoading(false);
       }
-      
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching client balance data:', err);
-      console.error('Error details:', err.response?.data || err.message);
-      toast.error('Failed to load client balance data');
-      setError('Failed to load client balance data');
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchClientBalanceData();
-}, []);
-
+    fetchClientBalances();
+  }, []);
 
   // Handle showing profitability report
   const handleShowProfitabilityReport = async () => {
@@ -154,8 +129,8 @@ useEffect(() => {
       
       // Fetch client profitability data
       try {
-        const clientResponse = await axios.get(`http://localhost:5001/api/profitability/clients-report/${selectedYear}`)
-        setClientProfitabilityData(clientResponse.data)
+        const clientResponse = await axios.get(`${API_ENDPOINTS.PROFITABILITY}/clients-report/${selectedYear}`);
+        setClientProfitabilityData(clientResponse.data);
         
         // Generate and store a new color palette when we get new data
         const numClients = Object.keys(clientResponse.data).length
@@ -172,8 +147,8 @@ useEffect(() => {
       
       // Fetch employee profitability data
       try {
-        const employeeResponse = await axios.get(`http://localhost:5001/api/profitability/employee-report/${selectedYear}`)
-        setEmployeeProfitabilityData(employeeResponse.data)
+        const employeeResponse = await axios.get(`${API_ENDPOINTS.PROFITABILITY}/employee-report/${selectedYear}`);
+        setEmployeeProfitabilityData(employeeResponse.data);
       } catch (employeeErr) {
         console.error('Error fetching employee profitability data:', employeeErr)
         const errorMessage = employeeErr.response?.data?.error || 'Failed to load employee profitability data'
@@ -261,6 +236,41 @@ useEffect(() => {
       },
     },
   }
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_ENDPOINTS.CLIENTS);
+        setClients(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching clients:', err);
+        setError('Failed to load clients');
+        setLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
+  const handleClientChange = async (clientId) => {
+    setSelectedClient(clientId);
+    if (clientId) {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_ENDPOINTS.LEDGER}/client-balance/${clientId}`);
+        setClientBalance(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching client balance:', err);
+        setError('Failed to load client balance');
+        setLoading(false);
+      }
+    } else {
+      setClientBalance(null);
+    }
+  };
 
   if (loading && !clientBalanceData.length) {
     return <div className="p-4">Loading data...</div>

@@ -4,9 +4,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Input } from "@/components/ui/input";
 import { useYear } from '../../../contexts/YearContexts';
 import { formatCurrency } from '../../../utils/currency';
+import { API_ENDPOINTS } from '../../../config';
+
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-const API_BASE_URL = 'http://localhost:5001/api/billing';
-const FINANCIAL_YEAR_API_BASE_URL = 'http://localhost:5001/api/financial-years';
 
 const BillingSetup = () => {
   const [data, setData] = useState([]);
@@ -30,7 +30,7 @@ const BillingSetup = () => {
           // First ensure billing details exist
           try {
             console.log('Creating billing details for year:', selectedYear);
-            await axios.post(`${FINANCIAL_YEAR_API_BASE_URL}/create-billing/${selectedYear}`);
+            await axios.post(`${API_ENDPOINTS.FINANCIAL_YEARS}/create-billing/${selectedYear}`);
             console.log('Billing details created successfully');
           } catch (error) {
             console.error('Error creating billing details:', error);
@@ -38,7 +38,7 @@ const BillingSetup = () => {
           }
 
           // Then fetch the clients
-          const response = await axios.get(`${API_BASE_URL}/clients/${selectedYear}`);
+          const response = await axios.get(`${API_ENDPOINTS.BILLING}/clients/${selectedYear}`);
           console.log('Clients response:', response.data);
           setClients(response.data);
         }
@@ -56,7 +56,7 @@ const BillingSetup = () => {
     const fetchData = async () => {
       try {
         if (selectedClient && selectedYear) {
-          const response = await axios.get(`${API_BASE_URL}/data/${selectedClient}/${selectedYear}`);
+          const response = await axios.get(`${API_ENDPOINTS.BILLING}/data/${selectedClient}/${selectedYear}`);
           setData(response.data);
           if (response.data.length > 0) {
             setCurrencyCode(response.data[0].currencyCode);
@@ -92,7 +92,7 @@ const BillingSetup = () => {
       newData[editIndex.row][editIndex.column] = parseFloat(tempValue);
       setData(newData);
 
-      await axios.put(`${API_BASE_URL}/data/${newData[editIndex.row].id}`, {
+      await axios.put(`${API_ENDPOINTS.BILLING}/data/${newData[editIndex.row].id}`, {
         month: editIndex.column,
         amount: parseFloat(tempValue),
       });

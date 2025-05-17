@@ -15,6 +15,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
+import { API_ENDPOINTS } from '../../config';
 
 const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +35,6 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = 'http://localhost:5001/api';
-
   useEffect(() => {
     if (open) {
       fetchEmployees();
@@ -52,7 +51,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/employees`);
+      const response = await fetch(API_ENDPOINTS.EMPLOYEES);
       if (!response.ok) {
         throw new Error('Failed to fetch employees');
       }
@@ -75,7 +74,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   const searchEmployees = async (query) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/employees/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_ENDPOINTS.EMPLOYEES}/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error('Failed to search employees');
       }
@@ -164,7 +163,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     try {
       const clientId = initialData?.ClientID;
       if (clientId && employee.id && !initialData?.id) { // Skip for editing existing resource
-        const response = await fetch(`${API_BASE_URL}/client-employees/client/${clientId}`);
+        const response = await fetch(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/client/${clientId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch client assignments');
         }
@@ -217,42 +216,42 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     }
   };
 
- const handleSubmit = (e) => {
-  e.preventDefault();
-  console.log("Submitting form:", formData);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Submitting form:", formData);
 
-  if (!formData.EmployeeID) {
-    setError("Please select a valid employee.");
-    return;
-  }
-
-  if (!formData.startDate) {
-    setError("Please provide a start date.");
-    return;
-  }
-
-  if (!formData.billingMonthly || formData.billingMonthly <= 0) {
-    setError("Please provide a valid monthly billing amount.");
-    return;
-  }
-
-  const payload = {
-    EmployeeID: formData.EmployeeID,
-    ClientID: initialData?.ClientID || null,
-    StartDate: formData.startDate,
-    EndDate: formData.status === "Active" ? null : formData.endDate || new Date().toISOString().split("T")[0], // Ensure EndDate is set for Inactive
-    MonthlyBilling: Number(formData.billingMonthly),
-    Status: formData.status,
-    isInactiveUpdate: initialData && initialData.Status === "Active" && formData.status === "Inactive",
-  };
-
-  console.log("Submitting payload:", payload);
-  onSubmit(payload, () => {
-    if (payload.isInactiveUpdate) {
-      console.log("Resource updated to Inactive successfully");
+    if (!formData.EmployeeID) {
+      setError("Please select a valid employee.");
+      return;
     }
-  });
-};
+
+    if (!formData.startDate) {
+      setError("Please provide a start date.");
+      return;
+    }
+
+    if (!formData.billingMonthly || formData.billingMonthly <= 0) {
+      setError("Please provide a valid monthly billing amount.");
+      return;
+    }
+
+    const payload = {
+      EmployeeID: formData.EmployeeID,
+      ClientID: initialData?.ClientID || null,
+      StartDate: formData.startDate,
+      EndDate: formData.status === "Active" ? null : formData.endDate || new Date().toISOString().split("T")[0], // Ensure EndDate is set for Inactive
+      MonthlyBilling: Number(formData.billingMonthly),
+      Status: formData.status,
+      isInactiveUpdate: initialData && initialData.Status === "Active" && formData.status === "Inactive",
+    };
+
+    console.log("Submitting payload:", payload);
+    onSubmit(payload, () => {
+      if (payload.isInactiveUpdate) {
+        console.log("Resource updated to Inactive successfully");
+      }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -373,9 +372,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
-
             <Button type="submit" className="bg-[#048DFF] shadow-md cursor-pointer text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
-
               {initialData ? 'Update' : 'Add'}
             </Button>
           </div>

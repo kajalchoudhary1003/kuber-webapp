@@ -3,6 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button"; // Import Button component
 import { useYear } from '../../../contexts/YearContexts';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { API_ENDPOINTS } from '../../../config';
 
 const fiscalMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
@@ -28,17 +31,14 @@ const EmployeeCost = () => {
         console.log('Fetching data for year:', selectedYear);
         setError(null);
         setLoading(true);
-        const response = await fetch(`http://localhost:5001/api/employee-cost/${selectedYear}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch employee cost data: ${response.statusText}`);
-        }
-        const result = await response.json();
-        console.log('Fetched employee cost data:', result);
-        setData(result);
+        const response = await axios.get(`${API_ENDPOINTS.EMPLOYEE_COST}/${selectedYear}`);
+        console.log('Fetched employee cost data:', response.data);
+        setData(response.data);
       } catch (err) {
         console.error('Error fetching employee cost data:', err);
-        setError(err.message);
+        setError(err.response?.data?.message || 'Failed to load employee costs');
         setData([]);
+        toast.error(err.response?.data?.message || 'Failed to load employee costs');
       } finally {
         setLoading(false);
       }
@@ -66,25 +66,16 @@ const EmployeeCost = () => {
       const month = editIndex.column;
       const amount = parseFloat(tempValue);
 
-      const response = await fetch(`http://localhost:5001/api/employee-cost/${employeeId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ month, amount }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update employee cost');
-      }
-
+      const response = await axios.put(`${API_ENDPOINTS.EMPLOYEE_COST}/${employeeId}`, { month, amount });
       newData[editIndex.row][editIndex.column] = amount;
       setData(newData);
       setEditIndex({ row: -1, column: '' });
       setError(null);
+      toast.success('Employee cost updated successfully');
     } catch (error) {
       console.error('Error updating employee cost data:', error);
-      setError(error.message);
+      setError(error.response?.data?.message || 'Failed to update employee cost');
+      toast.error(error.response?.data?.message || 'Failed to update employee cost');
     }
   };
 

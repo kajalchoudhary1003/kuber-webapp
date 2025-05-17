@@ -4,12 +4,9 @@ import ClientModal from '@/Modal/EmployeeModal/ClientModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-
+import { API_ENDPOINTS } from '../../../config';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
-const API_BASE_URL = 'http://localhost:5001/api/clients'; // Adjust if your backend uses a different port
 
 const ClientMaster = () => {
   const [clients, setClients] = useState([]);
@@ -20,7 +17,7 @@ const ClientMaster = () => {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch(API_BASE_URL);
+      const response = await fetch(API_ENDPOINTS.CLIENTS);
       if (!response.ok) throw new Error('Failed to fetch clients');
       const fetchedClients = await response.json();
       setClients(fetchedClients);
@@ -74,7 +71,7 @@ const ClientMaster = () => {
     try {
       if (selectedClient) {
         // Update existing client
-        const response = await fetch(`${API_BASE_URL}/${selectedClient.id}`, {
+        const response = await fetch(`${API_ENDPOINTS.CLIENTS}/${selectedClient.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newClient),
@@ -89,7 +86,7 @@ const ClientMaster = () => {
         });
       } else {
         // Create new client
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch(API_ENDPOINTS.CLIENTS, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newClient),
@@ -135,7 +132,7 @@ const ClientMaster = () => {
   const handleDeleteClient = async (clientId) => {
     try {
       // Attempt to delete the client directly
-      const response = await fetch(`${API_BASE_URL}/${clientId}`, {
+      const response = await fetch(`${API_ENDPOINTS.CLIENTS}/${clientId}`, {
         method: 'DELETE',
       });
       

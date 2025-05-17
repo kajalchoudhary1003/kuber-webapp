@@ -15,6 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js"
+import { API_ENDPOINTS } from '../../config'
 
 // Register Chart.js components
 ChartJS.register(
@@ -55,11 +56,11 @@ export default function ClientProfitability() {
         setLoading(true)
         
         // Fetch clients
-        const clientsResponse = await axios.get('http://localhost:5001/api/clients')
+        const clientsResponse = await axios.get(API_ENDPOINTS.CLIENTS)
         setClients(clientsResponse.data)
         
         // Fetch financial years
-        const yearsResponse = await axios.get('http://localhost:5001/api/financial-years')
+        const yearsResponse = await axios.get(API_ENDPOINTS.FINANCIAL_YEARS)
         setFinancialYears(yearsResponse.data.financialYears.map(year => year.year))
         
         // Set default selected year if available
@@ -93,7 +94,7 @@ export default function ClientProfitability() {
         setError(null)
         
         // Fetch profitability report data from backend
-        const response = await axios.get(`http://localhost:5001/api/profitability/client-report/${selectedClient}/${selectedYear}`)
+        const response = await axios.get(`${API_ENDPOINTS.PROFITABILITY}/client-report/${selectedClient}/${selectedYear}`)
         
         setProfitabilityData(response.data)
         setShowReport(true)
