@@ -11,4 +11,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://backend:5001',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 })
