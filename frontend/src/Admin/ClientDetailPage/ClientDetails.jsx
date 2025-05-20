@@ -311,7 +311,7 @@ const ClientDetails = () => {
         </h2>
         <div className="space-x-2">
           <Button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/admin/client-master")}
             className="bg-[#048DFF] cursor-pointer shadow-md text-white hover:bg-white hover:text-[#048DFF] hover:border-blue-500 border-2 border-[#048DFF] rounded-3xl px-6 py-2 transition-all">
 
             Back to Client Master
