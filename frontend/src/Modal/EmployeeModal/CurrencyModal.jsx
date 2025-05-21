@@ -34,7 +34,14 @@ const CurrencyModal = ({ open, onClose, mode, initialData, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'CurrencyCode') {
+      // Convert to uppercase and limit to 3 characters
+      const formattedValue = value.toUpperCase().slice(0, 3);
+      setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     
     // Clear error when user starts typing
     if (value.trim()) {
@@ -50,8 +57,15 @@ const CurrencyModal = ({ open, onClose, mode, initialData, onSubmit }) => {
     
     let isValid = true;
     
+    // Currency code validation
     if (!formData.CurrencyCode.trim()) {
       newErrors.CurrencyCode = 'Currency code is required';
+      isValid = false;
+    } else if (formData.CurrencyCode.length !== 3) {
+      newErrors.CurrencyCode = 'Currency code must be exactly 3 characters';
+      isValid = false;
+    } else if (!/^[A-Z]{3}$/.test(formData.CurrencyCode)) {
+      newErrors.CurrencyCode = 'Currency code must contain only uppercase letters';
       isValid = false;
     }
     
@@ -100,39 +114,52 @@ const CurrencyModal = ({ open, onClose, mode, initialData, onSubmit }) => {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Currency Code
+            </label>
             <Input
-              label="Currency Code"
               name="CurrencyCode"
-              placeholder="Enter currency code"
+              placeholder="e.g. USD, EUR, INR"
               value={formData.CurrencyCode}
               onChange={handleChange}
               required
+              maxLength={3}
               className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.CurrencyCode ? 'border-red-500' : ''}`}
               aria-invalid={errors.CurrencyCode ? "true" : "false"}
-              aria-describedby={errors.CurrencyCode ? "currency-code-error" : undefined}
+              aria-describedby={errors.CurrencyCode ? "currency-code-error" : "currency-code-help"}
             />
-            {errors.CurrencyCode && (
+            {errors.CurrencyCode ? (
               <p id="currency-code-error" className="text-red-500 text-sm mt-1">
                 {errors.CurrencyCode}
+              </p>
+            ) : (
+              <p id="currency-code-help" className="text-gray-500 text-xs mt-1">
+                Enter a 3-letter ISO currency code (e.g., USD, EUR, INR)
               </p>
             )}
           </div>
           
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Currency Name
+            </label>
             <Input
-              label="Currency Name"
               name="CurrencyName"
-              placeholder="Enter currency name"
+              placeholder="e.g. US Dollar, Euro, Indian Rupee"
               value={formData.CurrencyName}
               onChange={handleChange}
               required
               className={`focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 ${errors.CurrencyName ? 'border-red-500' : ''}`}
               aria-invalid={errors.CurrencyName ? "true" : "false"}
-              aria-describedby={errors.CurrencyName ? "currency-name-error" : undefined}
+              aria-describedby={errors.CurrencyName ? "currency-name-error" : "currency-name-help"}
             />
-            {errors.CurrencyName && (
+            {errors.CurrencyName ? (
               <p id="currency-name-error" className="text-red-500 text-sm mt-1">
                 {errors.CurrencyName}
+              </p>
+            ) : (
+              <p id="currency-name-help" className="text-gray-500 text-xs mt-1">
+                Enter the full name of the currency (e.g., US Dollar, Euro, Indian Rupee)
               </p>
             )}
           </div>
