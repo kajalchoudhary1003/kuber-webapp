@@ -8,6 +8,9 @@ router.post('/', levelController.createLevel);
 // Get all levels
 router.get('/', levelController.getAllLevels);
 
+// Get level by ID
+router.get('/:levelId', levelController.getLevelById);
+
 // Update level by ID
 router.put('/:levelId', levelController.updateLevel);
 

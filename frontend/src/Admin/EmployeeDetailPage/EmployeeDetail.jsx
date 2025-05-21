@@ -82,11 +82,11 @@ const EmployeeDetail = () => {
       } else {
         setOrgAbbreviation('N/A');
       }
-    } catch (err) {
-      console.error('Error fetching employee details:', err);
-      setError('Failed to load employee details');
+    } catch (error) {
+      console.error('Error fetching employee:', error);
+      setError('Error fetching employee');
+    } finally {
       setLoading(false);
-      toast.error('Failed to load employee details');
     }
   };
 
@@ -100,9 +100,9 @@ const EmployeeDetail = () => {
       setRoles(rolesRes.data);
       setLevels(levelsRes.data);
       setOrganisations(orgsRes.data);
-      rolesRes.data.forEach((role) => (cache.roles[role.id] = role));
-      levelsRes.data.forEach((level) => (cache.levels[level.id] = level));
-      orgsRes.data.forEach((org) => (cache.organisations[org.id] = org));
+      rolesRes.data.forEach((role) => (cache.roles[role.RoleID || role.id] = role));
+      levelsRes.data.forEach((level) => (cache.levels[level.LevelID || level.id] = level));
+      orgsRes.data.forEach((org) => (cache.organisations[org.OrganisationID || org.id] = org));
     } catch (error) {
       console.error('Error fetching roles, levels, or organisations:', error);
     }
@@ -112,8 +112,9 @@ const EmployeeDetail = () => {
     if (cache.roles[id]) return cache.roles[id];
     try {
       const response = await axios.get(`${API_ENDPOINTS.ROLES}/${id}`);
-      cache.roles[id] = response.data;
-      return response.data;
+      const role = response.data;
+      cache.roles[role.RoleID || role.id] = role;
+      return role;
     } catch (err) {
       console.error(`Error fetching role ${id}:`, err);
       return null;
@@ -124,8 +125,9 @@ const EmployeeDetail = () => {
     if (cache.levels[id]) return cache.levels[id];
     try {
       const response = await axios.get(`${API_ENDPOINTS.LEVELS}/${id}`);
-      cache.levels[id] = response.data;
-      return response.data;
+      const level = response.data;
+      cache.levels[level.LevelID || level.id] = level;
+      return level;
     } catch (err) {
       console.error(`Error fetching level ${id}:`, err);
       return null;
@@ -136,8 +138,9 @@ const EmployeeDetail = () => {
     if (cache.organisations[id]) return cache.organisations[id];
     try {
       const response = await axios.get(`${API_ENDPOINTS.ORGANISATIONS}/${id}`);
-      cache.organisations[id] = response.data;
-      return response.data;
+      const org = response.data;
+      cache.organisations[org.OrganisationID || org.id] = org;
+      return org;
     } catch (err) {
       console.error(`Error fetching organisation ${id}:`, err);
       return null;
@@ -148,9 +151,14 @@ const EmployeeDetail = () => {
     try {
       const response = await axios.get(`${API_ENDPOINTS.CLIENT_EMPLOYEES}/employee/${id}`);
       setClientAssignments(response.data);
-    } catch (err) {
-      console.error('Error fetching client assignments:', err);
-      toast.error('Failed to load client assignments');
+      setClientError(null);
+    } catch (error) {
+      console.error('Error fetching client assignments:', error.response?.status, error.message);
+      setClientError(
+        `Failed to load client assignments: ${
+          error.response?.status === 404 ? 'Client assignments endpoint not found' : error.message
+        }`
+      );
     }
   };
 
@@ -166,15 +174,16 @@ const EmployeeDetail = () => {
       );
 
       if (hasActiveClients) {
-        toast.error('Cannot delete employee with active client assignments');
+        toast.error('Employee cannot be deleted with active clients');
         return;
       }
 
       await axios.delete(`${API_ENDPOINTS.EMPLOYEES}/${id}`);
       toast.success('Employee deleted successfully');
-      navigate('/admin/employees');
-    } catch (err) {
-      console.error('Error deleting employee:', err);
+      navigate('/admin/employee-master');
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      setError('Error deleting employee');
       toast.error('Error deleting employee');
     }
   };

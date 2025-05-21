@@ -69,11 +69,28 @@ const updateRole = async (req, res) => {
   }
 };
 
+// Get role by ID
+const getRoleById = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    logger.info(`Get role by ID service called for roleId: ${roleId}`);
+    const role = await roleService.getRoleById(roleId);
+    if (!role) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    return res.status(200).json(role);
+  } catch (error) {
+    logger.error(`Error fetching role by ID: ${error.message}`);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 const roleController = {
   getAllRoles,
   createRole,
   deleteRole,
-  updateRole
+  updateRole,
+  getRoleById
 };
 
 module.exports = roleController;

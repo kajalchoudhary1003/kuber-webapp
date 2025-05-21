@@ -115,7 +115,66 @@ const updateEmployee = async (employeeId, updates) => {
       }
     }
 
+    // Update employee
     await employee.update(updates);
+
+    // If CTC Annual is updated, update employee cost records
+    if (updates.CTCAnnual) {
+      const monthlyCTC = updates.CTCMonthly || (updates.CTCAnnual / 12);
+      
+      // Get current date
+      const now = new Date();
+      const currentMonth = now.getMonth(); // 0-11 (January is 0)
+      const currentYear = now.getFullYear();
+
+      // Determine fiscal year (starts in April, month 3)
+      let fiscalYear;
+      if (currentMonth >= 3) {
+        fiscalYear = currentYear;
+      } else {
+        fiscalYear = currentYear - 1;
+      }
+
+      // Determine the current fiscal month index (0-11)
+      let fiscalMonthIndex;
+      if (currentMonth >= 3) {
+        fiscalMonthIndex = currentMonth - 3; // April is index 0
+      } else {
+        fiscalMonthIndex = currentMonth + 9; // Jan is 9, Feb is 10, Mar is 11
+      }
+
+      // Get all employee cost records for current and future fiscal years
+      const employeeCosts = await EmployeeCost.findAll({
+        where: {
+          EmployeeID: employeeId,
+          Year: {
+            [Op.gte]: fiscalYear
+          }
+        }
+      });
+
+      // Update each employee cost record
+      for (const cost of employeeCosts) {
+        const updates = {};
+        
+        // For current fiscal year, update only from current month onwards
+        if (cost.Year === fiscalYear) {
+          fiscalMonths.forEach((month, index) => {
+            if (index >= fiscalMonthIndex) {
+              updates[month] = monthlyCTC;
+            }
+          });
+        } else {
+          // For future fiscal years, update all months
+          fiscalMonths.forEach(month => {
+            updates[month] = monthlyCTC;
+          });
+        }
+
+        await cost.update(updates);
+      }
+    }
+
     return employee;
   } catch (error) {
     throw new Error(`Error updating employee: ${error.message}`);
