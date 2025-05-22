@@ -257,7 +257,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl p-6 rounded-2xl shadow-lg border-none bg-white">
         <DialogHeader className="flex items-start border-b border-[#9DA4B3] mb-3">
-          <DialogTitle className="text-left mb-2 min-w-[120px]">
+          <DialogTitle className="text-left mb-4 min-w-[120px] font-normal">
             {initialData ? 'Edit Resource' : 'Add Resource'}
           </DialogTitle>
         </DialogHeader>
@@ -266,9 +266,9 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
         {error && <p className="text-red-500 p-2 bg-red-50 rounded">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Name</Label>
+              <Label className="mb-1 font-normal text-gray-700">Name</Label>
               <div className="relative">
                 <Input
                   value={searchTerm}
@@ -298,27 +298,27 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               </div>
             </div>
             <div className="w-full">
-              <Label className="mb-2">Emp. Code</Label>
+              <Label className="mb-1 font-normal text-gray-700">Emp. Code</Label>
               <Input name="empCode" value={formData.empCode} readOnly className="focus:outline-none focus:ring-3 focus:ring-gray-300 " />
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Role</Label>
+              <Label className="mb-1 font-normal text-gray-700">Role</Label>
               <Input name="role" value={formData.role} readOnly className="focus:outline-none focus:ring-3 focus:ring-gray-300 " />
             </div>
             <div className="w-full">
-              <Label className="mb-2">Level</Label>
+              <Label className="mb-1 font-normal text-gray-700">Level</Label>
               <Input name="level" value={formData.level} className="focus:outline-none focus:ring-3 focus:ring-gray-300 " readOnly />
             </div>
           </div>
           <div>
-            <Label className="mb-2">Organization</Label>
+            <Label className="mb-1 font-normal text-gray-700">Organization</Label>
             <Input name="organization" className="focus:outline-none focus:ring-3 focus:ring-gray-300 " value={formData.organization} readOnly />
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Start Date*</Label>
+              <Label className="mb-1 font-normal text-gray-700">Start Date*</Label>
               <Input
                 type="date"
                 name="startDate"
@@ -329,7 +329,7 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               />
             </div>
             <div className="w-full">
-              <Label className="mb-2">Billing (Monthly)*</Label>
+              <Label className="mb-1 font-normal text-gray-700">Billing (Monthly)*</Label>
               <Input
                 type="number"
                 name="billingMonthly"
@@ -342,9 +342,9 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
               />
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Status</Label>
+              <Label className="mb-1 font-normal text-gray-700">Status</Label>
               <Select
                 value={formData.status}
                 onValueChange={(val) => handleChange({ target: { name: 'status', value: val } })}

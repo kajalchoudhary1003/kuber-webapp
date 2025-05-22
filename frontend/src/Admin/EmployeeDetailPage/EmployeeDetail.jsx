@@ -200,7 +200,7 @@ const EmployeeDetail = () => {
         const response = await axios.put(`${API_ENDPOINTS.EMPLOYEES}/${id}`, updatedData);
         console.log('Update response:', response.data);
         toast.success('Employee updated successfully');
-        alert('Employee updated successfully');
+
         fetchEmployee();
         fetchClientAssignments();
       } catch (error) {
@@ -217,12 +217,13 @@ const EmployeeDetail = () => {
     navigate('/admin/employee-master');
   };
 
-  if (loading) return <div>Loading...</div>;
+  // if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-center text-red-500 py-10">Error: {error}</div>;
   if (!employee) return <div>No employee data found.</div>;
 
   return (
     <div className="flex flex-col items-center bg-tint-alice-blue p-5">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="top-bar flex justify-between w-full mb-5">
         <h2 className="text-[24px] text-[#272727]">{`${employee.FirstName} ${employee.LastName}`}</h2>
         <Button
@@ -364,7 +365,6 @@ const EmployeeDetail = () => {
         organisations={organisations}
       />
 
-      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
