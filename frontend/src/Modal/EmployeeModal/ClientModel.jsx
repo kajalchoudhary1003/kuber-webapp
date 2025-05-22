@@ -110,19 +110,16 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => !val && onClose(null)}>
+     <Dialog open={open} onOpenChange={(val) => !val && onClose(null)}>
       <DialogContent className="max-w-3xl border-none bg-white p-6">
-        <DialogHeader>
-          <DialogTitle>{initialData?.id ? 'Edit Client' : 'Add Client'}</DialogTitle>
-          <DialogDescription>
-            Fill out the form to {initialData?.id ? 'update' : 'add a new'} client.
-          </DialogDescription>
+        <DialogHeader className='border-b border-[#9DA4B3]'>
+          <DialogTitle className='mb-4 font-normal'>{initialData?.id ? 'Edit Client' : 'Add Client'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mt-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 mt-2">
           {/* Client Name */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Client Name *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Client Name *</label>
             <input
               type="text"
               placeholder="Client Name"
@@ -130,13 +127,13 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               value={formData.ClientName}
               onChange={handleChange}
               required
-              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+              className="w-full h-9 px-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
             />
           </div>
 
           {/* Abbreviation */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Abbreviation *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Abbreviation *</label>
             <input
               type="text"
               placeholder="Abbreviation"
@@ -144,13 +141,14 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               value={formData.Abbreviation}
               onChange={handleChange}
               required
-              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+              className="w-full h-9 px-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+
             />
           </div>
 
           {/* Contact Person */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Contact Person *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Contact Person *</label>
             <input
               type="text"
               placeholder="Contact Person"
@@ -158,13 +156,14 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               value={formData.ContactPerson}
               onChange={handleChange}
               required
-              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+              className="w-full h-9 px-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+
             />
           </div>
 
           {/* Email */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Email *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Email *</label>
             <input
               type="email"
               placeholder="Email"
@@ -172,13 +171,14 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               value={formData.Email}
               onChange={handleChange}
               required
-             className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+             className="w-full h-9 px-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+
             />
           </div>
 
           {/* Registered Address */}
-          <div className="col-span-2">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Registered Address *</label>
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-normal text-gray-700">Registered Address *</label>
             <input
               type="text"
               placeholder="Registered Address"
@@ -186,13 +186,14 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
               value={formData.RegisteredAddress}
               onChange={handleChange}
               required
-              className="w-full p-2 border-black border rounded-md focus:outline-none focus:ring-3 focus:ring-gray-300 "
+              className="w-full h-9 px-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+
             />
           </div>
 
           {/* Billing Currency */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Billing Currency *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Billing Currency *</label>
             <Select
               value={formData.BillingCurrencyID || ""}
               onValueChange={(val) => handleSelectChange('BillingCurrencyID', val)}
@@ -212,7 +213,7 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
 
           {/* Bank Detail */}
           <div className="col-span-1">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Bank Detail *</label>
+            <label className="block mb-1 text-sm font-normal text-gray-700">Bank Detail *</label>
             <Select
               value={formData.BankDetailID || ""}
               onValueChange={(val) => handleSelectChange('BankDetailID', val)}
@@ -231,8 +232,8 @@ const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
           </div>
 
           {/* Organisation / Payee */}
-          <div className="col-span-2">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Payee *</label>
+          <div className="col-span-1">
+            <label className="block mb-1 text-sm font-normal text-gray-700">Payee *</label>
             <Select
               value={formData.OrganisationID || ""}
               onValueChange={(val) => handleSelectChange('OrganisationID', val)}

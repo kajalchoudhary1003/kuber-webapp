@@ -127,7 +127,7 @@ const ClientDetails = () => {
         }
         setResources((prev) => prev.filter((r) => r.id !== selectedResource.id));
         toast.success("Resource deleted successfully");
-        alert("Resource deleted successfully");
+
       } else {
         if (selectedResource && selectedResource.id) {
           // Update existing resource
@@ -145,7 +145,7 @@ const ClientDetails = () => {
             prev.map((r) => (r.id === selectedResource.id ? updatedResource : r))
           );
           toast.success("Resource updated successfully");
-          alert("Resource updated successfully");
+
         } else {
           // Create new resource
           const response = await fetch(API_ENDPOINTS.CLIENT_EMPLOYEES, {
@@ -160,7 +160,7 @@ const ClientDetails = () => {
           const newResource = await response.json();
           setResources((prev) => [...prev, newResource]);
           toast.success("Resource created successfully");
-          alert("Resource created successfully");
+
         }
       }
 
@@ -198,7 +198,7 @@ const ClientDetails = () => {
       }
       await fetchClientData();
       toast.success("Client updated successfully");
-      alert('Client updated successfully');
+
     } catch (err) {
       console.error("Error updating client:", err);
       toast.error(`Error: ${err.message}`);
@@ -285,7 +285,7 @@ const ClientDetails = () => {
   };
   
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  // if (loading) return <div className="p-4">Loading...</div>;
   if (error || !client) return <div className="p-4 text-red-500">Error: {error || "Client not found"}</div>;
 
   return (

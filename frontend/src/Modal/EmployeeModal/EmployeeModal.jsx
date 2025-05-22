@@ -175,14 +175,14 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
   return (
     <Dialog open={open} onOpenChange={() => onClose(null)}>
       <DialogContent className="max-w-3xl border-none bg-white p-6">
-        <DialogHeader>
-          <DialogTitle className='mb-3'>{initialData ? 'Edit Employee' : 'Create Employee'}</DialogTitle>
+        <DialogHeader className='border-b border-[#9DA4B3]'>
+          <DialogTitle className='mb-4 font-normal'>{initialData ? 'Edit Employee' : 'Create Employee'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2 flex gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4 ">
+          <div className=" flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">First Name</Label>
+              <Label className="mb-1 font-normal text-gray-700">First Name *</Label>
               <Input 
                 name="FirstName" 
                 value={formData.FirstName} 
@@ -192,7 +192,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               />
             </div>
             <div className="w-full">
-              <Label className="mb-2">Last Name</Label>
+              <Label className="mb-1 font-normal text-gray-700">Last Name *</Label>
               <Input 
                 name="LastName" 
                 value={formData.LastName} 
@@ -203,9 +203,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Employee Code</Label>
+              <Label className="mb-1 font-normal text-gray-700">Employee Code *</Label>
               <Input 
                 name="EmpCode" 
                 value={formData.EmpCode} 
@@ -215,14 +215,14 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               />
             </div>
             <div className="w-full">
-              <Label className="mb-2">Role</Label>
+              <Label className="mb-1 font-normal text-gray-700">Role *</Label>
               <Select
                 value={formData.RoleID}
                 onValueChange={(value) => setFormData({ ...formData, RoleID: value })}
                 required
                 disabled={roles.length === 0}
               >
-                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
+                <SelectTrigger className="w-full focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue placeholder={roles.length === 0 ? "No roles available" : "Select Role"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
@@ -239,16 +239,16 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Level</Label>
+              <Label className="mb-1 font-normal text-gray-700">Level *</Label>
               <Select
                 value={formData.LevelID}
                 onValueChange={(value) => setFormData({ ...formData, LevelID: value })}
                 required
                 disabled={levels.length === 0}
               >
-                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
+                <SelectTrigger className="w-full focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue placeholder={levels.length === 0 ? "No levels available" : "Select Level"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
@@ -264,14 +264,14 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               
             </div>
             <div className="w-full">
-              <Label className="mb-2">Organisation</Label>
+              <Label className="mb-1 font-normal text-gray-700">Organisation *</Label>
               <Select
                 value={formData.OrganisationID}
                 onValueChange={(value) => setFormData({ ...formData, OrganisationID: value })}
                 required
                 disabled={organisations.length === 0}
               >
-                <SelectTrigger className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
+                <SelectTrigger className="w-full focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0">
                   <SelectValue placeholder={organisations.length === 0 ? "No organisations available" : "Select Organisation"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-none">
@@ -288,9 +288,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">CTC Annual (₹)</Label>
+              <Label className="mb-1 font-normal text-gray-700">CTC (Annual) *</Label>
               <Input
                 name="CTCAnnual"
                 value={formData.CTCAnnual}
@@ -300,7 +300,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               />
             </div>
             <div className="w-full">
-              <Label className="mb-2">CTC Monthly (₹)</Label>
+              <Label className="mb-1 font-normal text-gray-700">CTC (Monthly) *</Label>
               <Input 
                 value={formData.CTCMonthly} 
                 readOnly 
@@ -310,9 +310,9 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="w-full">
-              <Label className="mb-2">Contact Number</Label>
+              <Label className="mb-1 font-normal text-gray-700">Contact Number *</Label>
               <Input
                 name="ContactNumber"
                 value={formData.ContactNumber}
@@ -325,7 +325,7 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
               )}
             </div>
             <div className="w-full">
-              <Label className="mb-2">Email</Label>
+              <Label className="mb-1 font-normal text-gray-700">Email *</Label>
               <Input 
                 name="Email" 
                 value={formData.Email} 
@@ -340,23 +340,23 @@ const EmployeeModal = ({ open, onClose, roles, levels, organisations, initialDat
           </div>
 
           <div className="w-full">
-            <Label className="mb-2">Status</Label>
-            <Select
-              value={formData.Status}
-              onValueChange={(value) => setFormData({ ...formData, Status: value })}
-              required
-            >
-              <SelectTrigger
-                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 min-w-full px-4"
-              >
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-none">
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+  <Label className="mb-1 font-normal text-gray-700">Status *</Label>
+  <Select
+    value={formData.Status}
+    onValueChange={(value) => setFormData({ ...formData, Status: value })}
+    required
+  >
+    <SelectTrigger
+      className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 min-w-full px-4"
+    >
+      <SelectValue placeholder="Select Status" />
+    </SelectTrigger>
+    <SelectContent className="bg-white border-none">
+      <SelectItem value="Active">Active</SelectItem>
+      <SelectItem value="Inactive">Inactive</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
 
           <DialogFooter className="pt-4">
             <Button
