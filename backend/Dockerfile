@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -16,6 +17,17 @@ COPY . .
 
 # Rebuild sqlite3 for the current platform
 RUN npm rebuild sqlite3
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apk add --no-cache sqlite
+
+# Copy built application from builder stage
+COPY --from=builder /app .
 
 # Expose the backend port
 EXPOSE 5001
