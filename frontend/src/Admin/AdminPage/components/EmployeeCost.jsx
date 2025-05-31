@@ -66,7 +66,7 @@ const EmployeeCost = () => {
       const month = editIndex.column;
       const amount = parseFloat(tempValue);
 
-      const response = await axios.put(`${API_ENDPOINTS.EMPLOYEE_COST}/${employeeId}`, { month, amount });
+      const response = await axios.patch(`${API_ENDPOINTS.EMPLOYEE_COST}/${employeeId}`, { month, amount });
       newData[editIndex.row][editIndex.column] = amount;
       setData(newData);
       setEditIndex({ row: -1, column: '' });
