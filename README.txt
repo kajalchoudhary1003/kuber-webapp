@@ -1,50 +1,80 @@
-==============================
-Kuber Web App - Simple Setup Guide
-==============================
+Kuber Webapp Documentation
 
-This guide will help you run the Kuber Web App on your computer using Docker Desktop. No technical skills needed!
 
+For a user-friendly guide to run the application, please visit:
+https://docs.google.com/document/d/1w3_NAQqTxGEWAgMgYDeZWdACGIgdLIdYFw8yV8dsUp0/edit?tab=t.0
+
+Project Structure:
+-----------------
+kuber-webapp/
+├── frontend/              # React frontend application
+│   ├── src/              # Source code
+│   ├── public/           # Static files
+│   ├── package.json      # Frontend dependencies
+│   ├── package-lock.json # Locked dependencies
+│   ├── Dockerfile        # Frontend container configuration
+│   ├── vite.config.js    # Vite configuration
+│   ├── jsconfig.json     # JavaScript configuration
+│   ├── components.json   # UI components configuration
+│   ├── eslint.config.js  # ESLint configuration
+│   └── index.html        # Entry HTML file
+│
+├── backend/              # Node.js backend application
+│   ├── src/             # Source code
+│   ├── package.json     # Backend dependencies
+│   ├── package-lock.json # Locked dependencies
+│   └── Dockerfile       # Backend container configuration
+│
+├── data/                # Data directory
+│   └── database/        # SQLite database location (empty folder)
+│
+├── docker-compose.yml   # Docker services configuration
+├── README.md           # Project documentation
+├── .dockerignore       # Docker ignore rules
+└── .gitignore         # Git ignore rules
+
+Setup Instructions:
+------------------
 1. Prerequisites:
-   - Install Docker Desktop from: https://www.docker.com/products/docker-desktop/
-   - Make sure Docker Desktop is running (open the app, wait for it to say "Running")
+   - Docker and Docker Compose installed
+   - Node.js (for local development)
 
-2. Get the Project Files:
-   - You will receive a ZIP file with the project.
-   - Download and unzip (extract) the file to a folder on your computer.
-   - IMPORTANT: You do NOT need any 'node_modules' folders. If you see them, you can delete them.
+2. Running with Docker:
+   - Navigate to project root
+   - Run: docker-compose up --build
+   - Frontend will be available at: http://localhost:3000
+   - Backend API will be available at: http://localhost:5001
 
-3. Start the Project (Easiest Way):
-   - Open the folder where you unzipped the project.
-   - Find the file named 'docker-compose.yml'.
-   - Right-click inside the folder (not on a file) and choose:
-     - On Mac: "Open in Terminal"
-     - On Windows: "Open in Command Prompt" or "Open PowerShell window here"
-   - In the window that opens, type this command and press Enter:
-     docker compose up --build
-   - Wait a few minutes. The app is ready when you see messages that all services are running.
+3. Local Development:
+   Frontend:
+   - cd frontend
+   - npm install
+   - npm run dev
+   - Access at: http://localhost:5173
 
-4. Open the App:
-   - Open your web browser and go to: http://localhost
-   - You should see the Kuber Web App!
+   Backend:
+   - cd backend
+   - npm install
+   - npm start
+   - API available at: http://localhost:5001
 
-5. Stopping the App:
-   - Go back to the terminal window and press Ctrl + C on your keyboard.
-   - Then type:
-     docker compose down
-   - Press Enter.
+4. Database:
+   - SQLite database is stored in data/database/
+   - Database file is created automatically on first run
+   - Data persists through Docker volumes
 
-6. Data is Saved!
-   - All your data is saved in the 'data/database' folder inside the project.
-   - When you stop and start the app again (even after days), your data will still be there.
+5. Environment Variables:
+   Backend:
+   - NODE_ENV=production
+   - PORT=5001
+   - DB_PATH=/app/database/database.sqlite
 
-7. Need Help?
-   - If you have any trouble, just ask! Screenshots or a quick call can help.
+Notes:
+------
+- Frontend uses Vite for development and building
+- Backend uses Express.js with SQLite
+- Docker services are configured with resource limits
+- CORS is configured for local development
+- Database is persisted using Docker volumes
 
----
-
-**Summary:**
-- Unzip the project
-- Open the folder in Terminal/Command Prompt
-- Run: docker compose up --build
-- Go to http://localhost in your browser
-- Your data is always saved! 
+For more detailed information, please refer to the README.md file.
