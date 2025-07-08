@@ -19,13 +19,30 @@ const ClientTableRow = ({ data, onEditClient, onDeleteClient }) => {
     onDeleteClient(data.id);
   };
 
+  const truncate = (text) => {
+    return text.length > 15 ? `${text.slice(0, 15)}...` : text;
+  };
   return (
     <TableRow className="hover:bg-blue-50 border-b border-[#EDEFF2]">
       {/* Removed the ID cell */}
       <TableCell className="py-3 px-1">{data.ClientName}</TableCell>
       <TableCell className="py-3 px-1">{data.ContactPerson}</TableCell>
-      <TableCell className="py-3 px-1">{data.Email}</TableCell>
-      <TableCell className="py-3 px-1">{data.RegisteredAddress}</TableCell>
+      <TableCell className="py-3 px-1 w-[200px] truncate">
+        <span
+          className="inline-block w-full cursor-pointer"
+          title={data.Email || "No Email"}
+        >
+          {truncate(data.Email)}
+        </span>
+      </TableCell>
+      <TableCell className="truncate max-w-[200px]">
+        <span
+          className="inline-block w-full cursor-pointer"
+          title={data.RegisteredAddress || "No Address"}
+        >
+          {truncate(data.RegisteredAddress)}
+        </span>
+      </TableCell>
       <TableCell className="py-3 px-1">{data.BillingCurrency ? data.BillingCurrency.CurrencyName : 'N/A'}</TableCell>
       <TableCell className="py-3 px-1">
         <Button
