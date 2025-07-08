@@ -97,11 +97,11 @@ const ClientDetails = () => {
   };
 
   // Helper function to format billing
-  const formatBilling = (billing, currency) => {
-    if (!billing) return "N/A";
-    const currencyName =  currency?.CurrencyCode || "INR";
-    return `${currencyName} ${parseFloat(billing).toFixed(2)}`;
-  };
+  // const formatBilling = (billing, currency) => {
+  //   if (!billing) return "N/A";
+  //   const currencyName =  currency?.CurrencyCode || "INR";
+  //   return `${currencyName} ${parseFloat(billing).toFixed(2)}`;
+  // };
 
   const handleAddResource = () => {
     setSelectedResource(null);
@@ -356,7 +356,7 @@ const ClientDetails = () => {
           </div>
           <div>
             <p className="text-gray-600 text-sm">Email</p>
-            <p>{client.Email || "N/A"}</p>
+            <p className="break-words">{client.Email || "N/A"}</p>
           </div>
         </div>
 
@@ -365,7 +365,7 @@ const ClientDetails = () => {
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Registered address</p>
-            <p>{client.RegisteredAddress || "N/A"}</p>
+            <p className="break-words">{client.RegisteredAddress || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-sm">Billing currency</p>

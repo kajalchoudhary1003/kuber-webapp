@@ -10,7 +10,7 @@ import {
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { API_ENDPOINTS } from '../../config';
 
-const ClientModal = ({ open, onClose, initialData, onSubmit }) => {
+const ClientModal = ({ open, onClose, initialData,  }) => {
   const [formData, setFormData] = useState({
     ClientName: '',
     Abbreviation: '',

@@ -49,43 +49,44 @@ const ResourceModal = ({ open, onClose, initialData, onSubmit }) => {
   }, [open]);
 
   const fetchEmployees = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(API_ENDPOINTS.EMPLOYEES);
-      if (!response.ok) {
-        throw new Error('Failed to fetch employees');
-      }
-      const data = await response.json();
-      setEmployeeOptions(Array.isArray(data.employees) ? data.employees : data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching employees:', err);
-      setError('Failed to load employees. Please try again.');
-      setLoading(false);
+  try {
+    setLoading(true);
+    const response = await fetch(`${API_ENDPOINTS.EMPLOYEES}?limit=1000`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch employees');
     }
-  };
+    const data = await response.json();
+    setEmployeeOptions(Array.isArray(data.employees) ? data.employees : data);
+    setLoading(false);
+  } catch (err) {
+    console.error('Error fetching employees:', err);
+    setError('Failed to load employees. Please try again.');
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    if (searchTerm && searchTerm.length >= 2) {
-      searchEmployees(searchTerm);
-    }
-  }, [searchTerm]);
 
-  const searchEmployees = async (query) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_ENDPOINTS.EMPLOYEES}/search?q=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error('Failed to search employees');
-      }
-      const data = await response.json();
-      setEmployeeOptions(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error searching employees:', err);
-      setLoading(false);
-    }
-  };
+  // useEffect(() => {
+  //   if (searchTerm && searchTerm.length >= 2) {
+  //     searchEmployees(searchTerm);
+  //   }
+  // }, [searchTerm]);
+
+  // const searchEmployees = async (query) => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await fetch(`${API_ENDPOINTS.EMPLOYEES}/search?q=${encodeURIComponent(query)}`);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to search employees');
+  //     }
+  //     const data = await response.json();
+  //     setEmployeeOptions(data);
+  //     setLoading(false);
+  //   } catch (err) {
+  //     console.error('Error searching employees:', err);
+  //     setLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (initialData) {

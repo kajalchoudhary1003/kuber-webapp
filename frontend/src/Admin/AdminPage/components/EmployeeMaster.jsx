@@ -211,23 +211,23 @@ const EmployeeMaster = () => {
     setModalOpen(true);
   };
 
-  const handleOpenRoleModal = (role = null, mode = 'create') => {
-    setSelectedRole(role);
-    setModalMode(mode);
-    setRoleModalOpen(true);
-  };
+  // const handleOpenRoleModal = (role = null, mode = 'create') => {
+  //   setSelectedRole(role);
+  //   setModalMode(mode);
+  //   setRoleModalOpen(true);
+  // };
 
-  const handleOpenLevelModal = (level = null, mode = 'create') => {
-    setSelectedLevel(level);
-    setModalMode(mode);
-    setLevelModalOpen(true);
-  };
+  // const handleOpenLevelModal = (level = null, mode = 'create') => {
+  //   setSelectedLevel(level);
+  //   setModalMode(mode);
+  //   setLevelModalOpen(true);
+  // };
 
-  const handleOpenOrgModal = (org = null, mode = 'create') => {
-    setSelectedOrg(org);
-    setModalMode(mode);
-    setOrgModalOpen(true);
-  };
+  // const handleOpenOrgModal = (org = null, mode = 'create') => {
+  //   setSelectedOrg(org);
+  //   setModalMode(mode);
+  //   setOrgModalOpen(true);
+  // };
 
   const handleCloseModal = async (newEmployee) => {
     setModalOpen(false);
