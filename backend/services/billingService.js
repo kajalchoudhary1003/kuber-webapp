@@ -101,17 +101,21 @@ const getBillingData = async (clientId, year) => {
         const isNextYear = fiscalMonthIndex >= 9;
         const billingYear = isNextYear ? parsedYear + 1 : parsedYear;
 
-        if (
+        const dbValue = detail[month] || 0;
+
+        // ✅ Preserve manually updated value
+        if (dbValue !== 0) {
+          adjustedBilling[month] = dbValue;
+        } else if (
           !startDate ||
           (billingYear < startYear) ||
           (billingYear === startYear && calendarMonth < startMonth)
         ) {
           adjustedBilling[month] = 0;
         } else {
-          adjustedBilling[month] = detail[month] || 0;
+          adjustedBilling[month] = 0;
         }
       });
-
       return {
         id: detail.id,
         name: `${detail.Employee.FirstName} ${detail.Employee.LastName}`,

@@ -58,7 +58,7 @@ const invoiceService = {
       }
 
       const billingYear = month >= 1 && month <= 3 ? parseInt(year) + 1 : parseInt(year);
-      const clientBalance = await clientBalanceService.getClientBalance(clientId);
+      const clientBalance = await clientBalanceService.getClientBalance(clientId, parseInt(year), parseInt(month));
       const previousBalance = clientBalance.balances.find(balance => 
         balance.currencyId === client.BillingCurrencyID
       )?.balance || 0;

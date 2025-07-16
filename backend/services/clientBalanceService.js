@@ -386,6 +386,138 @@ const clientBalanceService = {
       console.error('Error calculating client balance summary:', error);
       throw new Error('Error calculating client balance summary: ' + error.message);
     }
+  },
+
+  // MAIN FIX: Updated getClientBalance function to properly handle payments in previous balance calculation
+  async getClientBalance(clientId, upToYear = null, upToMonth = null) {
+    const transaction = await sequelize.transaction();
+    try {
+      console.log(`Getting balance for client ${clientId} up to ${upToYear}/${upToMonth}`);
+      
+      const client = await Client.findByPk(clientId, {
+        include: [
+          {
+            model: Currency,
+            as: 'BillingCurrency',
+            attributes: ['CurrencyName', 'CurrencyCode']
+          }
+        ],
+        transaction
+      });
+
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      
+      console.log(`Found client: ${client.ClientName}`);
+
+      // Build where condition for invoices
+      let invoiceWhereCondition = { ClientID: clientId };
+      
+      // If upToYear and upToMonth are provided, filter invoices
+      if (upToYear && upToMonth) {
+        invoiceWhereCondition = {
+          ...invoiceWhereCondition,
+          [Op.or]: [
+            { Year: { [Op.lt]: upToYear } }, // All invoices from previous years
+            { 
+              Year: upToYear,
+              Month: { [Op.lt]: upToMonth } // Only months before the current month in the same year
+            }
+          ]
+        };
+      }
+
+      console.log('Invoice where condition:', invoiceWhereCondition);
+
+      // Get filtered invoices
+      const allInvoices = await Invoice.findAll({
+        where: invoiceWhereCondition,
+        attributes: ['TotalAmount', 'Year', 'Month'], // Add Year and Month for debugging
+        raw: true,
+        transaction
+      });
+
+      console.log(`Filtered invoice data for client ${clientId}:`, allInvoices);
+
+      // Calculate the total manually
+      const manualTotalBill = allInvoices.reduce((sum, invoice) => {
+        const amount = parseFloat(invoice.TotalAmount) || 0;
+        return sum + amount;
+      }, 0);
+
+      console.log(`Manually calculated total bill for client ${clientId}: ${manualTotalBill}`);
+      
+      // Get total invoiced amount using SQL method with same filter
+      const invoiceTotal = await Invoice.findOne({
+        where: invoiceWhereCondition,
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('TotalAmount')), 'totalBill']
+        ],
+        raw: true,
+        transaction
+      });
+      
+      console.log(`Invoice total for client ${clientId} (SQL method):`, invoiceTotal);
+
+      // FIXED: Build where condition for payments - same logic as invoices
+      let paymentWhereCondition = { ClientID: clientId };
+      
+      if (upToYear && upToMonth) {
+        // For payments, we need to check ReceivedDate up to the current month
+        // This includes all payments received up to and including the current month
+        const upToDate = new Date(upToYear, upToMonth, 0); // Last day of current month
+        paymentWhereCondition = {
+          ...paymentWhereCondition,
+          ReceivedDate: {
+            [Op.lte]: upToDate // Changed from [Op.lt] to [Op.lte] to include current month payments
+          }
+        };
+      }
+
+      console.log('Payment where condition:', paymentWhereCondition);
+
+      // Get filtered payments
+      const paymentTotal = await PaymentTracker.findOne({
+        where: paymentWhereCondition,
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('Amount')), 'totalPaid']
+        ],
+        raw: true,
+        transaction
+      });
+      
+      console.log(`Payment total for client ${clientId}:`, paymentTotal);
+
+      // Use the manually calculated total if SQL method returns null or 0
+      const totalBill = (invoiceTotal?.totalBill || 0) > 0 ? 
+                        invoiceTotal.totalBill : manualTotalBill;
+      const totalPaid = paymentTotal?.totalPaid || 0;
+      const balance = totalBill - totalPaid;
+      
+      console.log(`Calculated balance for client ${clientId}: ${balance} (Bill: ${totalBill}, Paid: ${totalPaid})`);
+
+      // Format the response
+      const formattedBalances = [{
+        currencyId: client.BillingCurrencyID,
+        currencyName: client.BillingCurrency.CurrencyName,
+        currencyCode: client.BillingCurrency.CurrencyCode,
+        balance: balance
+      }];
+      
+      console.log(`Formatted balances:`, formattedBalances);
+      
+      await transaction.commit();
+      return {
+        clientId: client.id,
+        clientName: client.ClientName,
+        balances: formattedBalances
+      };
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error calculating client balance:', error);
+      throw new Error('Error calculating client balance: ' + error.message);
+    }
   }
 };
 
