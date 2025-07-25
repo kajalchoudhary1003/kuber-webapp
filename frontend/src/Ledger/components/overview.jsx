@@ -15,6 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js"
+import { formatCurrency } from '../../utils/currency';
 import { API_ENDPOINTS } from '../../config'
 
 // Register ChartJS components
@@ -207,10 +208,10 @@ export default function Overview() {
       tooltip: {
         callbacks: {
           title: (tooltipItems) => tooltipItems[0].label,
-          label: (tooltipItem) => `Total Profit: ₹${formatNumberWithCommas(tooltipItem.raw.toFixed(2))}`,
+          label: (tooltipItem) => `Total Profit: ${formatCurrency(tooltipItem.raw)}`,
           footer: (tooltipItems) => {
             const total = tooltipItems.reduce((sum, item) => sum + item.raw, 0)
-            return `Total: ₹${formatNumberWithCommas(total.toFixed(2))}`
+            return `Total: ${formatCurrency(total)}`
           },
         },
         displayColors: true,
@@ -303,8 +304,8 @@ export default function Overview() {
                   clientBalanceData.map((item, index) => (
                     <TableRow key={index} className="border-b border-slate-200">
                       <TableCell className="text-center">{item.clientName}</TableCell>
-                      <TableCell className="text-center">{formatNumberWithCommas(item.totalBill)}</TableCell>
-                      <TableCell className="text-center">{formatNumberWithCommas(item.totalPaid)}</TableCell>
+                      <TableCell className="text-center">{formatCurrency(item.totalBill)}</TableCell>
+                      <TableCell className="text-center">{formatCurrency(item.totalPaid)}</TableCell>
                       <TableCell className="text-center">{formatNumberWithCommas(item.balance)}</TableCell>
                     </TableRow>
                   ))
@@ -361,7 +362,7 @@ export default function Overview() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl ">CVT Profitability Report</h2>
               <div className="text-lg font-medium">
-                Total: ₹{formatNumberWithCommas(totalCvtProfit.toFixed(2))}
+                Total: {formatCurrency(totalCvtProfit)}
               </div>
             </div>
             <div style={{ width: '100%', height: '300px', position: 'relative' }}>
@@ -407,11 +408,11 @@ export default function Overview() {
                       <TableCell className="text-center whitespace-nowrap">{employee.clients.join(', ')}</TableCell>
                       {fiscalMonths.map((month) => (
                         <TableCell key={month} className="text-center whitespace-nowrap">
-                          ₹{formatNumberWithCommas((employee.monthlyProfit[month] || 0).toFixed(2))}
+                          {formatCurrency(employee.monthlyProfit[month] || 0)}
                         </TableCell>
                       ))}
-                      <TableCell className="text-center whitespace-nowrap">₹{formatNumberWithCommas(averageProfit.toFixed(2))}</TableCell>
-                      <TableCell className="text-center whitespace-nowrap">₹{formatNumberWithCommas(yearlyProfit.toFixed(2))}</TableCell>
+                      <TableCell className="text-center whitespace-nowrap">{formatCurrency(averageProfit)}</TableCell>
+                      <TableCell className="text-center whitespace-nowrap">{formatCurrency(yearlyProfit)}</TableCell>
                     </TableRow>
                   );
                 })}

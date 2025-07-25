@@ -29,7 +29,16 @@ const loadLogo = () => {
 
 const createInvoicePdf = async (invoiceData, employeeDetails, invoiceFilePath) => {
   const { clientId, year, month, totalAmount, logoBase64, clientName, clientAddress, bankDetails, currencyCode, previousBalance = 0 } = invoiceData;
-
+  const  formatCurrency=(value, currency="INR")=>{
+    const num=typeof value==='number' ? value:parseFloat(value||'0');
+    return new Intl.NumberFormat('en-IN',{
+      style:'currency',
+      currency,
+      maximumFractionDigits:0,
+      minimumFractionDigits:0
+    }).format(num);
+  };
+  
   if (!clientName) {
     console.warn(`clientName is missing or empty for clientId=${clientId}, using fallback 'Unknown Client'`);
   }
@@ -144,22 +153,22 @@ const createInvoicePdf = async (invoiceData, employeeDetails, invoiceFilePath) =
             ],
             ...employeeDetails.map(detail => [
               { text: detail.name, style: 'tableContentService' },
-              { text: detail.amount, style: 'tableContentCost' }
+              { text: formatCurrency(detail.amount, currencyCode), style: 'tableContentCost' }
             ]),
             // CHANGED: Added previous balance row
-            [
-              { text: 'Previous Balance', style: 'tableContentService' },
-              { text: previousBalance.toFixed(2), style: 'tableContentCost' }
-            ],
+            // [
+            //   { text: 'Previous Balance', style: 'tableContentService' },
+            //   { text: formatCurrency(previousBalance,currencyCode), style: 'tableContentCost' }
+            // ],
             // CHANGED: Updated total row to show current total
             [
               { text: 'Total', style: 'tableContentService', color: '#048DFF' },
-              { text: totalAmount.toFixed(2), style: 'tableContentCost', color: '#048DFF' }
+              { text: formatCurrency(totalAmount, currencyCode), style: 'tableContentCost', color: '#048DFF' }
             ],
             // CHANGED: Updated total due to include previous balance
             [
               { text: `Total Due ${currencyCode}`, style: 'tableContentService', fillColor: '#048DFF', color: '#ffffff' },
-              { text: `${currencyCode} ${(totalAmount + previousBalance).toFixed(2)}`, style: 'tableContentCost', fillColor: '#048DFF', color: '#ffffff' }
+              { text: formatCurrency(totalAmount+previousBalance,currencyCode), style: 'tableContentCost', fillColor: '#048DFF', color: '#ffffff' }
             ]
           ]
         },

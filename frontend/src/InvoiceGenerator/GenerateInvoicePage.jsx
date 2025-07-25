@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { formatCurrency } from '../utils/currency';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useYear } from '../contexts/YearContexts';
@@ -405,10 +406,7 @@ const GenerateInvoicePage = () => {
                     <td className="p-3 text-center">{invoice.clientName}</td>
                     <td className="p-3 text-center">
                       {invoice.id
-                        ? `${invoice.currencyCode} ${invoice.totalAmount.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}`
+                        ? formatCurrency(invoice.totalAmount, invoice.currencyCode)
                         : 'N/A'}
                     </td>
                     <td className="p-3 text-center">{formatDate(invoice.generatedOn)}</td>

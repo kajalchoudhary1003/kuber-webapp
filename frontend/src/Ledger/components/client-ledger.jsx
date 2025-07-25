@@ -8,6 +8,7 @@ import axios from "axios"
 import dayjs from "dayjs"
 import { toast } from 'react-toastify';
 import { API_ENDPOINTS } from '../../config';
+import { formatCurrency } from '@/utils/currency';
 
 export default function ClientLedger() {
   const [clients, setClients] = useState([])
@@ -344,12 +345,12 @@ export default function ClientLedger() {
                         <TableCell className="text-center">{entry.type === 'Invoice' || entry.type === 'invoice' ? 'Invoice Raised' : 'Payment Received'}</TableCell>
                         <TableCell className="text-center">
                           {(entry.type === 'Invoice' || entry.type === 'invoice') 
-                            ? formatNumberWithCommas(entry.InvoiceRaised || entry.amount) 
+                            ? formatCurrency(entry.InvoiceRaised || entry.amount) 
                             : '-'}
                         </TableCell>
                         <TableCell className="text-center">
                           {(entry.type === 'Payment' || entry.type === 'payment') 
-                            ? formatNumberWithCommas(Math.abs(entry.PaymentReceived || entry.amount)) 
+                            ? formatCurrency(Math.abs(entry.PaymentReceived || entry.amount)) 
                             : '-'}
                         </TableCell>
                         <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>

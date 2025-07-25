@@ -59,16 +59,17 @@ const invoiceService = {
 
       const billingYear = month >= 1 && month <= 3 ? parseInt(year) + 1 : parseInt(year);
       const clientBalance = await clientBalanceService.getClientBalance(clientId, parseInt(year), parseInt(month));
-      const previousBalance = clientBalance.balances.find(balance => 
-        balance.currencyId === client.BillingCurrencyID
-      )?.balance || 0;
+      // const previousBalance = clientBalance.balances.find(balance => 
+      //   balance.currencyId === client.BillingCurrencyID
+      // )?.balance || 0;
       
-      console.log(`Previous balance for client ${clientId}: ${previousBalance}`); // Add this for debugging
+      // console.log(`Previous balance for client ${clientId}: ${previousBalance}`); // Add this for debugging
       
       // Calculate total billing amount and fetch employee details
       const { total: billingTotal, employeeDetails } = await calculateTotalBillingAmount(clientId, billingYear, monthName);
       console.log(`Calculated total billing amount: ${billingTotal}`);
-      console.log(`Total due (previous + current): ${previousBalance + billingTotal}`); // Add this for debugging
+      // console.log(`Total due (previous + current): ${previousBalance + billingTotal}`); // Add this for debugging
+      console.log(`Total due (previous + current): ${billingTotal}`); // Add this for debugging
   
       const invoice = await Invoice.create({
         ClientID: client.id,
@@ -99,7 +100,7 @@ const invoiceService = {
             year,
             month,
             totalAmount: billingTotal,
-            previousBalance: previousBalance, // Add this line
+            // previousBalance: previousBalance,
             logoBase64: loadLogo(),
             clientName: client.ClientName,
             clientAddress: client.RegisteredAddress || 'N/A',
@@ -259,7 +260,7 @@ const invoiceService = {
           {
             model: Currency,
             as: 'BillingCurrency',
-            attributes: ['id', 'CurrencyCode'],
+            attributes: ['id', 'CurrencyCode', 'CurrencyName'],
           },
         ],
       });
@@ -361,14 +362,15 @@ async function calculateTotalBillingAmount(clientId, year, monthName) {
       if (amount > 0) { // Only include employees with non-zero billing
         employeeDetails.push({
           name: `${detail.Employee?.FirstName || ''} ${detail.Employee?.LastName || ''}`.trim() || 'Unknown',
-          amount: amount.toFixed(2),
+          // amount: amount.toFixed(2),
+          amount: amount,
         });
       }
       return sum + amount;
     }, 0);
 
     console.log(`Total calculated: ${total} for month ${monthName}`);
-    return { total, employeeDetails };
+    return { total: parseFloat(total.toFixed(2)), employeeDetails };
   } catch (error) {
     console.error('Error calculating total billing amount:', error);
     throw new Error(`Error calculating billing total: ${error.message}`);
