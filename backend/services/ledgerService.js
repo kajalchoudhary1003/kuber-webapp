@@ -1,11 +1,24 @@
 const Ledger = require('../models/ledgerModel');
 const Invoice = require('../models/invoiceModel');
 const PaymentTracker = require('../models/paymentTrackerModel');
+const Client = require('../models/clientModel');
+const Currency = require('../models/currencyModel');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
 const getLedgerEntriesByClientAndDateRange = async (clientId, startDate, endDate) => {
   try {
+    console.log("Ledger Service - Input parameters:", {
+      clientId,
+      startDate,
+      endDate,
+      types: {
+        clientId: typeof clientId,
+        startDate: typeof startDate,
+        endDate: typeof endDate
+      }
+    });
+
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
@@ -18,41 +31,81 @@ const getLedgerEntriesByClientAndDateRange = async (clientId, startDate, endDate
       endObj: end
     });
 
-    // Check ALL invoices in the system regardless of client or date
-    const allInvoices = await Invoice.findAll();
-    console.log(`Total invoices in the system: ${allInvoices.length}`);
-    if (allInvoices.length > 0) {
-      console.log("Sample invoice:", allInvoices[0].dataValues);
-    }
-
-    // Check invoices for this client regardless of date
-    const clientInvoices = await Invoice.findAll({
-      where: {
-        ClientID: clientId
-      }
+    // First, get client information with currency
+    console.log("Fetching client with ID:", clientId);
+    const client = await Client.findByPk(clientId, {
+      include: [
+        {
+          model: Currency,
+          as: 'BillingCurrency',
+          attributes: ['CurrencyCode', 'CurrencyName'],
+          required: false // Make this optional in case currency is not set
+        }
+      ]
     });
-    console.log(`Total invoices for client ${clientId}: ${clientInvoices.length}`);
-    if (clientInvoices.length > 0) {
-      console.log("Sample client invoice:", clientInvoices[0].dataValues);
+
+    if (!client) {
+      console.error(`Client not found with ID: ${clientId}`);
+      throw new Error('Client not found');
     }
 
-    // Now check with date filter using GeneratedOn instead of InvoiceDate
+    console.log('Client found:', {
+      id: client.id,
+      name: client.ClientName,
+      billingCurrencyId: client.BillingCurrencyID,
+      currency: client.BillingCurrency
+    });
+
+    // Default currency symbol mapping (fallback)
+    const currencySymbols = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'INR': '₹',
+      'JPY': '¥',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    };
+
+    const currencyCode = client.BillingCurrency?.CurrencyCode || 'INR';
+    const currencyName = client.BillingCurrency?.CurrencyName || 'Indian Rupee';
+    const currencySymbol = currencySymbols[currencyCode] || '₹';
+
+    console.log('Currency info:', { currencyCode, currencyName, currencySymbol });
+
+    // Debug: Check total counts first
+    const totalInvoices = await Invoice.count({
+      where: { ClientID: clientId }
+    });
+    const totalPayments = await PaymentTracker.count({
+      where: { ClientID: clientId }
+    });
+    
+    console.log(`Total records for client ${clientId}:`, {
+      invoices: totalInvoices,
+      payments: totalPayments
+    });
+
+    // Fetch invoices within date range
+    console.log("Fetching invoices with date filter...");
     const invoiceEntries = await Invoice.findAll({
       where: {
         ClientID: clientId,
-        GeneratedOn: { // Changed from InvoiceDate to GeneratedOn
+        GeneratedOn: {
           [Op.gte]: start,
           [Op.lte]: end 
         },
       },
-      order: [['GeneratedOn', 'ASC']], // Changed from InvoiceDate to GeneratedOn
+      attributes: ['id', 'GeneratedOn', 'TotalAmount', 'Status'],
+      order: [['GeneratedOn', 'ASC']],
     });
-    
+
     console.log(`Invoice entries within date range: ${invoiceEntries.length}`);
     if (invoiceEntries.length > 0) {
       console.log("Sample date-filtered invoice:", invoiceEntries[0].dataValues);
     }
 
+    
     const paymentEntries = await PaymentTracker.findAll({
       where: {
         ClientID: clientId,
@@ -61,47 +114,75 @@ const getLedgerEntriesByClientAndDateRange = async (clientId, startDate, endDate
           [Op.lte]: end 
         },
       },
+      attributes: ['id', 'ReceivedDate', 'Amount', 'Remark'],
       order: [['ReceivedDate', 'ASC']],
     });
     
     console.log(`Payment entries within date range: ${paymentEntries.length}`);
+    if (paymentEntries.length > 0) {
+      console.log("Sample payment entry:", {
+        id: paymentEntries[0].id,
+        receivedDate: paymentEntries[0].ReceivedDate,
+        amount: paymentEntries[0].Amount
+      });
+    }
 
+    // Combine entries
     const combinedEntries = [
       ...invoiceEntries.map(entry => ({
         id: entry.id,
         Date: entry.GeneratedOn, // Changed from InvoiceDate to GeneratedOn
         type: 'Invoice',
-        InvoiceRaised: entry.TotalAmount, // Changed from Amount to TotalAmount based on your model
+        InvoiceRaised: parseFloat(entry.TotalAmount) || 0, // Changed from Amount to TotalAmount based on your model
         PaymentReceived: null,
+        Status: entry.Status
       })),
       ...paymentEntries.map(entry => ({
         id: entry.id,
         Date: entry.ReceivedDate,
         type: 'Payment',
         InvoiceRaised: null,
-        PaymentReceived: entry.Amount,
+        PaymentReceived: parseFloat(entry.Amount) || 0,
+        Remark: entry.Remark
       })),
     ];
-
+   
     combinedEntries.sort((a, b) => new Date(a.Date) - new Date(b.Date));
-
+   
     let balance = 0;
     const entriesWithBalance = combinedEntries.map(entry => {
       if (entry.type === 'Invoice') {
-        balance += parseFloat(entry.InvoiceRaised);
+        balance += entry.InvoiceRaised;
       } else if (entry.type === 'Payment') {
-        balance -= parseFloat(entry.PaymentReceived);
+        balance -= entry.PaymentReceived;
       }
       return { ...entry, BalancePayment: balance };
     });
 
-    return {
+    const result = {
+      clientInfo: {
+        id: client.id,
+        name: client.ClientName,
+        currencyCode: currencyCode,
+        currencyName: currencyName,
+        currencySymbol: currencySymbol
+      },
       entries: entriesWithBalance,
-      balance,
+      balance: balance,
     };
+
+
+    return result;
+
   } catch (error) {
-    logger.error(`Error fetching ledger entries: ${error.message}`);
-    console.error("Full error:", error);
+    
+    logger.error(`Error fetching ledger entries: ${error.message}`, {
+      clientId,
+      startDate,
+      endDate,
+      stack: error.stack
+    });
+    
     throw new Error(`Error fetching ledger entries: ${error.message}`);
   }
 };

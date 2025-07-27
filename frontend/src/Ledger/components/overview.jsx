@@ -304,9 +304,10 @@ export default function Overview() {
                   clientBalanceData.map((item, index) => (
                     <TableRow key={index} className="border-b border-slate-200">
                       <TableCell className="text-center">{item.clientName}</TableCell>
-                      <TableCell className="text-center">{formatCurrency(item.totalBill)}</TableCell>
-                      <TableCell className="text-center">{formatCurrency(item.totalPaid)}</TableCell>
+                      <TableCell className="text-center">{formatCurrency(item.totalBill, item.currencyCode)}</TableCell>
+                      <TableCell className="text-center">{formatCurrency(item.totalPaid, item.currencyCode)}</TableCell>
                       <TableCell className="text-center">{formatNumberWithCommas(item.balance)}</TableCell>
+
                     </TableRow>
                   ))
                 ) : (

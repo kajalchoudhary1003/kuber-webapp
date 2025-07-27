@@ -19,6 +19,7 @@ export default function ClientLedger() {
   const [endDate, setEndDate] = useState(null)
   const [ledgerEntries, setLedgerEntries] = useState([])
   const [balance, setBalance] = useState(0)
+  const [clientInfo, setClientInfo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -106,37 +107,67 @@ export default function ClientLedger() {
           endDate: endDateStr
         });
         
-        // Fetch ledger data from backend - using POST as required by your API
+         // Fetch ledger data from backend - using POST as required by your API
         const response = await axios.post(`${API_ENDPOINTS.LEDGER}/by-client-date-range`, {
           clientId: selectedClient,
           startDate: startDateStr,
           endDate: endDateStr
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000 // 10 second timeout
         })
         
         console.log("API Response:", response.data);
-        console.log("Entries received:", response.data.entries);
+        console.log("Entries received:", response.data.clientInfo);
         
-        // Check if there are any invoice entries
-        const invoiceEntries = response.data.entries.filter(entry => 
-          entry.type === 'Invoice' || entry.type === 'invoice'
-        );
-        console.log("Invoice entries:", invoiceEntries);
+        // Validate response structure
+        if (!response.data) {
+          throw new Error('No data received from server');
+        }
         
-        // Check if there are any payment entries
-        const paymentEntries = response.data.entries.filter(entry => 
-          entry.type === 'Payment' || entry.type === 'payment'
-        );
-        console.log("Payment entries:", paymentEntries);
+        if (!response.data.entries) {
+          console.warn('No entries in response, setting empty array');
+          response.data.entries = [];
+        }
         
-        setLedgerEntries(response.data.entries)
-        setBalance(response.data.balance)
+        setLedgerEntries(response.data.entries || [])
+        setBalance(response.data.balance || 0)
+        setClientInfo(response.data.clientInfo || null)
         setShowLedger(true)
         setLoading(false)
       } catch (err) {
-        console.error('Error fetching ledger data:', err)
-        setError('Failed to load ledger data')
+        console.error('Detailed error fetching ledger data:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+          config: err.config
+        });
+        
+        // More specific error messages
+        let errorMessage = 'Failed to load ledger data';
+        if (err.response) {
+          // Server responded with error status
+          errorMessage = `Server error: ${err.response.status} - ${err.response.data?.error || err.response.statusText}`;
+        } else if (err.request) {
+          // Request was made but no response received
+          errorMessage = 'Network error: Unable to reach server';
+        } else if (err.code === 'ECONNABORTED') {
+          // Request timeout
+          errorMessage = 'Request timeout: Server took too long to respond';
+        }
+        
+        setError(errorMessage)
         setLoading(false)
+        
+        // Show toast notification for better UX
+        if (typeof toast !== 'undefined') {
+          toast.error(errorMessage);
+        }
       }
+    } else {
+      setError('Please select a client and time period');
     }
   }
 
@@ -145,7 +176,7 @@ export default function ClientLedger() {
     // 1. No client is selected
     // 2. No period is selected
     // 3. If custom period is selected but date range is not complete
-    
+
     if (!selectedClient) return true;
     if (!selectedPeriod) return true;
     if (selectedPeriod === "custom" && (!startDate || !endDate)) return true;
@@ -181,7 +212,7 @@ export default function ClientLedger() {
         }
       }
       
-      // Request the PDF download
+          // Request the PDF download
       const response = await axios.get(`${API_ENDPOINTS.LEDGER}/client/${selectedClient}/download`, {
         params: {
           startDate: startDateStr,
@@ -190,7 +221,7 @@ export default function ClientLedger() {
         responseType: 'blob'
       })
       
-      // Create a blob URL and trigger download
+         // Create a blob URL and trigger download
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
@@ -210,7 +241,7 @@ export default function ClientLedger() {
       if (!dateString) return '-';
       const date = new Date(dateString);
       
-      // Check if date is valid
+       // Check if date is valid
       if (isNaN(date.getTime())) {
         return '-';
       }
@@ -222,7 +253,18 @@ export default function ClientLedger() {
     }
   }
 
-  // Format number with commas
+  // Updated function to use client's currency
+  const formatAmount = (amount) => {
+    if (amount == null || amount === undefined) return '-';
+    
+    // Get the client's currency code, fallback to INR
+    const currencyCode = clientInfo?.currencyCode || 'INR';
+    
+    // Use the formatCurrency utility with the client's currency
+    return formatCurrency(amount, currencyCode);
+  }
+
+  // Alternative formatting function for display without currency symbol
   const formatNumberWithCommas = (number) => {
     if (number == null) return '-'
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -268,7 +310,7 @@ export default function ClientLedger() {
 
               {selectedPeriod === "custom" && (
                 <div className="flex gap-2">
-                  {/* Two separate DatePickers for start and end dates */}
+                  {/* Two separate DatePickers for start and end dates */}                  
                   <ConfigProvider theme={antTheme}>
                     <DatePicker 
                       placeholder="Start Date"
@@ -296,13 +338,13 @@ export default function ClientLedger() {
                 </div>
               )}
 
-<Button 
-  className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full cursor-pointer transition-all duration-300" 
-  disabled={isButtonDisabled() || loading}
-  onClick={handleShowLedger}
->
-  {loading ? "Loading..." : "Show Ledger"}
-</Button>
+              <Button 
+                className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full cursor-pointer transition-all duration-300" 
+                disabled={isButtonDisabled() || loading}
+                onClick={handleShowLedger}
+              >
+                {loading ? "Loading..." : "Show Ledger"}
+              </Button>
 
             </div>
           </div>
@@ -317,9 +359,18 @@ export default function ClientLedger() {
         <Card className="bg-white border-0 rounded-3xl shadow-md">
           <CardContent className="p-0">
             <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-xl ">Ledger</h3>
+              <div>
+                <h3 className="text-xl">Ledger</h3>
+                {clientInfo && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Client: {clientInfo.name} | Currency: {clientInfo.currencyCode} ({clientInfo.currencySymbol})
+                  </p>
+                )}
+              </div>
               <div className="flex items-center gap-2">
-                <span className="font-medium">Balance: {formatNumberWithCommas(balance)}</span>
+                <span className="font-medium">
+                  Balance: {formatAmount(balance)}
+                </span>
                 <Button variant="outline" size="sm" onClick={handleDownload}>
                   DOWNLOAD
                 </Button>
@@ -332,9 +383,9 @@ export default function ClientLedger() {
                   <TableRow>
                     <TableHead className="text-center">Date</TableHead>
                     <TableHead className="text-center">Particulars</TableHead>
-                    <TableHead className="text-center">Invoice Raised</TableHead>
-                    <TableHead className="text-center">Payment Received</TableHead>
-                    <TableHead className="text-center">Balance Payment</TableHead>
+                    <TableHead className="text-center">Invoice Raised ({clientInfo?.currencyCode || 'INR'})</TableHead>
+                    <TableHead className="text-center">Payment Received ({clientInfo?.currencyCode || 'INR'})</TableHead>
+                    <TableHead className="text-center">Balance Payment ({clientInfo?.currencyCode || 'INR'})</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -345,12 +396,12 @@ export default function ClientLedger() {
                         <TableCell className="text-center">{entry.type === 'Invoice' || entry.type === 'invoice' ? 'Invoice Raised' : 'Payment Received'}</TableCell>
                         <TableCell className="text-center">
                           {(entry.type === 'Invoice' || entry.type === 'invoice') 
-                            ? formatCurrency(entry.InvoiceRaised || entry.amount) 
+                            ? formatAmount(entry.InvoiceRaised || entry.amount) 
                             : '-'}
                         </TableCell>
                         <TableCell className="text-center">
                           {(entry.type === 'Payment' || entry.type === 'payment') 
-                            ? formatCurrency(Math.abs(entry.PaymentReceived || entry.amount)) 
+                            ? formatAmount(Math.abs(entry.PaymentReceived || entry.amount)) 
                             : '-'}
                         </TableCell>
                         <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>

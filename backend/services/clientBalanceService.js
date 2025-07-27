@@ -14,9 +14,16 @@ const clientBalanceService = {
       
       // Get all clients with their balance information
       const clients = await Client.findAll({
-        attributes: ['id', 'ClientName'],
-        transaction
-      });
+  attributes: ['id', 'ClientName'],
+  include: [
+    {
+      model: Currency,
+      as: 'BillingCurrency',
+      attributes: ['CurrencyCode', 'CurrencyName']
+    }
+  ],
+  transaction
+});
       
       console.log(`Found ${clients.length} clients in the database`);
       if (clients.length > 0) {
@@ -115,7 +122,8 @@ const clientBalanceService = {
           clientName: client.ClientName,
           totalBill,
           totalPaid,
-          balance
+          balance,
+          currencyCode: client.BillingCurrency?.CurrencyCode || 'INR'
         };
       }));
       

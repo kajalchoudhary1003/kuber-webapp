@@ -22,6 +22,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
+// Currency formatting function
+const formatCurrency = (value, currencyCode = 'INR') => {
+  if (!value && value !== 0) return 'N/A';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+};
+
 export default function PaymentTracker() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +46,7 @@ export default function PaymentTracker() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState(null)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [clientCurrency, setClientCurrency] = useState('INR') // Store client's currency
   const currentDate = new Date()
 
   // Fetch clients when component mounts
@@ -61,6 +73,7 @@ export default function PaymentTracker() {
     const fetchClientPayments = async () => {
       if (!selectedClient) {
         setClientPayments([])
+        setClientCurrency('INR') // Reset to default
         return
       }
 
@@ -68,11 +81,20 @@ export default function PaymentTracker() {
         setPaymentLoading(true)
         const response = await axios.get(`${API_ENDPOINTS.PAYMENT_TRACKER}/payment/last-three/${selectedClient}`)
         setClientPayments(response.data.payments || [])
+        
+        // Set the client's currency from the response
+        if (response.data.currency) {
+          setClientCurrency(response.data.currency)
+        } else {
+          setClientCurrency('INR') // Fallback to INR if no currency found
+        }
+        
         setPaymentError(null)
       } catch (err) {
         setPaymentError("Failed to fetch payments for this client")
         console.error("Error fetching client payments:", err)
         setClientPayments([])
+        setClientCurrency('INR')
       } finally {
         setPaymentLoading(false)
       }
@@ -109,6 +131,11 @@ export default function PaymentTracker() {
       // Refresh the payments list
       const response = await axios.get(`${API_ENDPOINTS.PAYMENT_TRACKER}/payment/last-three/${selectedClient}`)
       setClientPayments(response.data.payments || [])
+      
+      // Update currency if needed
+      if (response.data.currency) {
+        setClientCurrency(response.data.currency)
+      }
       
       // Reset form
       setDate(null)
@@ -211,112 +238,119 @@ export default function PaymentTracker() {
       </Card>
 
       <Card className="mb-6 bg-white border-0 rounded-3xl shadow-md">
-  <CardContent className="p-6">
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
-      <div className="space-y-2">
-        <h3 className="text-xl">Record New Payment</h3>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="date">Received Date</Label>
-        {/* Ant Design DatePicker with custom styling */}
-        <ConfigProvider theme={antTheme}>
-          <DatePicker
-            id="date"
-            format="DD/MM/YYYY"
-            onChange={handleDateChange}
-            value={date ? dayjs(date) : null}
-            style={{ 
-              width: '100%', 
-              height: '35px',
-              borderColor: '#000000' // Inline style for border color
-            }}
-            placeholder="Select date"
-          />
-        </ConfigProvider>
-      </div>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+            <div className="space-y-2">
+              <h3 className="text-xl">Record New Payment</h3>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="date">Received Date</Label>
+              {/* Ant Design DatePicker with custom styling */}
+              <ConfigProvider theme={antTheme}>
+                <DatePicker
+                  id="date"
+                  format="DD/MM/YYYY"
+                  onChange={handleDateChange}
+                  value={date ? dayjs(date) : null}
+                  style={{ 
+                    width: '100%', 
+                    height: '35px',
+                    borderColor: '#000000' // Inline style for border color
+                  }}
+                  placeholder="Select date"
+                />
+              </ConfigProvider>
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
-        
-          <Input 
-            id="amount" 
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)} 
-            className="pl-7 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
-            type="number"
-            step="0.01" 
-          />
-        
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount ({clientCurrency})</Label>
+              <div className="relative">
+                <Input 
+                  id="amount" 
+                  value={amount} 
+                  onChange={(e) => setAmount(e.target.value)} 
+                  className="pl-12 focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+                  type="number"
+                  step="0.01" 
+                  placeholder={`0.00`}
+                />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                  {new Intl.NumberFormat('en-US', { 
+                    style: 'currency', 
+                    currency: clientCurrency,
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(0).replace(/[\d.,]/g, '')}
+                </span>
+              </div>
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="remark">Remark</Label>
-        <Input 
-          id="remark" 
-          placeholder="Remark" 
-          value={remark} 
-          onChange={(e) => setRemark(e.target.value)} 
-          className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="remark">Remark</Label>
+              <Input 
+                id="remark" 
+                placeholder="Remark" 
+                value={remark} 
+                onChange={(e) => setRemark(e.target.value)} 
+                className="focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0"
+              />
+            </div>
 
-      <Button 
-  className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full h-10 cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 transition-all duration-300" 
-  onClick={handleRecordPayment}
-  disabled={!selectedClient || !date || !amount || submitLoading}
->
-  {submitLoading ? "Recording..." : "Record Payment"}
-</Button>
+            <Button 
+              className="bg-blue-500 shadow-lg hover:bg-white text-white hover:text-blue-500 border border-transparent hover:border-blue-500 rounded-full h-10 cursor-pointer focus-visible:ring-gray-300 focus-visible:ring-3 focus-visible:ring-offset-0 transition-all duration-300" 
+              onClick={handleRecordPayment}
+              disabled={!selectedClient || !date || !amount || submitLoading}
+            >
+              {submitLoading ? "Recording..." : "Record Payment"}
+            </Button>
 
-    </div>
-  </CardContent>
-</Card>
+          </div>
+        </CardContent>
+      </Card>
 
-
-
-{selectedClient && (
-  <Card className="bg-white border-0 rounded-3xl shadow-md">
-    <CardContent className="px-4">
-      <div className="overflow-hidden rounded-md border border-gray-300">
-        <Table className="[&_thead_tr]:border-b-0 [&_thead]:border-b-0">
-          <TableHeader className="bg-slate-200 !border-b-0">
-            <TableRow className="!border-b-0">
-              <TableHead className="w-[200px] text-center">Date</TableHead>
-              <TableHead className="w-[200px] text-center">Amount</TableHead>
-              <TableHead className="text-center">Remark</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paymentLoading ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">Loading payments...</TableCell>
-              </TableRow>
-            ) : paymentError ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4 text-red-500">{paymentError}</TableCell>
-              </TableRow>
-            ) : clientPayments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">No payment records found for this client</TableCell>
-              </TableRow>
-            ) : (
-              clientPayments.map((payment) => (
-                <TableRow key={payment.id} className="border-t border-gray-300">
-                  <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
-                  <TableCell className="text-center">{parseFloat(payment.Amount).toFixed(2)}</TableCell>
-                  <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </CardContent>
-  </Card>
-)}
-
-
+      {selectedClient && (
+        <Card className="bg-white border-0 rounded-3xl shadow-md">
+          <CardContent className="px-4">
+            <div className="overflow-hidden rounded-md border border-gray-300">
+              <Table className="[&_thead_tr]:border-b-0 [&_thead]:border-b-0">
+                <TableHeader className="bg-slate-200 !border-b-0">
+                  <TableRow className="!border-b-0">
+                    <TableHead className="w-[200px] text-center">Date</TableHead>
+                    <TableHead className="w-[200px] text-center">Amount ({clientCurrency})</TableHead>
+                    <TableHead className="text-center">Remark</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paymentLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4">Loading payments...</TableCell>
+                    </TableRow>
+                  ) : paymentError ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4 text-red-500">{paymentError}</TableCell>
+                    </TableRow>
+                  ) : clientPayments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4">No payment records found for this client</TableCell>
+                    </TableRow>
+                  ) : (
+                    clientPayments.map((payment) => (
+                      <TableRow key={payment.id} className="border-t border-gray-300">
+                        <TableCell className="text-center">{formatDisplayDate(payment.ReceivedDate)}</TableCell>
+                        <TableCell className="text-center">
+                          {formatCurrency(parseFloat(payment.Amount), clientCurrency)}
+                        </TableCell>
+                        <TableCell className="text-center">{payment.Remark || "-"}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
     </div>
   )
