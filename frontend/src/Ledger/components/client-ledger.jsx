@@ -404,7 +404,7 @@ export default function ClientLedger() {
                             ? formatAmount(Math.abs(entry.PaymentReceived || entry.amount)) 
                             : '-'}
                         </TableCell>
-                        <TableCell className="text-center">{formatNumberWithCommas(entry.BalancePayment || entry.balance)}</TableCell>
+                        <TableCell className="text-center">{formatAmount(entry.BalancePayment || entry.balance)}</TableCell>
                       </TableRow>
                     ))
                   ) : (

@@ -306,7 +306,7 @@ export default function Overview() {
                       <TableCell className="text-center">{item.clientName}</TableCell>
                       <TableCell className="text-center">{formatCurrency(item.totalBill, item.currencyCode)}</TableCell>
                       <TableCell className="text-center">{formatCurrency(item.totalPaid, item.currencyCode)}</TableCell>
-                      <TableCell className="text-center">{formatNumberWithCommas(item.balance)}</TableCell>
+                      <TableCell className="text-center">{formatCurrency(item.balance,item.currencyCode)}</TableCell>
 
                     </TableRow>
                   ))
