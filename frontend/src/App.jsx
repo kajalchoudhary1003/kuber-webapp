@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from './slidebar/slidebar';
-import { Header } from './header/header';
+import { AppSidebar } from './Slidebar/Slidebar';
+import { Header } from './Header/Header';
 import PaymentTracker from './Payments/PaymentsTracker';
 import Ledger from './Ledger/Ledger';
 import InvoiceGeneratorPage from './InvoiceGenerator/InvoiceGenerator';

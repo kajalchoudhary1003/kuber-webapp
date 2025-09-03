@@ -4,7 +4,7 @@ const CurrencyExchangeRate = require('../models/currencyExchangeRateModel');
 const Currency = require('../models/currencyModel');
 const Client = require('../models/clientModel');
 const Employee = require('../models/employeeModel');
-const EmployeeCost = require('../models/EmployeeCostModel');
+const EmployeeCost = require('../models/employeeCostModel');
 const logger = require('../utils/logger');
 
 /**
